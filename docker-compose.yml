@@ -1,0 +1,18 @@
+# Optional: a PostgreSQL for development if you don't want to use a locally installed one.
+# Runs on port 5433 so it doesn't clash with a local PostgreSQL on 5432.
+#   docker compose up -d
+# Then use: Host=localhost;Port=5433;Database=feedora;Username=feedora;Password=feedora
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: feedora
+      POSTGRES_USER: feedora
+      POSTGRES_PASSWORD: feedora
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

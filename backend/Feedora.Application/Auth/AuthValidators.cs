@@ -1,0 +1,45 @@
+using Feedora.Application.Common;
+using FluentValidation;
+
+namespace Feedora.Application.Auth;
+
+public class RegisterCompanyValidator : AbstractValidator<RegisterCompanyRequest>
+{
+    public RegisterCompanyValidator()
+    {
+        RuleFor(x => x.FullName).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.CompanyName).NotEmpty().MaximumLength(150);
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256);
+        RuleFor(x => x.PhoneNumber).NotEmpty().PhoneNumber();
+        this.ValidLocation(x => x.Province, x => x.District);
+        RuleFor(x => x.Password).NotEmpty().MinimumLength(8);
+        RuleFor(x => x.ConfirmPassword).Equal(x => x.Password).WithMessage("Passwords do not match.");
+    }
+}
+
+public class RegisterIndividualValidator : AbstractValidator<RegisterIndividualRequest>
+{
+    public RegisterIndividualValidator()
+    {
+        RuleFor(x => x.FullName).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Gender).IsInEnum();
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256);
+        RuleFor(x => x.PhoneNumber).NotEmpty().PhoneNumber();
+        RuleFor(x => x.AdditionalPhoneNumber).PhoneNumber()
+            .When(x => !string.IsNullOrWhiteSpace(x.AdditionalPhoneNumber));
+        RuleFor(x => x.SocialMediaLink).MaximumLength(300).HttpUrl()
+            .When(x => !string.IsNullOrWhiteSpace(x.SocialMediaLink));
+        this.ValidLocation(x => x.Province, x => x.District);
+        RuleFor(x => x.Password).NotEmpty().MinimumLength(8);
+        RuleFor(x => x.ConfirmPassword).Equal(x => x.Password).WithMessage("Passwords do not match.");
+    }
+}
+
+public class LoginValidator : AbstractValidator<LoginRequest>
+{
+    public LoginValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.Password).NotEmpty();
+    }
+}
