@@ -14,8 +14,10 @@ public record PublicProfileDto(
     string? Bio,
     string? Province,
     string? District,
+    string? LocalLevel,
     string? SocialMediaLink,
     Gender? Gender,
+    int? Age,
     DateTime JoinedAt,
     int PostCount);
 
@@ -24,17 +26,20 @@ public record MyProfileDto(
     PublicProfileDto Profile,
     string Email,
     string? PhoneNumber,
-    string? AdditionalPhoneNumber);
+    string? AdditionalPhoneNumber,
+    DateOnly? DateOfBirth);
 
 public record UpdateProfileRequest(
     string FullName,
     string? CompanyName,
     Gender? Gender,
+    DateOnly? DateOfBirth,
     string PhoneNumber,
     string? AdditionalPhoneNumber,
     string? SocialMediaLink,
     string? Province,
     string? District,
+    string? LocalLevel,
     string? Bio);
 
 public record ChangePasswordRequest(string CurrentPassword, string NewPassword, string ConfirmPassword);
@@ -53,7 +58,8 @@ public class UpdateProfileValidator : AbstractValidator<UpdateProfileRequest>
             .When(x => !string.IsNullOrWhiteSpace(x.SocialMediaLink));
         RuleFor(x => x.Bio).MaximumLength(500);
         When(x => x.Province is not null || x.District is not null,
-            () => this.ValidLocation(x => x.Province, x => x.District));
+            () => this.ValidArea(x => x.Province, x => x.District, x => x.LocalLevel));
+        RuleFor(x => x.DateOfBirth).ValidDateOfBirth().When(x => x.DateOfBirth.HasValue);
     }
 }
 

@@ -56,9 +56,10 @@ export function ProfilePage() {
               <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
                 {p.district && (
                   <li className="flex items-center gap-1.5">
-                    <MapPin className="size-4" /> {p.district}, {p.province}
+                    <MapPin className="size-4" /> {[p.localLevel, p.district, p.province].filter(Boolean).join(', ')}
                   </li>
                 )}
+                {p.age != null && <li>{p.age} years old</li>}
                 <li className="flex items-center gap-1.5">
                   <CalendarDays className="size-4" /> Joined {formatDate(p.joinedAt)}
                 </li>

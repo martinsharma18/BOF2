@@ -50,9 +50,12 @@ export function WalletCard() {
         )}
 
         {pending && (
-          <p className="mt-3 flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-800">
-            <Clock className="size-3.5" /> {formatMoney(pending.amount)} withdrawal pending
-          </p>
+          <div className="mt-3 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">
+            <p className="flex items-center gap-1.5 font-medium">
+              <Clock className="size-3.5" /> {formatMoney(pending.amount)} withdrawal pending
+            </p>
+            <p className="mt-0.5">You can request another cash withdraw after the admin flags this one Done or Rejected.</p>
+          </div>
         )}
 
         <Button

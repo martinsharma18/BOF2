@@ -2,6 +2,7 @@ using Feedora.Api.Infrastructure;
 using Feedora.Application.Admin;
 using Feedora.Application.Ads;
 using Feedora.Application.Common;
+using Feedora.Application.Vacancies;
 using Feedora.Application.Wallet;
 using Feedora.Domain;
 using Microsoft.AspNetCore.Authorization;
@@ -12,7 +13,7 @@ namespace Feedora.Api.Controllers;
 [ApiController]
 [Route("api/admin")]
 [Authorize(Roles = Roles.Admin)]
-public class AdminController(IAdminService admin, IAdService ads, IWalletService wallet) : ControllerBase
+public class AdminController(IAdminService admin, IAdService ads, IWalletService wallet, IVacancyService vacancies) : ControllerBase
 {
     [HttpGet("stats")]
     public Task<AdminStatsDto> GetStats(CancellationToken ct) => admin.GetStatsAsync(ct);
@@ -47,10 +48,27 @@ public class AdminController(IAdminService admin, IAdService ads, IWalletService
     public Task<PagedResult<WithdrawalDto>> GetWithdrawals([FromQuery] WithdrawalQuery query, CancellationToken ct) =>
         wallet.ListWithdrawalsAsync(query, ct);
 
-    /// <summary>Mark a cash-out request as paid (money sent) or rejected.</summary>
+    /// <summary>Flag a cash-out request as Pending, Paid (done, money sent) or Rejected.</summary>
     [HttpPut("withdrawals/{id:guid}")]
     public Task<WithdrawalDto> ProcessWithdrawal(Guid id, ProcessWithdrawalRequest request, CancellationToken ct) =>
         wallet.ProcessWithdrawalAsync(id, request, ct);
+
+    [HttpGet("vacancies")]
+    public Task<IReadOnlyList<VacancyDto>> GetVacancies(CancellationToken ct) => vacancies.ListAllAsync(ct);
+
+    [HttpPost("vacancies")]
+    public Task<VacancyDto> CreateVacancy(VacancyRequest request, CancellationToken ct) => vacancies.CreateAsync(request, ct);
+
+    [HttpPut("vacancies/{id:guid}")]
+    public Task<VacancyDto> UpdateVacancy(Guid id, VacancyRequest request, CancellationToken ct) =>
+        vacancies.UpdateAsync(id, request, ct);
+
+    [HttpDelete("vacancies/{id:guid}")]
+    public async Task<IActionResult> DeleteVacancy(Guid id, CancellationToken ct)
+    {
+        await vacancies.DeleteAsync(id, ct);
+        return NoContent();
+    }
 
     [HttpDelete("ads/{id:guid}")]
     public async Task<IActionResult> DeleteAd(Guid id, CancellationToken ct)

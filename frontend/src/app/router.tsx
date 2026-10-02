@@ -23,6 +23,8 @@ const SettingsPage = page(() => import('@/pages/SettingsPage'), 'SettingsPage')
 const ApplicationsPage = page(() => import('@/pages/ApplicationsPage'), 'ApplicationsPage')
 const NotificationsPage = page(() => import('@/pages/NotificationsPage'), 'NotificationsPage')
 const WalletPage = page(() => import('@/pages/WalletPage'), 'WalletPage')
+const InvitationsPage = page(() => import('@/pages/InvitationsPage'), 'InvitationsPage')
+const InboxPage = page(() => import('@/pages/InboxPage'), 'InboxPage')
 const TermsPage = page(() => import('@/pages/LegalPage'), 'TermsPage')
 const PrivacyPage = page(() => import('@/pages/LegalPage'), 'PrivacyPage')
 const AdminLayout = page(() => import('@/pages/admin/AdminLayout'), 'AdminLayout')
@@ -30,6 +32,7 @@ const AdminOverviewPage = page(() => import('@/pages/admin/AdminOverviewPage'), 
 const AdminUsersPage = page(() => import('@/pages/admin/AdminUsersPage'), 'AdminUsersPage')
 const AdminAdsPage = page(() => import('@/pages/admin/AdminAdsPage'), 'AdminAdsPage')
 const AdminWithdrawalsPage = page(() => import('@/pages/admin/AdminWithdrawalsPage'), 'AdminWithdrawalsPage')
+const AdminVacanciesPage = page(() => import('@/pages/admin/AdminVacanciesPage'), 'AdminVacanciesPage')
 const NotFoundPage = page(() => import('@/pages/NotFoundPage'), 'NotFoundPage')
 
 function Home() {
@@ -68,11 +71,13 @@ export function AppRoutes() {
 
             <Route element={<RequireAuth allow={['Individual']} />}>
               <Route path="wallet" element={<WalletPage />} />
+              <Route path="inbox" element={<InboxPage />} />
             </Route>
 
             <Route element={<RequireAuth allow={['Company']} />}>
               <Route path="posts/new" element={<NewPostPage />} />
               <Route path="posts/:id/edit" element={<EditPostPage />} />
+              <Route path="invitations" element={<InvitationsPage />} />
             </Route>
 
             <Route element={<RequireAuth allow={['Admin']} />}>
@@ -80,6 +85,7 @@ export function AppRoutes() {
                 <Route index element={<AdminOverviewPage />} />
                 <Route path="users" element={<AdminUsersPage />} />
                 <Route path="withdrawals" element={<AdminWithdrawalsPage />} />
+                <Route path="vacancies" element={<AdminVacanciesPage />} />
                 <Route path="ads" element={<AdminAdsPage />} />
               </Route>
             </Route>

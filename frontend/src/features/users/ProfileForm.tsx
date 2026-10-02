@@ -3,8 +3,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Alert, Button, Field, Input, Textarea, toast } from '@/components/ui'
-import { optionalPhone, optionalUrl, phone } from '@/features/auth/schemas'
+import { dateOfBirth, optionalPhone, optionalUrl, phone } from '@/features/auth/schemas'
 import { LocationFields } from '@/features/locations/LocationFields'
+import { yearsAgo } from '@/lib/format'
 import { applyServerErrors } from '@/lib/formErrors'
 import type { MyProfile } from '@/lib/types'
 import { useUpdateProfile } from './api'
@@ -13,11 +14,13 @@ const schema = z.object({
   fullName: z.string().trim().min(1, 'Your name is required').max(100),
   companyName: z.string().trim().max(150),
   gender: z.enum(['Male', 'Female']).or(z.literal('')),
+  dateOfBirth,
   phoneNumber: phone,
   additionalPhoneNumber: optionalPhone,
   socialMediaLink: optionalUrl,
   province: z.string(),
   district: z.string(),
+  localLevel: z.string(),
   bio: z.string().max(500, 'Keep it under 500 characters'),
 })
 type Values = z.infer<typeof schema>
@@ -43,34 +46,39 @@ export function ProfileForm({ me }: { me: MyProfile }) {
       fullName: profile.fullName,
       companyName: profile.companyName ?? '',
       gender: profile.gender ?? '',
+      dateOfBirth: me.dateOfBirth ?? '',
       phoneNumber: me.phoneNumber ?? '',
       additionalPhoneNumber: me.additionalPhoneNumber ?? '',
       socialMediaLink: profile.socialMediaLink ?? '',
       province: profile.province ?? '',
       district: profile.district ?? '',
+      localLevel: profile.localLevel ?? '',
       bio: profile.bio ?? '',
     },
   })
 
   const clearDistrict = useCallback(() => setValue('district', ''), [setValue])
+  const clearLocalLevel = useCallback(() => setValue('localLevel', ''), [setValue])
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null)
     if (type === 'Company' && !values.companyName) return setError('companyName', { message: 'Company name is required' })
     if (type === 'Individual' && !values.gender) return setError('gender', { message: 'Select M or F' })
-    if (type !== 'Admin' && (!values.province || !values.district))
-      return setError(values.province ? 'district' : 'province', { message: 'Select your location' })
+    if (type === 'Individual' && !values.dateOfBirth) return setError('dateOfBirth', { message: 'Enter your date of birth' })
+    if (type !== 'Admin' && !values.province) return setError('province', { message: 'Select your province' })
 
     try {
       await update.mutateAsync({
         fullName: values.fullName,
         companyName: values.companyName || null,
         gender: values.gender || null,
+        dateOfBirth: values.dateOfBirth || null,
         phoneNumber: values.phoneNumber,
         additionalPhoneNumber: values.additionalPhoneNumber || null,
         socialMediaLink: values.socialMediaLink || null,
         province: values.province || null,
         district: values.district || null,
+        localLevel: values.localLevel || null,
         bio: values.bio || null,
       })
       reset(values)
@@ -107,6 +115,11 @@ export function ProfileForm({ me }: { me: MyProfile }) {
             {errors.gender && <p className="mt-1.5 text-xs font-medium text-red-600">{errors.gender.message}</p>}
           </fieldset>
         )}
+        {type === 'Individual' && (
+          <Field label="Date of birth" htmlFor="dateOfBirth" error={errors.dateOfBirth?.message}>
+            <Input id="dateOfBirth" type="date" autoComplete="bday" min={yearsAgo(100)} max={yearsAgo(16)} {...register('dateOfBirth')} aria-invalid={!!errors.dateOfBirth} />
+          </Field>
+        )}
         <Field label="Email" htmlFor="email" hint="Email can't be changed.">
           <Input id="email" value={me.email} disabled readOnly />
         </Field>
@@ -129,9 +142,14 @@ export function ProfileForm({ me }: { me: MyProfile }) {
         <LocationFields
           province={register('province')}
           district={register('district')}
+          localLevel={register('localLevel')}
           selectedProvince={watch('province')}
+          selectedDistrict={watch('district')}
           onProvinceChanged={clearDistrict}
-          errors={{ province: errors.province?.message, district: errors.district?.message }}
+          onDistrictChanged={clearLocalLevel}
+          localLevelOptional
+          districtOptional
+          errors={{ province: errors.province?.message, district: errors.district?.message, localLevel: errors.localLevel?.message }}
         />
       )}
 

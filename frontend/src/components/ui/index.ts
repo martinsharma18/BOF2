@@ -1,5 +1,6 @@
 export { Button, ButtonLink, buttonClasses } from './Button'
 export { Dialog, ConfirmDialog } from './Dialog'
+export { AccountTypeBadge } from './AccountTypeBadge'
 export { Alert, Avatar, Badge, Card, EmptyState, PageHeader } from './Display'
 export { Checkbox, Field, FieldError, FormSection, Input, Select, Textarea } from './Form'
 export { Menu, MenuItem, MenuSeparator } from './Menu'

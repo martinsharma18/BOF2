@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { ageFrom } from '@/lib/format'
 
 export const phone = z.string().trim().regex(/^\+?[0-9\s-]{7,15}$/, 'Enter a valid phone number')
 export const optionalPhone = z.union([z.literal(''), phone])
@@ -26,8 +27,20 @@ export type LoginValues = z.infer<typeof loginSchema>
 
 const location = {
   province: z.string().min(1, 'Select a province'),
-  district: z.string().min(1, 'Select a district'),
+  // Optional: province only is enough.
+  district: z.string(),
+  localLevel: z.string(),
 }
+
+/** YYYY-MM-DD from a date input; 16-100 years old. Empty is allowed here and required per account type. */
+export const dateOfBirth = z
+  .string()
+  .refine((v) => !v || /^\d{4}-\d{2}-\d{2}$/.test(v), 'Enter a valid date')
+  .refine((v) => {
+    if (!v) return true
+    const age = ageFrom(v)
+    return age >= 16 && age <= 100
+  }, 'You must be between 16 and 100 years old')
 
 /** One registration form; the account type radio decides which extra fields are required. */
 export const registerSchema = z
@@ -40,6 +53,7 @@ export const registerSchema = z
     companyName: z.string().trim().max(150),
     // Individual only. An unticked radio group reports null, so allow it here; superRefine requires it for individuals.
     gender: z.enum(['Male', 'Female']).nullish(),
+    dateOfBirth,
     socialMediaLink: optionalUrl,
     additionalPhoneNumber: optionalPhone,
     ...location,
@@ -51,6 +65,8 @@ export const registerSchema = z
       ctx.addIssue({ code: 'custom', path: ['companyName'], message: 'Company name is required' })
     if (v.accountType === 'Individual' && !v.gender)
       ctx.addIssue({ code: 'custom', path: ['gender'], message: 'Select M or F' })
+    if (v.accountType === 'Individual' && !v.dateOfBirth)
+      ctx.addIssue({ code: 'custom', path: ['dateOfBirth'], message: 'Enter your date of birth' })
   })
 export type RegisterValues = z.infer<typeof registerSchema>
 

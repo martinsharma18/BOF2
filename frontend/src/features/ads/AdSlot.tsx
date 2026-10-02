@@ -4,6 +4,7 @@ import { api } from '@/lib/api'
 import { cn } from '@/lib/cn'
 import type { Ad, AdPlacement } from '@/lib/types'
 import { APP_NAME } from '@/lib/brand'
+import { adFormats } from './formats'
 
 export function useAds(placement: AdPlacement, count = 3) {
   return useQuery({
@@ -27,8 +28,8 @@ export function AdSlot({ placement, index = 0, className }: { placement: AdPlace
       <aside
         aria-label="Advertising space"
         className={cn(
-          'flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-slate-300 bg-white/50 text-center',
-          isBanner ? 'min-h-28 px-6 py-6' : 'min-h-72 px-6 py-10',
+          'flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-slate-300 bg-white/50 px-6 text-center',
+          isBanner ? 'min-h-28 py-6' : 'aspect-square',
           className,
         )}
       >
@@ -45,7 +46,7 @@ export function AdSlot({ placement, index = 0, className }: { placement: AdPlace
         src={ad.imageUrl}
         alt=""
         loading="lazy"
-        className={cn('w-full bg-slate-100 object-cover', isBanner ? 'aspect-[4/1] sm:aspect-[6/1]' : 'aspect-[4/5]')}
+        className={cn('w-full bg-slate-100 object-cover', adFormats[placement].aspectClass)}
       />
       <div className="flex items-start justify-between gap-3 p-3">
         <div className="min-w-0">

@@ -3,12 +3,16 @@ using Feedora.Application.Common;
 using Feedora.Application.Admin;
 using Feedora.Application.Ads;
 using Feedora.Application.Applications;
+using Feedora.Application.Inbox;
+using Feedora.Application.Invitations;
+using Feedora.Application.Locations;
 using Feedora.Application.Notifications;
 using Feedora.Application.Wallet;
 using Feedora.Application.Feedbacks;
 using Feedora.Application.Posts;
 using Feedora.Application.Reactions;
 using Feedora.Application.Users;
+using Feedora.Application.Vacancies;
 using Feedora.Domain.Entities;
 using Feedora.Infrastructure.Auth;
 using Feedora.Infrastructure.Persistence;
@@ -64,6 +68,11 @@ public static class DependencyInjection
         services.AddScoped<IApplicationService, ApplicationService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IWalletService, WalletService>();
+        services.AddScoped<IInvitationService, InvitationService>();
+        services.AddScoped<IVacancyService, VacancyService>();
+        services.AddScoped<IInboxService, InboxService>();
+        services.AddScoped<ILocationService, LocationService>();
+        services.AddMemoryCache();
         services.AddSingleton<IFileStorage, LocalFileStorage>();
 
         return services;

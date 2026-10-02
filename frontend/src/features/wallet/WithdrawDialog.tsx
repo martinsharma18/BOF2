@@ -20,7 +20,12 @@ export function WithdrawDialog({ open, onClose, balance }: { open: boolean; onCl
       .min(MINIMUM, `The minimum is ${formatMoney(MINIMUM)}`)
       .max(balance, `You can withdraw up to ${formatMoney(balance)}`),
     bankName: z.string().min(1, 'Choose where to receive the money'),
-    accountNumber: z.string().trim().min(1, 'Account number is required').max(40).regex(/^[0-9A-Za-z\s-]+$/, 'Digits, letters, spaces or dashes only'),
+    accountNumber: z
+      .string()
+      .trim()
+      .min(1, 'Enter an account number or phone number')
+      .max(40)
+      .regex(/^\+?[0-9A-Za-z\s-]+$/, 'Digits, letters, spaces or dashes only'),
     accountName: z.string().trim().min(1, 'Account holder name is required').max(100),
   })
   type Values = z.input<typeof schema>
@@ -58,7 +63,7 @@ export function WithdrawDialog({ open, onClose, balance }: { open: boolean; onCl
       open={open}
       onClose={close}
       title="Cash withdraw"
-      description={`Available: ${formatMoney(balance)}. Your request goes to the admin, who sends the money to this account.`}
+      description={`Available: ${formatMoney(balance)}. Your request goes to the admin, who checks it, sends the money and flags it Done.`}
       footer={
         <>
           <Button variant="secondary" onClick={close}>
@@ -83,8 +88,8 @@ export function WithdrawDialog({ open, onClose, balance }: { open: boolean; onCl
             ))}
           </Select>
         </Field>
-        <Field label="Account number" htmlFor="w-number" error={errors.accountNumber?.message}>
-          <Input id="w-number" autoComplete="off" placeholder="Account or wallet number" {...register('accountNumber')} aria-invalid={!!errors.accountNumber} />
+        <Field label="Account number or phone number" htmlFor="w-number" error={errors.accountNumber?.message} hint="Bank account number, or the phone number of your eSewa / Khalti / IME Pay wallet.">
+          <Input id="w-number" autoComplete="off" placeholder="e.g. 0123456789 or 98XXXXXXXX" {...register('accountNumber')} aria-invalid={!!errors.accountNumber} />
         </Field>
         <Field label="Name" htmlFor="w-name" error={errors.accountName?.message}>
           <Input id="w-name" autoComplete="name" placeholder="Name on the account" {...register('accountName')} aria-invalid={!!errors.accountName} />

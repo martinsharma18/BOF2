@@ -24,7 +24,9 @@ export function FeedFilters({ value, onChange }: { value: PostFilters; onChange:
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to the debounced text
   }, [debouncedSearch])
 
-  const districts = provinces.find((p) => p.name === value.province)?.districts ?? []
+  const province = provinces.find((p) => p.name === value.province)
+  const districts = province?.districts ?? []
+  const localLevels = (value.district && province?.localLevels?.[value.district]) || []
   const hasFilters = Boolean(value.search || value.type || value.province)
 
   const typeChip = (type: PostType | undefined, label: string) => (
@@ -86,11 +88,11 @@ export function FeedFilters({ value, onChange }: { value: PostFilters; onChange:
       </div>
 
       {showLocation && (
-        <div className="grid animate-slide-up grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="grid animate-slide-up grid-cols-1 gap-2 sm:grid-cols-3">
           <Select
             aria-label="Province"
             value={value.province ?? ''}
-            onChange={(e) => onChange({ ...value, province: e.target.value || undefined, district: undefined })}
+            onChange={(e) => onChange({ ...value, province: e.target.value || undefined, district: undefined, localLevel: undefined })}
           >
             <option value="">All provinces</option>
             {provinces.map((p) => (
@@ -103,12 +105,25 @@ export function FeedFilters({ value, onChange }: { value: PostFilters; onChange:
             aria-label="District"
             value={value.district ?? ''}
             disabled={!value.province}
-            onChange={(e) => onChange({ ...value, district: e.target.value || undefined })}
+            onChange={(e) => onChange({ ...value, district: e.target.value || undefined, localLevel: undefined })}
           >
             <option value="">{value.province ? 'All districts' : 'Choose a province first'}</option>
             {districts.map((d) => (
               <option key={d} value={d}>
                 {d}
+              </option>
+            ))}
+          </Select>
+          <Select
+            aria-label="Local level"
+            value={value.localLevel ?? ''}
+            disabled={!value.district}
+            onChange={(e) => onChange({ ...value, localLevel: e.target.value || undefined })}
+          >
+            <option value="">{value.district ? 'All local levels' : 'Choose a district first'}</option>
+            {localLevels.map((l) => (
+              <option key={l} value={l}>
+                {l}
               </option>
             ))}
           </Select>

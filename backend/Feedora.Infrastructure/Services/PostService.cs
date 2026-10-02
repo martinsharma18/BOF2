@@ -125,9 +125,11 @@ public class PostService(
                                 | (request.AcceptsFemale ? GenderPreference.Female : GenderPreference.None);
         post.MinimumNumber = request.MinimumNumber;
         post.MaximumPayment = request.MaximumPayment;
+        post.ContactNumber = request.ContactNumber.Trim();
         post.IsFromAnywhere = request.IsFromAnywhere;
         post.Province = request.IsFromAnywhere ? null : request.Province;
-        post.District = request.IsFromAnywhere ? null : request.District;
+        post.District = request.IsFromAnywhere || string.IsNullOrWhiteSpace(request.District) ? null : request.District;
+        post.LocalLevel = post.District is null || string.IsNullOrWhiteSpace(request.LocalLevel) ? null : request.LocalLevel;
         post.Requirement = request.Requirement.Trim();
     }
 
@@ -139,11 +141,23 @@ public class PostService(
         if (query.Type is { } type)
             posts = posts.Where(p => p.Type == type);
 
-        // A location filter also matches posts open to "anywhere".
-        if (!string.IsNullOrWhiteSpace(query.District))
-            posts = posts.Where(p => p.IsFromAnywhere || p.District == query.District);
-        else if (!string.IsNullOrWhiteSpace(query.Province))
-            posts = posts.Where(p => p.IsFromAnywhere || p.Province == query.Province);
+        // A location filter matches posts for that exact place, posts for the wider area around it
+        // (whole district / whole province) and posts open to "anywhere".
+        var province = query.Province;
+        if (string.IsNullOrWhiteSpace(province) && !string.IsNullOrWhiteSpace(query.District))
+            province = Feedora.Domain.NepalLocations.Provinces.FirstOrDefault(p => p.Value.Contains(query.District)).Key;
+
+        if (!string.IsNullOrWhiteSpace(query.LocalLevel) && !string.IsNullOrWhiteSpace(query.District))
+            posts = posts.Where(p => p.IsFromAnywhere
+                || p.LocalLevel == query.LocalLevel
+                || (p.District == query.District && p.LocalLevel == null)
+                || (p.Province == province && p.District == null));
+        else if (!string.IsNullOrWhiteSpace(query.District))
+            posts = posts.Where(p => p.IsFromAnywhere
+                || p.District == query.District
+                || (p.Province == province && p.District == null));
+        else if (!string.IsNullOrWhiteSpace(province))
+            posts = posts.Where(p => p.IsFromAnywhere || p.Province == province);
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
@@ -196,7 +210,7 @@ public class PostService(
                 .Select(a => new
                 {
                     a.PostId,
-                    Summary = new MyApplicationDto(a.Id, a.Status, a.ClaimedAmount, a.Payments.Sum(x => (decimal?)x.Amount) ?? 0),
+                    Summary = new MyApplicationDto(a.Id, a.Status, a.ClaimedAmount, a.Payments.Sum(x => (decimal?)x.Amount) ?? 0, a.ClaimDeclineReason),
                 })
                 .ToDictionaryAsync(a => a.PostId, a => a.Summary, ct)
             : [];
@@ -205,7 +219,7 @@ public class PostService(
             p.Id, p.Type, p.Title, p.MediaUrl,
             p.GenderPreference.HasFlag(GenderPreference.Male),
             p.GenderPreference.HasFlag(GenderPreference.Female),
-            p.MinimumNumber, p.MaximumPayment, p.IsFromAnywhere, p.Province, p.District,
+            p.MinimumNumber, p.MaximumPayment, p.ContactNumber, p.IsFromAnywhere, p.Province, p.District, p.LocalLevel,
             p.Requirement, p.CreatedAt, p.UpdatedAt,
             authors[p.AuthorId],
             reactionCounts[p.Id].ToDictionary(c => c.Type, c => c.Count),

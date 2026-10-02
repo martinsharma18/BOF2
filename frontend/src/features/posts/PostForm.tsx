@@ -12,6 +12,12 @@ import type { Post } from '@/lib/types'
 import { useSavePost } from './api'
 import { postTypes } from './labels'
 
+const genderOptions = [
+  { value: 'Male', label: 'Male' },
+  { value: 'Female', label: 'Female' },
+  { value: 'Both', label: 'Both' },
+] as const
+
 const MAX_FILE_BYTES = 5 * 1024 * 1024
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
@@ -20,47 +26,52 @@ const schema = z
     type: z.enum(['Type1', 'Type2'], 'Choose a post type'),
     title: z.string().trim().min(1, 'Give your post a short title').max(120),
     requirement: z.string().trim().min(1, 'Describe what you need').max(4000),
-    acceptsMale: z.boolean(),
-    acceptsFemale: z.boolean(),
+    gender: z.enum(['Male', 'Female', 'Both'], 'Choose Male, Female or Both'),
+    contactNumber: z
+      .string()
+      .trim()
+      .min(1, 'Enter a contact number')
+      .regex(/^\+?[0-9][0-9\s-]{5,18}$/, 'Enter a valid phone number'),
     minimumNumber: z.number('Enter a number').int('Whole numbers only').min(1, 'At least 1').max(10000, 'Too large'),
     maximumPayment: z.number('Enter an amount').min(0, 'Cannot be negative').max(999_999_999, 'Too large'),
     isFromAnywhere: z.boolean(),
     province: z.string(),
     district: z.string(),
+    localLevel: z.string(),
   })
-  .refine((v) => v.acceptsMale || v.acceptsFemale, { path: ['acceptsMale'], message: 'Select Male, Female or both' })
   .refine((v) => v.isFromAnywhere || v.province, { path: ['province'], message: 'Select a province' })
-  .refine((v) => v.isFromAnywhere || v.district, { path: ['district'], message: 'Select a district' })
 
 type Values = z.infer<typeof schema>
 const fieldNames: (keyof Values)[] = [
   'type',
   'title',
   'requirement',
-  'acceptsMale',
-  'acceptsFemale',
+  'gender',
+  'contactNumber',
   'minimumNumber',
   'maximumPayment',
   'isFromAnywhere',
   'province',
   'district',
+  'localLevel',
 ]
 
 function toDefaults(post?: Post): Partial<Values> {
   if (!post) {
-    return { acceptsMale: false, acceptsFemale: false, isFromAnywhere: false, province: '', district: '', title: '', requirement: '' }
+    return { contactNumber: '', isFromAnywhere: false, province: '', district: '', localLevel: '', title: '', requirement: '' }
   }
   return {
     type: post.type,
     title: post.title,
     requirement: post.requirement,
-    acceptsMale: post.acceptsMale,
-    acceptsFemale: post.acceptsFemale,
+    gender: post.acceptsMale && post.acceptsFemale ? 'Both' : post.acceptsMale ? 'Male' : 'Female',
+    contactNumber: post.contactNumber ?? '',
     minimumNumber: post.minimumNumber,
     maximumPayment: post.maximumPayment,
     isFromAnywhere: post.isFromAnywhere,
     province: post.province ?? '',
     district: post.district ?? '',
+    localLevel: post.localLevel ?? '',
   }
 }
 
@@ -83,8 +94,10 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
   } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: toDefaults(post) })
 
   const selectedType = watch('type')
+  const selectedGender = watch('gender')
   const isFromAnywhere = watch('isFromAnywhere')
   const clearDistrict = useCallback(() => setValue('district', ''), [setValue])
+  const clearLocalLevel = useCallback(() => setValue('localLevel', ''), [setValue])
 
   const preview = useObjectUrl(file)
 
@@ -109,14 +122,16 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
     form.append('type', values.type)
     form.append('title', values.title)
     form.append('requirement', values.requirement)
-    form.append('acceptsMale', String(values.acceptsMale))
-    form.append('acceptsFemale', String(values.acceptsFemale))
+    form.append('acceptsMale', String(values.gender !== 'Female'))
+    form.append('acceptsFemale', String(values.gender !== 'Male'))
+    form.append('contactNumber', values.contactNumber)
     form.append('minimumNumber', String(values.minimumNumber))
     form.append('maximumPayment', String(values.maximumPayment))
     form.append('isFromAnywhere', String(values.isFromAnywhere))
     if (!values.isFromAnywhere) {
       form.append('province', values.province)
-      form.append('district', values.district)
+      if (values.district) form.append('district', values.district)
+      if (values.localLevel) form.append('localLevel', values.localLevel)
     }
     if (file) form.append('media', file)
     else if (removeExisting) form.append('removeMedia', 'true')
@@ -222,11 +237,21 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
         <FormSection title="Who you need">
           <div>
             <p className="mb-2 text-sm font-medium text-slate-700">Gender</p>
-            <div className="flex gap-6">
-              <Checkbox label="Male" {...register('acceptsMale')} />
-              <Checkbox label="Female" {...register('acceptsFemale')} />
+            <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Gender">
+              {genderOptions.map((g) => (
+                <label
+                  key={g.value}
+                  className={cn(
+                    'flex cursor-pointer items-center justify-center rounded-xl px-3 py-2.5 text-sm font-semibold ring-1 transition',
+                    selectedGender === g.value ? 'bg-brand-50/60 text-brand-700 ring-2 ring-brand-500' : 'text-slate-700 ring-slate-200 hover:ring-slate-300',
+                  )}
+                >
+                  <input type="radio" value={g.value} {...register('gender')} className="sr-only" />
+                  {g.label}
+                </label>
+              ))}
             </div>
-            <FieldError message={errors.acceptsMale?.message} />
+            <FieldError message={errors.gender?.message} />
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Minimum number of people" htmlFor="minimumNumber" error={errors.minimumNumber?.message}>
@@ -236,18 +261,26 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
               <Input id="maximumPayment" type="number" inputMode="decimal" min={0} step="1" {...register('maximumPayment', { valueAsNumber: true })} aria-invalid={!!errors.maximumPayment} />
             </Field>
           </div>
+          <Field label="Contact number" htmlFor="contactNumber" error={errors.contactNumber?.message} hint="Phone number people can call about this post.">
+            <Input id="contactNumber" type="tel" inputMode="tel" autoComplete="tel" maxLength={20} placeholder="e.g. 98XXXXXXXX" {...register('contactNumber')} aria-invalid={!!errors.contactNumber} />
+          </Field>
         </FormSection>
 
-        <FormSection title="From where" description="Where should people be located?">
+        <FormSection title="From where" description="Pick a province only, a province and district, or narrow it down to one local level.">
           <Checkbox label="From anywhere in Nepal" {...register('isFromAnywhere')} />
           <div className={cn('transition-opacity', isFromAnywhere && 'pointer-events-none opacity-50')}>
             <LocationFields
               province={register('province')}
               district={register('district')}
+              localLevel={register('localLevel')}
               selectedProvince={watch('province')}
+              selectedDistrict={watch('district')}
               onProvinceChanged={clearDistrict}
+              onDistrictChanged={clearLocalLevel}
+              localLevelOptional
+              districtOptional
               disabled={isFromAnywhere}
-              errors={isFromAnywhere ? undefined : { province: errors.province?.message, district: errors.district?.message }}
+              errors={isFromAnywhere ? undefined : { province: errors.province?.message, district: errors.district?.message, localLevel: errors.localLevel?.message }}
             />
           </div>
         </FormSection>

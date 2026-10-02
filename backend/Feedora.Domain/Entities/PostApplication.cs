@@ -22,6 +22,9 @@ public class PostApplication
     public string? ClaimNote { get; set; }
     public DateTime? ClaimedAt { get; set; }
 
+    /// <summary>Why the company turned down the last claim. Cleared when the applicant claims again.</summary>
+    public string? ClaimDeclineReason { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

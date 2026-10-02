@@ -17,6 +17,10 @@ public class ApplicationsController(IApplicationService applications) : Controll
     public Task<PagedResult<ApplicationDto>> List([FromQuery] ApplicationQuery query, CancellationToken ct) =>
         applications.ListAsync(query, ct);
 
+    /// <summary>Counts per stage (New / Hired / Claimed / Paid / Declined).</summary>
+    [HttpGet("summary")]
+    public Task<ApplicationSummaryDto> Summary(Guid? postId, CancellationToken ct) => applications.SummaryAsync(postId, ct);
+
     [HttpGet("{id:guid}")]
     public Task<ApplicationDto> Get(Guid id, CancellationToken ct) => applications.GetAsync(id, ct);
 
@@ -39,6 +43,13 @@ public class ApplicationsController(IApplicationService applications) : Controll
     public Task<ApplicationDto> Claim(Guid id, ClaimPaymentRequest request, CancellationToken ct) =>
         applications.ClaimAsync(id, request, ct);
 
+    /// <summary>Company turns down the claim with a reason. The applicant can then claim again.</summary>
+    [HttpPost("{id:guid}/claim/decline")]
+    [Authorize(Roles = Roles.Company)]
+    public Task<ApplicationDto> DeclineClaim(Guid id, DeclineClaimRequest request, CancellationToken ct) =>
+        applications.DeclineClaimAsync(id, request, ct);
+
+    /// <summary>Company pays the claimed amount. One payment per job; the job closes.</summary>
     [HttpPost("{id:guid}/payments")]
     [Authorize(Roles = Roles.Company)]
     public Task<ApplicationDto> Pay(Guid id, PayApplicantRequest request, CancellationToken ct) =>

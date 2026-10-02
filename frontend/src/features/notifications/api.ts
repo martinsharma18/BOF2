@@ -5,6 +5,7 @@ import type { AppNotification, PagedResult } from '@/lib/types'
 export const notificationKeys = {
   all: ['notifications'] as const,
   list: ['notifications', 'list'] as const,
+  listOf: (unreadOnly: boolean, pageSize: number) => ['notifications', 'list', { unreadOnly, pageSize }] as const,
   unread: ['notifications', 'unread'] as const,
 }
 
@@ -18,11 +19,11 @@ export function useUnreadCount() {
   })
 }
 
-export function useNotifications() {
+export function useNotifications({ unreadOnly = false, pageSize = 20 }: { unreadOnly?: boolean; pageSize?: number } = {}) {
   return useInfiniteQuery({
-    queryKey: notificationKeys.list,
+    queryKey: notificationKeys.listOf(unreadOnly, pageSize),
     queryFn: async ({ pageParam }) =>
-      (await api.get<PagedResult<AppNotification>>('/notifications', { params: { page: pageParam, pageSize: 20 } })).data,
+      (await api.get<PagedResult<AppNotification>>('/notifications', { params: { page: pageParam, pageSize, unreadOnly } })).data,
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
   })

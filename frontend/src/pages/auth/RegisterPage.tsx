@@ -12,6 +12,7 @@ import { LocationFields } from '@/features/locations/LocationFields'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/cn'
+import { yearsAgo } from '@/lib/format'
 import { applyServerErrors } from '@/lib/formErrors'
 import type { AuthResponse } from '@/lib/types'
 
@@ -36,11 +37,13 @@ const fields = [
   'fullName',
   'companyName',
   'gender',
+  'dateOfBirth',
   'email',
   'phoneNumber',
   'socialMediaLink',
   'province',
   'district',
+  'localLevel',
   'additionalPhoneNumber',
   'password',
   'confirmPassword',
@@ -73,6 +76,8 @@ export function RegisterPage() {
       additionalPhoneNumber: '',
       province: '',
       district: '',
+      localLevel: '',
+      dateOfBirth: '',
       password: '',
       confirmPassword: '',
     },
@@ -82,16 +87,18 @@ export function RegisterPage() {
   const gender = watch('gender')
   const isCompany = accountType === 'Company'
   const clearDistrict = useCallback(() => setValue('district', ''), [setValue])
+  const clearLocalLevel = useCallback(() => setValue('localLevel', ''), [setValue])
 
   const onSubmit = handleSubmit(async (v) => {
     setFormError(null)
-    const common = { fullName: v.fullName, email: v.email, phoneNumber: v.phoneNumber, province: v.province, district: v.district, password: v.password, confirmPassword: v.confirmPassword }
+    const common = { fullName: v.fullName, email: v.email, phoneNumber: v.phoneNumber, province: v.province, district: v.district || null, localLevel: v.localLevel || null, password: v.password, confirmPassword: v.confirmPassword }
     try {
       const { data } = isCompany
         ? await api.post<AuthResponse>('/auth/register/company', { ...common, companyName: v.companyName })
         : await api.post<AuthResponse>('/auth/register/individual', {
             ...common,
             gender: v.gender,
+            dateOfBirth: v.dateOfBirth,
             socialMediaLink: v.socialMediaLink || null,
             additionalPhoneNumber: v.additionalPhoneNumber || null,
           })
@@ -102,7 +109,7 @@ export function RegisterPage() {
     }
   }, (invalid) => {
     // Never fail silently: if the only errors are on fields hidden for this account type, say so.
-    const visible = isCompany ? fields.filter((f) => !['gender', 'socialMediaLink', 'additionalPhoneNumber'].includes(f)) : fields.filter((f) => f !== 'companyName')
+    const visible = isCompany ? fields.filter((f) => !['gender', 'dateOfBirth', 'socialMediaLink', 'additionalPhoneNumber'].includes(f)) : fields.filter((f) => f !== 'companyName')
     const hidden = Object.keys(invalid).filter((k) => !visible.includes(k))
     setFormError(hidden.length && hidden.length === Object.keys(invalid).length ? 'Please check the form and try again.' : null)
   })
@@ -154,9 +161,14 @@ export function RegisterPage() {
               <LocationFields
                 province={register('province')}
                 district={register('district')}
+                localLevel={register('localLevel')}
                 selectedProvince={watch('province')}
+                selectedDistrict={watch('district')}
                 onProvinceChanged={clearDistrict}
-                errors={{ province: errors.province?.message, district: errors.district?.message }}
+                onDistrictChanged={clearLocalLevel}
+                districtOptional
+                localLevelOptional
+                errors={{ province: errors.province?.message, district: errors.district?.message, localLevel: errors.localLevel?.message }}
               />
             </FormSection>
           </div>
@@ -187,6 +199,11 @@ export function RegisterPage() {
                 <FieldError message={errors.gender?.message} />
               </fieldset>
             )}
+            {!isCompany && (
+              <Field label="Date of birth" htmlFor="dateOfBirth" error={errors.dateOfBirth?.message}>
+                <Input id="dateOfBirth" type="date" autoComplete="bday" min={yearsAgo(100)} max={yearsAgo(16)} {...register('dateOfBirth')} aria-invalid={!!errors.dateOfBirth} />
+              </Field>
+            )}
             <Field label="Email" htmlFor="email" error={errors.email?.message}>
               <Input id="email" type="email" autoComplete="email" {...register('email')} aria-invalid={!!errors.email} />
             </Field>
@@ -211,9 +228,14 @@ export function RegisterPage() {
             <LocationFields
               province={register('province')}
               district={register('district')}
+              localLevel={register('localLevel')}
               selectedProvince={watch('province')}
+              selectedDistrict={watch('district')}
               onProvinceChanged={clearDistrict}
-              errors={{ province: errors.province?.message, district: errors.district?.message }}
+              onDistrictChanged={clearLocalLevel}
+              districtOptional
+              localLevelOptional
+              errors={{ province: errors.province?.message, district: errors.district?.message, localLevel: errors.localLevel?.message }}
             />
           </FormSection>
         )}

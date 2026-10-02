@@ -11,6 +11,28 @@ namespace Feedora.Infrastructure.Persistence;
 
 public static class DbSeeder
 {
+    /// <summary>Loads Nepal's 753 local levels into the local_levels table (reloads if the list changed).</summary>
+    private static async Task SeedLocalLevelsAsync(AppDbContext db, ILogger logger)
+    {
+        var expected = NepalLocalLevels.ByDistrict.Sum(d => d.Value.Length);
+        if (await db.LocalLevels.CountAsync() == expected)
+            return;
+
+        var provinceOf = NepalLocations.Provinces
+            .SelectMany(p => p.Value.Select(d => (District: d, Province: p.Key)))
+            .ToDictionary(x => x.District, x => x.Province);
+
+        await db.LocalLevels.ExecuteDeleteAsync();
+        db.LocalLevels.AddRange(NepalLocalLevels.ByDistrict.SelectMany(d => d.Value.Select(name => new LocalLevel
+        {
+            Province = provinceOf[d.Key],
+            District = d.Key,
+            Name = name,
+        })));
+        await db.SaveChangesAsync();
+        logger.LogInformation("Loaded {Count} local levels", expected);
+    }
+
     /// <summary>Applies pending migrations, creates the roles and the first admin (User C) account.</summary>
     public static async Task SeedAsync(IServiceProvider services)
     {
@@ -20,6 +42,7 @@ public static class DbSeeder
 
         var db = provider.GetRequiredService<AppDbContext>();
         await db.Database.MigrateAsync();
+        await SeedLocalLevelsAsync(db, logger);
 
         var roleManager = provider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
         foreach (var role in Roles.All)

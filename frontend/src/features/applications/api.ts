@@ -3,18 +3,38 @@ import { postKeys } from '@/features/posts/api'
 import { walletKeys } from '@/features/wallet/api'
 import { api } from '@/lib/api'
 import type { Application, ApplicationKind, ApplicationMessage, ApplicationStatus, PagedResult } from '@/lib/types'
+import type { ApplicationStage } from './labels'
 
 export const applicationKeys = {
   all: ['applications'] as const,
   list: (params: object) => ['applications', 'list', params] as const,
   detail: (id: string) => ['applications', 'detail', id] as const,
+  summary: (postId?: string) => ['applications', 'summary', postId ?? 'all'] as const,
   messages: (id: string) => ['applications', 'messages', id] as const,
 }
 
 export interface ApplicationParams {
   postId?: string
   status?: ApplicationStatus
+  stage?: ApplicationStage
   page: number
+}
+
+export interface ApplicationSummary {
+  all: number
+  new: number
+  hired: number
+  claimed: number
+  paid: number
+  declined: number
+}
+
+/** Counts per stage, for the tabs and the "needs your action" banner. */
+export function useApplicationSummary(postId?: string) {
+  return useQuery({
+    queryKey: applicationKeys.summary(postId),
+    queryFn: async () => (await api.get<ApplicationSummary>('/applications/summary', { params: { postId } })).data,
+  })
 }
 
 /** Company: received applications. Individual: sent applications. The server decides by account. */
@@ -47,7 +67,10 @@ export function useApply(postId: string) {
   })
 }
 
-/** Replaces an application in every cached list and its detail. */
+/**
+ * Replaces an application in every cached list and its detail right away, then refreshes the
+ * stage counts and lists (the job may have moved to another tab).
+ */
 function useSyncApplication() {
   const queryClient = useQueryClient()
   return (updated: Application) => {
@@ -55,6 +78,8 @@ function useSyncApplication() {
     queryClient.setQueriesData<PagedResult<Application>>({ queryKey: ['applications', 'list'] }, (data) =>
       data ? { ...data, items: data.items.map((a) => (a.id === updated.id ? updated : a)) } : data,
     )
+    void queryClient.invalidateQueries({ queryKey: ['applications', 'summary'] })
+    void queryClient.invalidateQueries({ queryKey: ['applications', 'list'] })
   }
 }
 
@@ -80,15 +105,30 @@ export function useClaimPayment() {
   })
 }
 
+/** The company pays exactly the claimed amount; the job closes. */
 export function usePayApplicant() {
   const sync = useSyncApplication()
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, amount, note }: { id: string; amount: number; note?: string }) =>
-      (await api.post<Application>(`/applications/${id}/payments`, { amount, note })).data,
+    mutationFn: async ({ id, note }: { id: string; note?: string }) =>
+      (await api.post<Application>(`/applications/${id}/payments`, { note })).data,
     onSuccess: (application) => {
       sync(application)
       return queryClient.invalidateQueries({ queryKey: walletKeys.all })
+    },
+  })
+}
+
+/** The company turns down a claim with a reason; the applicant can claim again. */
+export function useDeclineClaim() {
+  const sync = useSyncApplication()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) =>
+      (await api.post<Application>(`/applications/${id}/claim/decline`, { reason })).data,
+    onSuccess: (application) => {
+      sync(application)
+      return queryClient.invalidateQueries({ queryKey: postKeys.all })
     },
   })
 }

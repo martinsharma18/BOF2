@@ -19,10 +19,11 @@ export const reactions: { type: ReactionType; emoji: string; label: string }[] =
 export const reactionMeta = (type: ReactionType) => reactions.find((r) => r.type === type)!
 
 export function genderLabel(post: Pick<Post, 'acceptsMale' | 'acceptsFemale'>) {
-  if (post.acceptsMale && post.acceptsFemale) return 'Male & Female'
+  if (post.acceptsMale && post.acceptsFemale) return 'Both (Male & Female)'
   return post.acceptsMale ? 'Male only' : 'Female only'
 }
 
-export function locationLabel(post: Pick<Post, 'isFromAnywhere' | 'province' | 'district'>) {
-  return post.isFromAnywhere ? 'Anywhere in Nepal' : `${post.district}, ${post.province}`
+export function locationLabel(post: Pick<Post, 'isFromAnywhere' | 'province' | 'district' | 'localLevel'>) {
+  if (post.isFromAnywhere) return 'Anywhere in Nepal'
+  return [post.localLevel, post.district, post.province].filter(Boolean).join(', ')
 }

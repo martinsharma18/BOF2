@@ -9,7 +9,8 @@ public record RegisterCompanyRequest(
     string Email,
     string PhoneNumber,
     string Province,
-    string District,
+    string? District,
+    string? LocalLevel,
     string Password,
     string ConfirmPassword);
 
@@ -17,11 +18,13 @@ public record RegisterCompanyRequest(
 public record RegisterIndividualRequest(
     string FullName,
     Gender Gender,
+    DateOnly? DateOfBirth,
     string Email,
     string PhoneNumber,
     string? SocialMediaLink,
     string Province,
-    string District,
+    string? District,
+    string? LocalLevel,
     string? AdditionalPhoneNumber,
     string Password,
     string ConfirmPassword);

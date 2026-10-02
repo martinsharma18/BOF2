@@ -1,23 +1,24 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ClipboardList, X } from 'lucide-react'
+import { ArrowRight, Banknote, ClipboardList, Hand, UserPlus, X } from 'lucide-react'
 import { Alert, Button, ButtonLink, Card, EmptyState, PageHeader, Skeleton } from '@/components/ui'
 import { WithRail } from '@/components/layout/AppShell'
-import { useApplication, useApplications } from '@/features/applications/api'
+import { useApplication, useApplications, useApplicationSummary, type ApplicationSummary } from '@/features/applications/api'
 import { ApplicationCard } from '@/features/applications/ApplicationCard'
+import { stageTabs, type ApplicationStage } from '@/features/applications/labels'
 import { useAuth } from '@/features/auth/AuthContext'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/cn'
-import type { ApplicationStatus } from '@/lib/types'
 import { FeedRail } from './FeedRail'
 
-const statusTabs: { value: ApplicationStatus | undefined; label: string }[] = [
-  { value: undefined, label: 'All' },
-  { value: 'Pending', label: 'Waiting' },
-  { value: 'Accepted', label: 'Accepted' },
-  { value: 'Rejected', label: 'Declined' },
-]
+const countKey: Record<ApplicationStage, keyof ApplicationSummary> = {
+  New: 'new',
+  Hired: 'hired',
+  Claimed: 'claimed',
+  Paid: 'paid',
+  Declined: 'declined',
+}
 
 export function ApplicationsPage() {
   const { canPost } = useAuth()
@@ -27,10 +28,15 @@ export function ApplicationsPage() {
   const [params, setParams] = useSearchParams()
   const postId = params.get('post') ?? undefined
   const focusId = params.get('id')
-  const [status, setStatus] = useState<ApplicationStatus>()
+  const [stage, setStage] = useState<ApplicationStage>()
   const [page, setPage] = useState(1)
 
-  const list = useApplications({ postId, status, page })
+  const list = useApplications({ postId, stage, page })
+  const summary = useApplicationSummary(postId).data
+  const showStage = (next?: ApplicationStage) => {
+    setStage(next)
+    setPage(1)
+  }
   const focused = useApplication(focusId)
   const data = list.data
   const filteredPostTitle = postId ? data?.items[0]?.postTitle : undefined
@@ -48,8 +54,8 @@ export function ApplicationsPage() {
         title={title}
         description={
           canPost
-            ? 'People who applied to your posts. Review their profile, message them, accept and pay.'
-            : 'Track the posts you applied to and chat with companies.'
+            ? 'Hire people who applied, then pay them when they claim. One application = one job = one payment.'
+            : 'Every job you applied to, where it stands, and what to do next.'
         }
       />
 
@@ -65,26 +71,34 @@ export function ApplicationsPage() {
         </div>
       )}
 
+      {summary && <ActionBar summary={summary} isCompany={canPost} onShow={showStage} />}
+
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div role="tablist" aria-label="Filter by status" className="flex gap-1 rounded-xl bg-slate-200/60 p-1">
-          {statusTabs.map((t) => (
-            <button
-              key={t.label}
-              type="button"
-              role="tab"
-              aria-selected={status === t.value}
-              onClick={() => {
-                setStatus(t.value)
-                setPage(1)
-              }}
-              className={cn(
-                'rounded-lg px-3 py-1.5 text-sm font-semibold transition',
-                status === t.value ? 'bg-white text-slate-900 shadow-card' : 'text-slate-600 hover:text-slate-900',
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
+        <div role="tablist" aria-label="Filter by stage" className="flex max-w-full gap-1 overflow-x-auto rounded-xl bg-slate-200/60 p-1">
+          {stageTabs.map((t) => {
+            const count = summary ? summary[t.stage ? countKey[t.stage] : 'all'] : undefined
+            const selected = stage === t.stage
+            return (
+              <button
+                key={t.company}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                onClick={() => showStage(t.stage)}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold whitespace-nowrap transition',
+                  selected ? 'bg-white text-slate-900 shadow-card' : 'text-slate-600 hover:text-slate-900',
+                )}
+              >
+                {canPost ? t.company : t.individual}
+                {count !== undefined && count > 0 && (
+                  <span className={cn('rounded-full px-1.5 text-[11px] tabular-nums', selected ? 'bg-brand-100 text-brand-700' : 'bg-slate-300/60 text-slate-600')}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
         {postId && (
           <button
@@ -114,7 +128,7 @@ export function ApplicationsPage() {
         <Card>
           <EmptyState
             icon={<ClipboardList className="size-6" />}
-            title={canPost ? 'No applications yet' : "You haven't applied to anything yet"}
+            title={stage ? 'Nothing here right now' : canPost ? 'No applications yet' : "You haven't applied to anything yet"}
             description={
               canPost ? 'When people apply to your posts, they show up here and you get a notification.' : (
                 <>
@@ -148,5 +162,36 @@ export function ApplicationsPage() {
         </div>
       )}
     </WithRail>
+  )
+}
+
+/** "Needs your action" shortcuts: the stages where this person has something to do. */
+function ActionBar({ summary, isCompany, onShow }: { summary: ApplicationSummary; isCompany: boolean; onShow: (stage: ApplicationStage) => void }) {
+  const items = isCompany
+    ? [
+        summary.claimed > 0 && { stage: 'Claimed' as const, icon: <Banknote className="size-4" />, text: `${summary.claimed} waiting for payment`, tone: 'bg-amber-50 text-amber-900 ring-amber-200' },
+        summary.new > 0 && { stage: 'New' as const, icon: <UserPlus className="size-4" />, text: `${summary.new} new to review`, tone: 'bg-brand-50 text-brand-900 ring-brand-200' },
+      ]
+    : [
+        summary.hired > 0 && { stage: 'Hired' as const, icon: <Hand className="size-4" />, text: `${summary.hired} hired: claim when the work is done`, tone: 'bg-emerald-50 text-emerald-900 ring-emerald-200' },
+      ]
+  const shown = items.filter(Boolean) as Exclude<(typeof items)[number], false>[]
+  if (!shown.length) return null
+
+  return (
+    <div className="mb-4 flex flex-wrap gap-2" aria-label="Needs your action">
+      {shown.map((i) => (
+        <button
+          key={i.stage}
+          type="button"
+          onClick={() => onShow(i.stage)}
+          className={cn('inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 transition hover:brightness-95', i.tone)}
+        >
+          {i.icon}
+          {i.text}
+          <ArrowRight className="size-3.5" />
+        </button>
+      ))}
+    </div>
   )
 }

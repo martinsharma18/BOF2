@@ -10,7 +10,11 @@ public record UpdateApplicationStatusRequest(ApplicationStatus Status);
 
 public record SendMessageRequest(string Content);
 
-public record PayApplicantRequest(decimal Amount, string? Note);
+/// <summary>The company pays exactly the claimed amount. The note is shown in the applicant's wallet.</summary>
+public record PayApplicantRequest(string? Note);
+
+/// <summary>The company turns down a claim (wrong amount, work not finished…). The applicant can claim again.</summary>
+public record DeclineClaimRequest(string Reason);
 
 /// <summary>An accepted applicant asks the company to pay them.</summary>
 public record ClaimPaymentRequest(decimal Amount, string? Note);
@@ -23,6 +27,8 @@ public record ApplicantDto(
     Gender? Gender,
     string? Province,
     string? District,
+    string? LocalLevel,
+    DateOnly? DateOfBirth,
     string? Email,
     string? PhoneNumber,
     string? AdditionalPhoneNumber,
@@ -46,15 +52,30 @@ public record ApplicationDto(
     decimal PaidAmount,
     decimal? ClaimedAmount,
     string? ClaimNote,
-    DateTime? ClaimedAt);
+    DateTime? ClaimedAt,
+    string? ClaimDeclineReason);
 
 public record ApplicationMessageDto(Guid Id, Guid ApplicationId, string Content, DateTime CreatedAt, AuthorDto Sender);
+
+/// <summary>Where a job really is. "Hired" splits into Hired (working) and Claimed (waiting to be paid).</summary>
+public enum ApplicationStage
+{
+    New = 1,
+    Hired = 2,
+    Claimed = 3,
+    Paid = 4,
+    Declined = 5
+}
 
 public class ApplicationQuery : PageQuery
 {
     public Guid? PostId { get; set; }
     public ApplicationStatus? Status { get; set; }
+    public ApplicationStage? Stage { get; set; }
 }
+
+/// <summary>How many applications are in each stage, for the tabs and the "needs your action" banner.</summary>
+public record ApplicationSummaryDto(int All, int New, int Hired, int Claimed, int Paid, int Declined);
 
 public class ApplyValidator : AbstractValidator<ApplyRequest>
 {
@@ -87,8 +108,15 @@ public class PayApplicantValidator : AbstractValidator<PayApplicantRequest>
 {
     public PayApplicantValidator()
     {
-        RuleFor(x => x.Amount).GreaterThan(0).LessThan(10_000_000);
         RuleFor(x => x.Note).MaximumLength(200);
+    }
+}
+
+public class DeclineClaimValidator : AbstractValidator<DeclineClaimRequest>
+{
+    public DeclineClaimValidator()
+    {
+        RuleFor(x => x.Reason).NotEmpty().WithMessage("Tell them why, so they can fix the claim.").MaximumLength(300);
     }
 }
 
@@ -110,6 +138,9 @@ public interface IApplicationService
     Task<PagedResult<ApplicationDto>> ListAsync(ApplicationQuery query, CancellationToken ct = default);
 
     Task<ApplicationDto> GetAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>Counts per stage for the signed-in user's applications (optionally one post).</summary>
+    Task<ApplicationSummaryDto> SummaryAsync(Guid? postId, CancellationToken ct = default);
     Task<ApplicationDto> UpdateStatusAsync(Guid id, UpdateApplicationStatusRequest request, CancellationToken ct = default);
     Task<IReadOnlyList<ApplicationMessageDto>> ListMessagesAsync(Guid id, CancellationToken ct = default);
     Task<ApplicationMessageDto> SendMessageAsync(Guid id, SendMessageRequest request, CancellationToken ct = default);
@@ -117,6 +148,9 @@ public interface IApplicationService
     /// <summary>Accepted applicant claims payment for their work. Notifies the company.</summary>
     Task<ApplicationDto> ClaimAsync(Guid id, ClaimPaymentRequest request, CancellationToken ct = default);
 
-    /// <summary>Company releases money to an accepted applicant; it lands in their wallet.</summary>
+    /// <summary>Company turns down the claim with a reason; the applicant can claim again.</summary>
+    Task<ApplicationDto> DeclineClaimAsync(Guid id, DeclineClaimRequest request, CancellationToken ct = default);
+
+    /// <summary>Company pays the claimed amount; it lands in the applicant's wallet and the job closes.</summary>
     Task<ApplicationDto> PayAsync(Guid id, PayApplicantRequest request, CancellationToken ct = default);
 }

@@ -1,13 +1,14 @@
 import { useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CheckCircle2, ClipboardList, Hand, ImageIcon, Link2, MapPin, MessageCircle, MoreHorizontal, Pencil, Send, Trash2, Users, VenusAndMars, Wallet } from 'lucide-react'
-import { Avatar, Badge, Button, ButtonLink, Card, ConfirmDialog, Dialog, Menu, MenuItem, MenuSeparator, Skeleton, Textarea, toast } from '@/components/ui'
+import { CheckCircle2, ClipboardList, Download, Hand, ImageIcon, Link2, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Send, Trash2, Users, VenusAndMars, Wallet } from 'lucide-react'
+import { Avatar, Badge, Button, ButtonLink, Card, ConfirmDialog, Dialog, Menu, MenuItem, MenuSeparator, Skeleton, Spinner, Textarea, toast } from '@/components/ui'
 import { useApply } from '@/features/applications/api'
 import { ClaimPaymentDialog } from '@/features/applications/ClaimPaymentDialog'
-import { applicationStatusMeta } from '@/features/applications/labels'
+import { JobProgress } from '@/features/applications/JobProgress'
 import { useAuth } from '@/features/auth/AuthContext'
 import { getErrorMessage, getProblem } from '@/lib/api'
 import { cn } from '@/lib/cn'
+import { downloadFile, toFileName } from '@/lib/download'
 import { formatMoney, pluralize, timeAgo } from '@/lib/format'
 import type { Post } from '@/lib/types'
 import { useDeletePost } from './api'
@@ -48,6 +49,19 @@ export function PostCard({
       toast.success('Link copied')
     } catch {
       toast.error('Could not copy the link')
+    }
+  }
+
+  const [downloading, setDownloading] = useState(false)
+  const downloadPhoto = async () => {
+    if (!post.mediaUrl) return
+    setDownloading(true)
+    try {
+      await downloadFile(post.mediaUrl, toFileName(post.title))
+    } catch {
+      toast.error('Could not download the photo')
+    } finally {
+      setDownloading(false)
     }
   }
 
@@ -109,6 +123,11 @@ export function PostCard({
           <MenuItem icon={<Link2 className="size-4" />} onClick={copyLink}>
             Copy link
           </MenuItem>
+          {post.mediaUrl && (
+            <MenuItem icon={<Download className="size-4" />} onClick={downloadPhoto}>
+              Download photo
+            </MenuItem>
+          )}
           {isOwner && (
             <MenuItem icon={<Pencil className="size-4" />} onClick={() => navigate(`${postUrl}/edit`)}>
               Edit post
@@ -147,8 +166,19 @@ export function PostCard({
       {/* Photo on the left, the four decision criteria on the right. */}
       <div className="mx-4 mt-4 grid gap-3 sm:mx-5 sm:grid-cols-[minmax(0,1.2fr)_minmax(220px,0.8fr)]">
         {post.mediaUrl ? (
-          <div className="overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200">
+          <div className="group relative overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200">
             <img src={post.mediaUrl} alt="" loading="lazy" className="h-full max-h-72 min-h-40 w-full object-cover" />
+            <button
+              type="button"
+              onClick={downloadPhoto}
+              disabled={downloading}
+              aria-label="Download photo"
+              title="Download photo"
+              className="absolute right-2 bottom-2 inline-flex h-9 items-center gap-1.5 rounded-lg bg-slate-900/70 px-3 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-slate-900/85 disabled:opacity-60"
+            >
+              {downloading ? <Spinner className="size-4" /> : <Download className="size-4" />}
+              <span className="hidden sm:inline">Download</span>
+            </button>
           </div>
         ) : (
           <div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-brand-50 to-accent-50 text-sm font-medium text-brand-700">
@@ -161,6 +191,9 @@ export function PostCard({
           <Detail icon={<Wallet className="size-4" />} label="Maximum payment" value={formatMoney(post.maximumPayment)} highlight />
           <Detail icon={<VenusAndMars className="size-4" />} label="Gender" value={genderLabel(post)} />
           <Detail icon={<MapPin className="size-4" />} label="Area" value={locationLabel(post)} />
+          {post.contactNumber && (
+            <Detail icon={<Phone className="size-4" />} label="Contact" value={post.contactNumber} href={`tel:${post.contactNumber.replace(/[\s-]/g, '')}`} />
+          )}
         </dl>
       </div>
 
@@ -221,72 +254,117 @@ export function PostCard({
       <Dialog
         open={applyOpen}
         onClose={() => setApplyOpen(false)}
-        title="Apply for this opportunity"
-        description={<>Your message and <Link className="font-semibold text-brand-600 hover:underline" to={`/u/${user?.id}`}>profile</Link> will be shared with {post.author.displayName}.</>}
+        title={`Apply: ${post.title}`}
+        description={<>Your message and <Link className="font-semibold text-brand-600 hover:underline" to={`/u/${user?.id}`}>profile</Link> (with your phone number) go to {post.author.displayName}.</>}
         footer={<><Button variant="secondary" onClick={() => setApplyOpen(false)}>Cancel</Button><Button icon={<Send className="size-4" />} loading={apply.isPending} disabled={!applicationMessage.trim()} onClick={submitApplication}>Send application</Button></>}
       >
-        <label htmlFor={`application-${post.id}`} className="mb-2 block text-sm font-medium text-slate-700">A short message for the company</label>
-        <Textarea id={`application-${post.id}`} rows={4} maxLength={1500} placeholder="Introduce yourself and tell them why you are interested…" value={applicationMessage} onChange={(event) => setApplicationMessage(event.target.value)} />
+        <div className="space-y-4">
+          {/* The job at a glance, so people know what they're applying for. */}
+          <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-xl bg-slate-200/70 text-center ring-1 ring-slate-200/70">
+            {[
+              { label: 'Pays up to', value: post.maximumPayment > 0 ? formatMoney(post.maximumPayment) : 'Not set' },
+              { label: 'People needed', value: `${post.minimumNumber}+` },
+              { label: 'Area', value: locationLabel(post) },
+            ].map((d) => (
+              <div key={d.label} className="bg-slate-50 px-2 py-2">
+                <dt className="text-[10px] font-semibold tracking-wide text-slate-500 uppercase">{d.label}</dt>
+                <dd className="truncate text-sm font-semibold text-slate-900" title={d.value}>{d.value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <div>
+            <label htmlFor={`application-${post.id}`} className="mb-2 block text-sm font-medium text-slate-700">A short message for the company</label>
+            <Textarea id={`application-${post.id}`} rows={4} maxLength={1500} placeholder="Introduce yourself: your experience, when you can start, and why you're a good fit…" value={applicationMessage} onChange={(event) => setApplicationMessage(event.target.value)} />
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-slate-500">Quick start:</span>
+              {['I can start right away.', 'I have done this kind of work before.', 'I live nearby and can travel easily.'].map((line) => (
+                <button
+                  key={line}
+                  type="button"
+                  onClick={() => setApplicationMessage((m) => (m.includes(line) ? m : `${m.trim()} ${line}`.trim()))}
+                  className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-brand-50 hover:text-brand-700"
+                >
+                  + {line}
+                </button>
+              ))}
+              <span className="ml-auto text-xs text-slate-400 tabular-nums">{applicationMessage.length}/1500</span>
+            </div>
+          </div>
+
+          <p className="rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-900">
+            <b>What happens next:</b> the company reviews and hires → you do the work → you claim your payment → they pay into your wallet.
+          </p>
+        </div>
       </Dialog>
     </Card>
   )
 }
 
 /**
- * Apply and Claim for individuals. Apply sends the application; Claim unlocks once the company
- * accepts you and asks them to pay (the money then lands in your wallet).
+ * Apply and Claim for individuals. One application is one job with one payment:
+ * Apply → the company hires you → Claim your payment (once) → the company pays → done.
  */
 function ApplicantActions({ post, onApply }: { post: Post; onApply: () => void }) {
   const [claimOpen, setClaimOpen] = useState(false)
   const mine = post.myApplication
-  const accepted = mine?.status === 'Accepted'
-  const claimOpenAmount = mine?.claimedAmount ?? null
-  const canClaim = accepted && claimOpenAmount === null
+  const claimed = mine?.claimedAmount != null
+  const canClaim = mine?.status === 'Accepted' && !claimed
 
-  let hint: ReactNode
-  if (!mine) hint = 'Apply first. Claim unlocks when the company accepts you.'
-  else if (mine.status === 'Pending') hint = 'Application sent. Claim unlocks when the company accepts you.'
-  else if (mine.status === 'Rejected') hint = 'The company declined this application.'
-  else if (claimOpenAmount !== null) hint = `Claim of ${formatMoney(claimOpenAmount)} sent. Waiting for the company to pay.`
-  else if (mine.paidAmount > 0) hint = `${formatMoney(mine.paidAmount)} received in your wallet. Claim again for more work.`
-  else hint = 'You’re accepted! Claim your payment when the work is done.'
+  // One plain sentence telling the person exactly where they are and what happens next.
+  let hint: { text: string; tone: 'slate' | 'brand' | 'amber' | 'green' | 'red' }
+  if (!mine) hint = { text: 'Step 1: apply. Claim unlocks after the company hires you.', tone: 'slate' }
+  else if (mine.status === 'Pending') hint = { text: 'Applied. Waiting for the company to hire you.', tone: 'amber' }
+  else if (mine.status === 'Rejected') hint = { text: 'The company chose someone else for this job.', tone: 'red' }
+  else if (mine.status === 'Completed') hint = { text: `Paid ${formatMoney(mine.paidAmount)}. The money is in your wallet.`, tone: 'green' }
+  else if (claimed) hint = { text: `You claimed ${formatMoney(mine.claimedAmount!)}. Waiting for the company to pay.`, tone: 'amber' }
+  else if (mine.claimDeclineReason) hint = { text: `Claim declined: “${mine.claimDeclineReason}” Fix it and claim again.`, tone: 'red' }
+  else hint = { text: 'You’re hired! When the work is done, tap Claim to get paid.', tone: 'brand' }
+
+  const hintColors = {
+    slate: 'bg-slate-50 text-slate-600 ring-slate-200',
+    brand: 'bg-brand-50 text-brand-800 ring-brand-200',
+    amber: 'bg-amber-50 text-amber-800 ring-amber-200',
+    green: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+    red: 'bg-red-50 text-red-700 ring-red-200',
+  }
 
   return (
-    <div className="mx-4 mt-3 sm:mx-5">
+    <div className="mx-4 mt-4 sm:mx-5">
       <div className="flex gap-2">
         <Button
           className="flex-1"
           variant={mine ? 'secondary' : 'primary'}
-          icon={mine ? <CheckCircle2 className="size-4" /> : <Send className="size-4" />}
+          icon={mine ? <CheckCircle2 className="size-4 text-emerald-600" /> : <Send className="size-4" />}
           disabled={!!mine}
           onClick={onApply}
         >
           {mine ? 'Applied' : 'Apply'}
         </Button>
         <Button
-          variant="accent"
+          variant={canClaim ? 'accent' : 'secondary'}
           className="flex-1"
-          icon={<Hand className="size-4" />}
+          icon={mine?.status === 'Completed' || claimed ? <CheckCircle2 className="size-4 text-emerald-600" /> : <Hand className="size-4" />}
           disabled={!canClaim}
-          title={canClaim ? undefined : typeof hint === 'string' ? hint : undefined}
           onClick={() => setClaimOpen(true)}
         >
-          {claimOpenAmount !== null ? 'Claimed' : 'Claim'}
+          {mine?.status === 'Completed' ? 'Paid' : claimed ? 'Claimed' : mine?.claimDeclineReason ? 'Claim again' : 'Claim payment'}
         </Button>
       </div>
-      <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-        {mine && (
-          <Link to={`/applications?id=${mine.id}`} className="hover:opacity-80">
-            <Badge tone={applicationStatusMeta[mine.status].tone}>{applicationStatusMeta[mine.status].label}</Badge>
-          </Link>
-        )}
-        <span>{hint}</span>
-      </p>
-      {mine && accepted && (
+
+      {mine && mine.status !== 'Rejected' && (
+        <Link to={`/applications?id=${mine.id}`} className="mt-3 block rounded-xl px-1 py-1 hover:bg-slate-50" aria-label="Open this application">
+          <JobProgress status={mine.status} claimed={claimed} />
+        </Link>
+      )}
+      <p className={cn('mt-2 rounded-lg px-3 py-2 text-xs font-medium ring-1', hintColors[hint.tone])}>{hint.text}</p>
+
+      {mine && canClaim && (
         <ClaimPaymentDialog
           applicationId={mine.id}
           companyName={post.author.displayName}
-          suggestedAmount={Math.max(post.maximumPayment - mine.paidAmount, 0)}
+          maxAmount={post.maximumPayment}
+          declineReason={mine.claimDeclineReason}
           open={claimOpen}
           onClose={() => setClaimOpen(false)}
         />
@@ -295,7 +373,7 @@ function ApplicantActions({ post, onApply }: { post: Post; onApply: () => void }
   )
 }
 
-function Detail({ icon, label, value, highlight }: { icon: ReactNode; label: string; value: string; highlight?: boolean }) {
+function Detail({ icon, label, value, highlight, href }: { icon: ReactNode; label: string; value: string; highlight?: boolean; href?: string }) {
   return (
     <div className="flex items-start gap-2.5 bg-slate-50 px-3 py-2.5">
       <span className={cn('mt-0.5', highlight ? 'text-accent-500' : 'text-brand-500')} aria-hidden>
@@ -304,7 +382,13 @@ function Detail({ icon, label, value, highlight }: { icon: ReactNode; label: str
       <div className="min-w-0">
         <dt className="text-[11px] font-medium tracking-wide text-slate-500 uppercase">{label}</dt>
         <dd className={cn('truncate text-sm font-semibold', highlight ? 'text-accent-700' : 'text-slate-900')} title={value}>
-          {value}
+          {href ? (
+            <a href={href} className="text-brand-700 hover:underline">
+              {value}
+            </a>
+          ) : (
+            value
+          )}
         </dd>
       </div>
     </div>

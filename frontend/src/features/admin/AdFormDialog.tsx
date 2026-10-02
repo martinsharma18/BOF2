@@ -1,10 +1,12 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ImagePlus } from 'lucide-react'
 import { Alert, Button, Checkbox, Dialog, Field, FieldError, Input, Select, Textarea, toast } from '@/components/ui'
+import { adFormats, fitsFormat } from '@/features/ads/formats'
 import { optionalUrl } from '@/features/auth/schemas'
+import { cn } from '@/lib/cn'
 import { useObjectUrl } from '@/hooks/useObjectUrl'
 import { applyServerErrors } from '@/lib/formErrors'
 import type { Ad } from '@/lib/types'
@@ -39,6 +41,7 @@ export function AdFormDialog({ ad, onClose }: { ad?: Ad; onClose: () => void }) 
     register,
     handleSubmit,
     setError,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<Values>({
     resolver: zodResolver(schema),
@@ -78,6 +81,13 @@ export function AdFormDialog({ ad, onClose }: { ad?: Ad; onClose: () => void }) 
   })
 
   const image = preview ?? ad?.imageUrl
+  const placement = watch('placement')
+  const format = adFormats[placement]
+
+  // Measure the picked image so we can warn before it gets cropped.
+  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null)
+  useEffect(() => setNatural(null), [image])
+  const misfit = natural && !fitsFormat(placement, natural.w, natural.h)
 
   return (
     <Dialog
@@ -104,10 +114,19 @@ export function AdFormDialog({ ad, onClose }: { ad?: Ad; onClose: () => void }) 
           <button
             type="button"
             onClick={() => input.current?.click()}
-            className="flex aspect-[3/1] w-full items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 hover:border-brand-300"
+            className={cn(
+              'mx-auto flex w-full items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 hover:border-brand-300',
+              format.aspectClass,
+              placement === 'Sidebar' && 'max-w-64',
+            )}
           >
             {image ? (
-              <img src={image} alt="" className="size-full object-cover" />
+              <img
+                src={image}
+                alt=""
+                className="size-full object-cover"
+                onLoad={(e) => setNatural({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
+              />
             ) : (
               <span className="flex flex-col items-center gap-1 text-sm font-semibold text-slate-500">
                 <ImagePlus className="size-6 text-brand-500" /> Upload ad image
@@ -129,6 +148,14 @@ export function AdFormDialog({ ad, onClose }: { ad?: Ad; onClose: () => void }) 
               setFile(picked)
             }}
           />
+          <p className="mt-2 text-center text-xs text-slate-500">
+            Best size for this space: <b>{format.size}</b>. The preview shows exactly how it will look.
+          </p>
+          {misfit && (
+            <p className="mt-1 text-center text-xs font-medium text-amber-700">
+              This image is {natural.w} × {natural.h} px, a different shape, so its edges will be cropped. Use {format.size} for a perfect fit.
+            </p>
+          )}
           <FieldError message={imageError ?? errors.root?.message} />
         </div>
 
@@ -138,8 +165,8 @@ export function AdFormDialog({ ad, onClose }: { ad?: Ad; onClose: () => void }) 
           </Field>
           <Field label="Placement" htmlFor="ad-placement">
             <Select id="ad-placement" {...register('placement')}>
-              <option value="Sidebar">Sidebar (tall)</option>
-              <option value="Banner">Banner (between posts)</option>
+              <option value="Sidebar">{adFormats.Sidebar.label}</option>
+              <option value="Banner">{adFormats.Banner.label}</option>
             </Select>
           </Field>
         </div>

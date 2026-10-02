@@ -16,10 +16,14 @@ public class Post
     public int MinimumNumber { get; set; }
     public decimal MaximumPayment { get; set; }
 
+    /// <summary>Phone number people can call about this post.</summary>
+    public string? ContactNumber { get; set; }
+
     /// <summary>When true, Province/District are ignored ("From Anywhere").</summary>
     public bool IsFromAnywhere { get; set; }
     public string? Province { get; set; }
     public string? District { get; set; }
+    public string? LocalLevel { get; set; }
 
     public string Requirement { get; set; } = string.Empty;
 

@@ -43,8 +43,8 @@ export function useAdminWithdrawals(params: { status?: WithdrawalStatus; page: n
 export function useProcessWithdrawal() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, paid, note }: { id: string; paid: boolean; note?: string }) =>
-      (await api.put<Withdrawal>(`/admin/withdrawals/${id}`, { paid, note })).data,
+    mutationFn: async ({ id, status, note }: { id: string; status: WithdrawalStatus; note?: string }) =>
+      (await api.put<Withdrawal>(`/admin/withdrawals/${id}`, { status, note })).data,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] })
       return queryClient.invalidateQueries({ queryKey: walletKeys.all })

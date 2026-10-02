@@ -81,7 +81,7 @@ public class WalletService(
             var adminIds = await db.Users.Where(u => u.AccountType == AccountType.Admin && !u.IsDisabled).Select(u => u.Id).ToListAsync(ct);
             foreach (var adminId in adminIds)
                 db.Notify(adminId, NotificationType.WithdrawalRequested,
-                    $"{name} requested a withdrawal of Rs. {amount:N0}", $"{entity.BankName} · {entity.AccountName}", "/admin/withdrawals");
+                    $"{name} requested a withdrawal of Rs. {amount:N0}", $"{entity.BankName} · {entity.AccountName}", "/admin/withdrawals", actorId: userId);
 
             await db.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
@@ -115,25 +115,47 @@ public class WalletService(
         await processValidator.ValidateAndThrowAsync(request, ct);
         var withdrawal = await db.Withdrawals.FirstOrDefaultAsync(w => w.Id == id, ct)
                          ?? throw new NotFoundException("Withdrawal not found.");
-        if (withdrawal.Status != WithdrawalStatus.Pending)
-            throw Error("This request has already been processed.");
+        if (withdrawal.Status == request.Status)
+            throw Error($"This request is already {Label(request.Status)}.");
 
-        withdrawal.Status = request.Paid ? WithdrawalStatus.Paid : WithdrawalStatus.Rejected;
+        // A rejected request gave its money back to the wallet. Re-opening it takes the money again,
+        // so the user must still have it.
+        if (withdrawal.Status == WithdrawalStatus.Rejected)
+        {
+            var earned = await db.Payments.Where(p => p.RecipientId == withdrawal.UserId).SumAsync(p => (decimal?)p.Amount, ct) ?? 0;
+            var spent = await db.Withdrawals
+                .Where(w => w.UserId == withdrawal.UserId && w.Id != withdrawal.Id && w.Status != WithdrawalStatus.Rejected)
+                .SumAsync(w => (decimal?)w.Amount, ct) ?? 0;
+            if (withdrawal.Amount > earned - spent)
+                throw Error($"The user's wallet only has Rs. {earned - spent:N0} now, so this request can't be re-opened.");
+        }
+
+        withdrawal.Status = request.Status;
         withdrawal.AdminNote = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
-        withdrawal.ProcessedAt = DateTime.UtcNow;
+        withdrawal.ProcessedAt = request.Status == WithdrawalStatus.Pending ? null : DateTime.UtcNow;
 
-        db.Notify(withdrawal.UserId,
-            request.Paid ? NotificationType.WithdrawalPaid : NotificationType.WithdrawalRejected,
-            request.Paid
-                ? $"Rs. {withdrawal.Amount:N0} has been sent to your account"
-                : $"Your withdrawal of Rs. {withdrawal.Amount:N0} was rejected",
+        var (type, title) = request.Status switch
+        {
+            WithdrawalStatus.Paid => (NotificationType.WithdrawalPaid, $"Done: Rs. {withdrawal.Amount:N0} has been sent to your account"),
+            WithdrawalStatus.Rejected => (NotificationType.WithdrawalRejected, $"Your withdrawal of Rs. {withdrawal.Amount:N0} was rejected"),
+            _ => (NotificationType.WithdrawalRequested, $"Your withdrawal of Rs. {withdrawal.Amount:N0} is pending again"),
+        };
+        db.Notify(withdrawal.UserId, type, title,
             withdrawal.AdminNote ?? $"{withdrawal.BankName} · {withdrawal.AccountNumber}",
-            "/wallet");
+            "/wallet",
+            actorId: currentUser.UserId);
 
         await db.SaveChangesAsync(ct);
         var people = await db.LoadAuthorsAsync([withdrawal.UserId], ct);
         return ToDto(withdrawal, people[withdrawal.UserId]);
     }
+
+    private static string Label(WithdrawalStatus status) => status switch
+    {
+        WithdrawalStatus.Paid => "done",
+        WithdrawalStatus.Rejected => "rejected",
+        _ => "pending",
+    };
 
     private static WithdrawalDto ToDto(WithdrawalRequest w, AuthorDto user) =>
         new(w.Id, w.Amount, w.BankName, w.AccountName, w.AccountNumber, w.Status, w.AdminNote, w.CreatedAt, w.ProcessedAt, user);

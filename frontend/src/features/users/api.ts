@@ -26,11 +26,14 @@ export interface UpdateProfilePayload {
   fullName: string
   companyName: string | null
   gender: Gender | null
+  /** YYYY-MM-DD */
+  dateOfBirth: string | null
   phoneNumber: string
   additionalPhoneNumber: string | null
   socialMediaLink: string | null
   province: string | null
   district: string | null
+  localLevel: string | null
   bio: string | null
 }
 

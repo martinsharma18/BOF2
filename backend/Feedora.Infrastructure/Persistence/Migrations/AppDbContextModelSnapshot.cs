@@ -243,10 +243,14 @@ namespace Feedora.Infrastructure.Persistence.Migrations
                         .HasColumnName("company_name");
 
                     b.Property<string>("District")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("district");
+
+                    b.Property<string>("LocalLevel")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("local_level");
 
                     b.Property<string>("Province")
                         .IsRequired()
@@ -297,6 +301,54 @@ namespace Feedora.Infrastructure.Persistence.Migrations
                     b.ToTable("feedbacks", (string)null);
                 });
 
+            modelBuilder.Entity("Feedora.Domain.Entities.InboxItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("InvitationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("invitation_id");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_read");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid?>("VacancyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("vacancy_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_inbox_items");
+
+                    b.HasIndex("InvitationId")
+                        .HasDatabaseName("ix_inbox_items_invitation_id");
+
+                    b.HasIndex("VacancyId")
+                        .HasDatabaseName("ix_inbox_items_vacancy_id");
+
+                    b.HasIndex("UserId", "IsRead", "CreatedAt")
+                        .HasDatabaseName("ix_inbox_items_user_id_is_read_created_at");
+
+                    b.ToTable("inbox_items", (string)null);
+                });
+
             modelBuilder.Entity("Feedora.Domain.Entities.IndividualProfile", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -308,8 +360,11 @@ namespace Feedora.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("additional_phone_number");
 
+                    b.Property<DateOnly?>("DateOfBirth")
+                        .HasColumnType("date")
+                        .HasColumnName("date_of_birth");
+
                     b.Property<string>("District")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("district");
@@ -319,6 +374,11 @@ namespace Feedora.Infrastructure.Persistence.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)")
                         .HasColumnName("gender");
+
+                    b.Property<string>("LocalLevel")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("local_level");
 
                     b.Property<string>("Province")
                         .IsRequired()
@@ -337,12 +397,128 @@ namespace Feedora.Infrastructure.Persistence.Migrations
                     b.ToTable("individual_profiles", (string)null);
                 });
 
+            modelBuilder.Entity("Feedora.Domain.Entities.Invitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("District")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("district");
+
+                    b.Property<string>("Gender")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("gender");
+
+                    b.Property<string>("LocalLevel")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("local_level");
+
+                    b.Property<int?>("MaxAge")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_age");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("message");
+
+                    b.Property<int?>("MinAge")
+                        .HasColumnType("integer")
+                        .HasColumnName("min_age");
+
+                    b.Property<Guid?>("PostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("post_id");
+
+                    b.Property<string>("Province")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("province");
+
+                    b.Property<int>("RecipientCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("recipient_count");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id")
+                        .HasName("pk_invitations");
+
+                    b.HasIndex("PostId")
+                        .HasDatabaseName("ix_invitations_post_id");
+
+                    b.HasIndex("CompanyId", "CreatedAt")
+                        .HasDatabaseName("ix_invitations_company_id_created_at");
+
+                    b.ToTable("invitations", (string)null);
+                });
+
+            modelBuilder.Entity("Feedora.Domain.Entities.LocalLevel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("District")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("district");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Province")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("province");
+
+                    b.HasKey("Id")
+                        .HasName("pk_local_levels");
+
+                    b.HasIndex("District", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_local_levels_district_name");
+
+                    b.ToTable("local_levels", (string)null);
+                });
+
             modelBuilder.Entity("Feedora.Domain.Entities.Notification", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_id");
 
                     b.Property<string>("Body")
                         .HasMaxLength(500)
@@ -380,6 +556,9 @@ namespace Feedora.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_notifications");
+
+                    b.HasIndex("ActorId")
+                        .HasDatabaseName("ix_notifications_actor_id");
 
                     b.HasIndex("UserId", "IsRead", "CreatedAt")
                         .HasDatabaseName("ix_notifications_user_id_is_read_created_at");
@@ -446,6 +625,11 @@ namespace Feedora.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("author_id");
 
+                    b.Property<string>("ContactNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("contact_number");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -462,6 +646,11 @@ namespace Feedora.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsFromAnywhere")
                         .HasColumnType("boolean")
                         .HasColumnName("is_from_anywhere");
+
+                    b.Property<string>("LocalLevel")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("local_level");
 
                     b.Property<decimal>("MaximumPayment")
                         .HasPrecision(12, 2)
@@ -529,6 +718,11 @@ namespace Feedora.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ApplicantId")
                         .HasColumnType("uuid")
                         .HasColumnName("applicant_id");
+
+                    b.Property<string>("ClaimDeclineReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("claim_decline_reason");
 
                     b.Property<string>("ClaimNote")
                         .HasMaxLength(200)
@@ -665,6 +859,67 @@ namespace Feedora.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_refresh_tokens_user_id");
 
                     b.ToTable("refresh_tokens", (string)null);
+                });
+
+            modelBuilder.Entity("Feedora.Domain.Entities.Vacancy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime?>("AnnouncedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("announced_at");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateOnly?>("Deadline")
+                        .HasColumnType("date")
+                        .HasColumnName("deadline");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("HowToApply")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("how_to_apply");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("location");
+
+                    b.Property<string>("Organization")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("organization");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id")
+                        .HasName("pk_vacancies");
+
+                    b.HasIndex("IsActive", "CreatedAt")
+                        .HasDatabaseName("ix_vacancies_is_active_created_at");
+
+                    b.ToTable("vacancies", (string)null);
                 });
 
             modelBuilder.Entity("Feedora.Domain.Entities.WithdrawalRequest", b =>
@@ -948,6 +1203,34 @@ namespace Feedora.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Feedora.Domain.Entities.InboxItem", b =>
+                {
+                    b.HasOne("Feedora.Domain.Entities.Invitation", "Invitation")
+                        .WithMany()
+                        .HasForeignKey("InvitationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_inbox_items_invitations_invitation_id");
+
+                    b.HasOne("Feedora.Domain.Entities.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_inbox_items_users_user_id");
+
+                    b.HasOne("Feedora.Domain.Entities.Vacancy", "Vacancy")
+                        .WithMany()
+                        .HasForeignKey("VacancyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_inbox_items_vacancies_vacancy_id");
+
+                    b.Navigation("Invitation");
+
+                    b.Navigation("User");
+
+                    b.Navigation("Vacancy");
+                });
+
             modelBuilder.Entity("Feedora.Domain.Entities.IndividualProfile", b =>
                 {
                     b.HasOne("Feedora.Domain.Entities.AppUser", "User")
@@ -960,14 +1243,42 @@ namespace Feedora.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Feedora.Domain.Entities.Invitation", b =>
+                {
+                    b.HasOne("Feedora.Domain.Entities.AppUser", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_invitations_users_company_id");
+
+                    b.HasOne("Feedora.Domain.Entities.Post", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_invitations_posts_post_id");
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Post");
+                });
+
             modelBuilder.Entity("Feedora.Domain.Entities.Notification", b =>
                 {
+                    b.HasOne("Feedora.Domain.Entities.AppUser", "Actor")
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_notifications_users_actor_id");
+
                     b.HasOne("Feedora.Domain.Entities.AppUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_notifications_users_user_id");
+
+                    b.Navigation("Actor");
 
                     b.Navigation("User");
                 });

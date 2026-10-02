@@ -20,6 +20,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<WithdrawalRequest> Withdrawals => Set<WithdrawalRequest>();
+    public DbSet<Invitation> Invitations => Set<Invitation>();
+    public DbSet<Vacancy> Vacancies => Set<Vacancy>();
+    public DbSet<InboxItem> InboxItems => Set<InboxItem>();
+    public DbSet<LocalLevel> LocalLevels => Set<LocalLevel>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -40,7 +44,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .HasForeignKey<CompanyProfile>(p => p.UserId).OnDelete(DeleteBehavior.Cascade);
             e.Property(p => p.CompanyName).HasMaxLength(150).IsRequired();
             e.Property(p => p.Province).HasMaxLength(50).IsRequired();
-            e.Property(p => p.District).HasMaxLength(50).IsRequired();
+            e.Property(p => p.District).HasMaxLength(50);
+            e.Property(p => p.LocalLevel).HasMaxLength(100);
         });
 
         builder.Entity<IndividualProfile>(e =>
@@ -51,7 +56,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(p => p.Gender).HasConversion<string>().HasMaxLength(10);
             e.Property(p => p.SocialMediaLink).HasMaxLength(300);
             e.Property(p => p.Province).HasMaxLength(50).IsRequired();
-            e.Property(p => p.District).HasMaxLength(50).IsRequired();
+            e.Property(p => p.District).HasMaxLength(50);
+            e.Property(p => p.LocalLevel).HasMaxLength(100);
             e.Property(p => p.AdditionalPhoneNumber).HasMaxLength(20);
         });
 
@@ -64,8 +70,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(p => p.GenderPreference).HasConversion<int>();
             e.Property(p => p.MediaUrl).HasMaxLength(500);
             e.Property(p => p.MaximumPayment).HasPrecision(12, 2);
+            e.Property(p => p.ContactNumber).HasMaxLength(20);
             e.Property(p => p.Province).HasMaxLength(50);
             e.Property(p => p.District).HasMaxLength(50);
+            e.Property(p => p.LocalLevel).HasMaxLength(100);
             e.Property(p => p.Requirement).HasMaxLength(4000).IsRequired();
             e.HasIndex(p => p.CreatedAt);
             e.HasIndex(p => new { p.AuthorId, p.CreatedAt });
@@ -117,6 +125,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.HasIndex(a => new { a.ApplicantId, a.CreatedAt });
         });
 
+        builder.Entity<PostApplication>(e => e.Property(a => a.ClaimDeclineReason).HasMaxLength(300));
+
         builder.Entity<ApplicationMessage>(e =>
         {
             e.HasOne(m => m.Application).WithMany(a => a.Messages)
@@ -131,6 +141,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         {
             e.HasOne(n => n.User).WithMany()
                 .HasForeignKey(n => n.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(n => n.Actor).WithMany()
+                .HasForeignKey(n => n.ActorId).OnDelete(DeleteBehavior.SetNull);
             e.Property(n => n.Type).HasConversion<string>().HasMaxLength(30);
             e.Property(n => n.Title).HasMaxLength(200).IsRequired();
             e.Property(n => n.Body).HasMaxLength(500);
@@ -164,6 +176,51 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(w => w.AdminNote).HasMaxLength(300);
             e.HasIndex(w => new { w.Status, w.CreatedAt });
             e.HasIndex(w => new { w.UserId, w.CreatedAt });
+        });
+
+        builder.Entity<Invitation>(e =>
+        {
+            e.HasOne(i => i.Company).WithMany()
+                .HasForeignKey(i => i.CompanyId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(i => i.Post).WithMany()
+                .HasForeignKey(i => i.PostId).OnDelete(DeleteBehavior.SetNull);
+            e.Property(i => i.Title).HasMaxLength(120).IsRequired();
+            e.Property(i => i.Message).HasMaxLength(500).IsRequired();
+            e.Property(i => i.Province).HasMaxLength(50);
+            e.Property(i => i.District).HasMaxLength(50);
+            e.Property(i => i.LocalLevel).HasMaxLength(100);
+            e.Property(i => i.Gender).HasConversion<string>().HasMaxLength(10);
+            e.HasIndex(i => new { i.CompanyId, i.CreatedAt });
+        });
+
+        builder.Entity<Vacancy>(e =>
+        {
+            e.Property(v => v.Title).HasMaxLength(120).IsRequired();
+            e.Property(v => v.Organization).HasMaxLength(150).IsRequired();
+            e.Property(v => v.Location).HasMaxLength(150).IsRequired();
+            e.Property(v => v.Description).HasMaxLength(2000).IsRequired();
+            e.Property(v => v.HowToApply).HasMaxLength(300);
+            e.HasIndex(v => new { v.IsActive, v.CreatedAt });
+        });
+
+        builder.Entity<InboxItem>(e =>
+        {
+            e.HasOne(i => i.User).WithMany()
+                .HasForeignKey(i => i.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(i => i.Invitation).WithMany()
+                .HasForeignKey(i => i.InvitationId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(i => i.Vacancy).WithMany()
+                .HasForeignKey(i => i.VacancyId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(i => i.Kind).HasConversion<string>().HasMaxLength(20);
+            e.HasIndex(i => new { i.UserId, i.IsRead, i.CreatedAt });
+        });
+
+        builder.Entity<LocalLevel>(e =>
+        {
+            e.Property(l => l.Province).HasMaxLength(50).IsRequired();
+            e.Property(l => l.District).HasMaxLength(50).IsRequired();
+            e.Property(l => l.Name).HasMaxLength(100).IsRequired();
+            e.HasIndex(l => new { l.District, l.Name }).IsUnique();
         });
 
         builder.Entity<RefreshToken>(e =>

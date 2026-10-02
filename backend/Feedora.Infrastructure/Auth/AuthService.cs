@@ -38,7 +38,8 @@ public class AuthService(
             {
                 CompanyName = request.CompanyName.Trim(),
                 Province = request.Province,
-                District = request.District,
+                District = NullIfBlank(request.District),
+                LocalLevel = string.IsNullOrWhiteSpace(request.District) ? null : NullIfBlank(request.LocalLevel),
             },
         };
 
@@ -59,9 +60,11 @@ public class AuthService(
             IndividualProfile = new IndividualProfile
             {
                 Gender = request.Gender,
+                DateOfBirth = request.DateOfBirth,
                 SocialMediaLink = NullIfBlank(request.SocialMediaLink),
                 Province = request.Province,
-                District = request.District,
+                District = NullIfBlank(request.District),
+                LocalLevel = string.IsNullOrWhiteSpace(request.District) ? null : NullIfBlank(request.LocalLevel),
                 AdditionalPhoneNumber = NullIfBlank(request.AdditionalPhoneNumber),
             },
         };

@@ -1,3 +1,4 @@
+using System.Data;
 using System.Linq.Expressions;
 using Feedora.Application.Applications;
 using Feedora.Application.Common;
@@ -17,7 +18,8 @@ public class ApplicationService(
     IValidator<UpdateApplicationStatusRequest> statusValidator,
     IValidator<SendMessageRequest> messageValidator,
     IValidator<PayApplicantRequest> payValidator,
-    IValidator<ClaimPaymentRequest> claimValidator) : IApplicationService
+    IValidator<ClaimPaymentRequest> claimValidator,
+    IValidator<DeclineClaimRequest> declineClaimValidator) : IApplicationService
 {
     private const string DefaultClaimMessage = "I would like to claim this opportunity.";
 
@@ -38,6 +40,8 @@ public class ApplicationService(
             a.Applicant.IndividualProfile != null ? (Gender?)a.Applicant.IndividualProfile.Gender : null,
             a.Applicant.IndividualProfile != null ? a.Applicant.IndividualProfile.Province : null,
             a.Applicant.IndividualProfile != null ? a.Applicant.IndividualProfile.District : null,
+            a.Applicant.IndividualProfile != null ? a.Applicant.IndividualProfile.LocalLevel : null,
+            a.Applicant.IndividualProfile != null ? a.Applicant.IndividualProfile.DateOfBirth : null,
             a.Applicant.Email,
             a.Applicant.PhoneNumber,
             a.Applicant.IndividualProfile != null ? a.Applicant.IndividualProfile.AdditionalPhoneNumber : null,
@@ -54,7 +58,8 @@ public class ApplicationService(
         a.Payments.Sum(p => (decimal?)p.Amount) ?? 0,
         a.ClaimedAmount,
         a.ClaimNote,
-        a.ClaimedAt);
+        a.ClaimedAt,
+        a.ClaimDeclineReason);
 
     public async Task<ApplicationDto> ApplyAsync(Guid postId, ApplyRequest request, CancellationToken ct = default)
     {
@@ -86,7 +91,8 @@ public class ApplicationService(
                 ? $"{applicantName} claimed \"{post.Title}\""
                 : $"{applicantName} applied to \"{post.Title}\"",
             application.Message,
-            Link(application.Id));
+            Link(application.Id),
+            actorId: userId);
 
         try
         {
@@ -108,6 +114,15 @@ public class ApplicationService(
             applications = applications.Where(a => a.PostId == postId);
         if (query.Status is { } status)
             applications = applications.Where(a => a.Status == status);
+        if (query.Stage is { } stage)
+            applications = stage switch
+            {
+                ApplicationStage.New => applications.Where(a => a.Status == ApplicationStatus.Pending),
+                ApplicationStage.Hired => applications.Where(a => a.Status == ApplicationStatus.Accepted && a.ClaimedAmount == null),
+                ApplicationStage.Claimed => applications.Where(a => a.Status == ApplicationStatus.Accepted && a.ClaimedAmount != null),
+                ApplicationStage.Paid => applications.Where(a => a.Status == ApplicationStatus.Completed),
+                _ => applications.Where(a => a.Status == ApplicationStatus.Rejected),
+            };
 
         var total = await applications.CountAsync(ct);
         var items = await applications
@@ -120,6 +135,29 @@ public class ApplicationService(
         return new PagedResult<ApplicationDto>(items, query.Page, query.PageSize, total);
     }
 
+    public async Task<ApplicationSummaryDto> SummaryAsync(Guid? postId, CancellationToken ct = default)
+    {
+        var applications = VisibleToMe(currentUser.RequireUserId());
+        if (postId is { } id)
+            applications = applications.Where(a => a.PostId == id);
+
+        var counts = await applications
+            .GroupBy(a => new { a.Status, Claimed = a.ClaimedAmount != null })
+            .Select(g => new { g.Key.Status, g.Key.Claimed, Count = g.Count() })
+            .ToListAsync(ct);
+
+        int Count(ApplicationStatus status, bool? claimed = null) =>
+            counts.Where(c => c.Status == status && (claimed == null || c.Claimed == claimed)).Sum(c => c.Count);
+
+        return new ApplicationSummaryDto(
+            All: counts.Sum(c => c.Count),
+            New: Count(ApplicationStatus.Pending),
+            Hired: Count(ApplicationStatus.Accepted, claimed: false),
+            Claimed: Count(ApplicationStatus.Accepted, claimed: true),
+            Paid: Count(ApplicationStatus.Completed),
+            Declined: Count(ApplicationStatus.Rejected));
+    }
+
     public async Task<ApplicationDto> GetAsync(Guid id, CancellationToken ct = default) =>
         await VisibleToMe(currentUser.RequireUserId()).Where(a => a.Id == id).Select(ToDto).FirstOrDefaultAsync(ct)
         ?? throw new NotFoundException("Application not found.");
@@ -129,6 +167,16 @@ public class ApplicationService(
         await statusValidator.ValidateAndThrowAsync(request, ct);
         var application = await LoadAsCompanyAsync(id, ct);
 
+        string? error = null;
+        if (request.Status is not (ApplicationStatus.Accepted or ApplicationStatus.Rejected))
+            error = "You can only accept or decline an application.";
+        else if (application.Status == ApplicationStatus.Completed)
+            error = "This job is already paid and closed.";
+        else if (application.ClaimedAmount is not null && request.Status == ApplicationStatus.Rejected)
+            error = "The applicant has claimed payment. Pay or decline the claim first.";
+        if (error is not null)
+            throw new FieldErrorsException(new Dictionary<string, string[]> { ["Status"] = [error] });
+
         if (application.Status != request.Status)
         {
             application.Status = request.Status;
@@ -137,10 +185,10 @@ public class ApplicationService(
             var company = await CompanyNameAsync(application.Post.AuthorId, ct);
             if (request.Status == ApplicationStatus.Accepted)
                 db.Notify(application.ApplicantId, NotificationType.ApplicationAccepted,
-                    $"{company} accepted your application", application.Post.Title, Link(id));
+                    $"{company} hired you", $"{application.Post.Title}. When the work is done, claim your payment.", Link(id), actorId: application.Post.AuthorId);
             else if (request.Status == ApplicationStatus.Rejected)
                 db.Notify(application.ApplicantId, NotificationType.ApplicationRejected,
-                    $"{company} declined your application", application.Post.Title, Link(id));
+                    $"{company} chose someone else for \"{application.Post.Title}\"", "Keep applying to other jobs on the feed.", Link(id), actorId: application.Post.AuthorId);
 
             await db.SaveChangesAsync(ct);
         }
@@ -174,7 +222,7 @@ public class ApplicationService(
         var senders = await db.LoadAuthorsAsync([userId], ct);
         var sender = senders[userId];
         db.Notify(userId == applicantId ? companyId : applicantId, NotificationType.NewMessage,
-            $"New message from {sender.DisplayName}", $"{postTitle}: {message.Content}", Link(id));
+            $"New message from {sender.DisplayName}", $"{postTitle}: {message.Content}", Link(id), actorId: userId);
 
         await db.SaveChangesAsync(ct);
         return new ApplicationMessageDto(message.Id, id, message.Content, message.CreatedAt, sender);
@@ -190,24 +238,66 @@ public class ApplicationService(
         if (application.ApplicantId != userId)
             throw new NotFoundException("Application not found.");
 
+        // One open claim per job: only while hired, and only if nothing is claimed or paid yet.
         string? error = null;
-        if (application.Status != ApplicationStatus.Accepted)
-            error = "You can claim payment once the company accepts your application.";
+        if (application.Status == ApplicationStatus.Completed)
+            error = "This job is already paid.";
+        else if (application.Status != ApplicationStatus.Accepted)
+            error = "You can claim payment once the company hires you.";
         else if (application.ClaimedAmount is not null)
-            error = "You already have a claim waiting for the company to pay.";
+            error = "You have already claimed payment for this job. Wait for the company to pay or decline it.";
+        else if (application.Post.MaximumPayment > 0 && request.Amount > application.Post.MaximumPayment)
+            error = $"The most this post pays is Rs. {application.Post.MaximumPayment:N0}.";
         if (error is not null)
-            throw new FieldErrorsException(new Dictionary<string, string[]> { ["Amount"] = [error] });
+            throw AmountError(error);
 
-        application.ClaimedAmount = decimal.Round(request.Amount, 2);
-        application.ClaimNote = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
-        application.ClaimedAt = DateTime.UtcNow;
-        application.UpdatedAt = application.ClaimedAt;
+        var amount = decimal.Round(request.Amount, 2);
+        var note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
+        var now = DateTime.UtcNow;
+
+        // Conditional update so a double tap can't claim twice.
+        var updated = await db.Applications
+            .Where(a => a.Id == id && a.Status == ApplicationStatus.Accepted && a.ClaimedAmount == null)
+            .ExecuteUpdateAsync(u => u
+                .SetProperty(a => a.ClaimedAmount, amount)
+                .SetProperty(a => a.ClaimNote, note)
+                .SetProperty(a => a.ClaimedAt, now)
+                .SetProperty(a => a.ClaimDeclineReason, (string?)null)
+                .SetProperty(a => a.UpdatedAt, now), ct);
+        if (updated == 0)
+            throw AmountError("You have already claimed payment for this job.");
 
         var name = await db.Users.Where(u => u.Id == userId).Select(u => u.FullName).FirstAsync(ct);
         db.Notify(application.Post.AuthorId, NotificationType.PaymentClaimed,
-            $"{name} claimed Rs. {application.ClaimedAmount:N0} for \"{application.Post.Title}\"",
-            application.ClaimNote ?? "Review and pay from Applicants.",
-            Link(id));
+            $"{name} claimed Rs. {amount:N0} for \"{application.Post.Title}\"",
+            note ?? "Check the work, then pay or decline the claim from Applicants.",
+            Link(id),
+            actorId: userId);
+
+        await db.SaveChangesAsync(ct);
+        return await GetAsync(id, ct);
+    }
+
+    public async Task<ApplicationDto> DeclineClaimAsync(Guid id, DeclineClaimRequest request, CancellationToken ct = default)
+    {
+        await declineClaimValidator.ValidateAndThrowAsync(request, ct);
+        var application = await LoadAsCompanyAsync(id, ct);
+        if (application.Status != ApplicationStatus.Accepted || application.ClaimedAmount is null)
+            throw new FieldErrorsException(new Dictionary<string, string[]> { ["Reason"] = ["There is no claim waiting on this job."] });
+
+        var claimed = application.ClaimedAmount.Value;
+        application.ClaimedAmount = null;
+        application.ClaimNote = null;
+        application.ClaimedAt = null;
+        application.ClaimDeclineReason = request.Reason.Trim();
+        application.UpdatedAt = DateTime.UtcNow;
+
+        var company = await CompanyNameAsync(application.Post.AuthorId, ct);
+        db.Notify(application.ApplicantId, NotificationType.ClaimDeclined,
+            $"{company} declined your claim of Rs. {claimed:N0}",
+            $"{application.ClaimDeclineReason} You can fix it and claim again.",
+            Link(id),
+            actorId: application.Post.AuthorId);
 
         await db.SaveChangesAsync(ct);
         return await GetAsync(id, ct);
@@ -217,31 +307,53 @@ public class ApplicationService(
     {
         await payValidator.ValidateAndThrowAsync(request, ct);
         var application = await LoadAsCompanyAsync(id, ct);
-        if (application.Status != ApplicationStatus.Accepted)
-            throw new FieldErrorsException(new Dictionary<string, string[]>
+
+        string? error = null;
+        if (application.Status == ApplicationStatus.Completed)
+            error = "This job is already paid.";
+        else if (application.Status != ApplicationStatus.Accepted)
+            error = "Hire the applicant before paying them.";
+        else if (application.ClaimedAmount is null)
+            error = "Wait for the applicant to claim payment. You'll be notified.";
+        if (error is not null)
+            throw AmountError(error);
+
+        var amount = application.ClaimedAmount!.Value;
+        var companyId = application.Post.AuthorId;
+
+        // Serializable + conditional close so two taps on Pay can never create two payments.
+        var strategy = db.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+            db.ChangeTracker.Clear();
+            await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+
+            var closed = await db.Applications
+                .Where(a => a.Id == id && a.Status == ApplicationStatus.Accepted && a.ClaimedAmount == amount)
+                .ExecuteUpdateAsync(u => u
+                    .SetProperty(a => a.Status, ApplicationStatus.Completed)
+                    .SetProperty(a => a.UpdatedAt, DateTime.UtcNow), ct);
+            if (closed == 0)
+                throw AmountError("This job was just paid or the claim changed. Refresh and check again.");
+
+            db.Payments.Add(new Payment
             {
-                ["Amount"] = ["Accept the application before releasing a payment."],
+                ApplicationId = id,
+                PayerId = companyId,
+                RecipientId = application.ApplicantId,
+                Amount = amount,
+                Note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim(),
             });
 
-        db.Payments.Add(new Payment
-        {
-            ApplicationId = id,
-            PayerId = application.Post.AuthorId,
-            RecipientId = application.ApplicantId,
-            Amount = decimal.Round(request.Amount, 2),
-            Note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim(),
+            var company = await CompanyNameAsync(companyId, ct);
+            db.Notify(application.ApplicantId, NotificationType.PaymentReceived,
+                $"{company} paid you Rs. {amount:N0}", $"For \"{application.Post.Title}\". It's now in your wallet.", "/wallet",
+                actorId: companyId);
+
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
         });
 
-        // Paying settles the open claim, so the applicant can claim again for later work.
-        application.ClaimedAmount = null;
-        application.ClaimNote = null;
-        application.ClaimedAt = null;
-
-        var company = await CompanyNameAsync(application.Post.AuthorId, ct);
-        db.Notify(application.ApplicantId, NotificationType.PaymentReceived,
-            $"{company} paid you Rs. {request.Amount:N0}", $"For \"{application.Post.Title}\". It's now in your wallet.", "/wallet");
-
-        await db.SaveChangesAsync(ct);
         return await GetAsync(id, ct);
     }
 
@@ -283,6 +395,9 @@ public class ApplicationService(
             .FirstAsync(ct);
 
     private static string Link(Guid applicationId) => $"/applications?id={applicationId}";
+
+    private static FieldErrorsException AmountError(string message) =>
+        new(new Dictionary<string, string[]> { ["Amount"] = [message] });
 
     private static FieldErrorsException AlreadyApplied() =>
         new(new Dictionary<string, string[]> { ["Message"] = ["You have already applied to this post."] });

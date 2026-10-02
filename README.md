@@ -10,21 +10,24 @@ A Nepal-focused marketplace for requirements. Companies and individuals post wha
 |---|---|
 | Public | Landing page, login, register as **Company** (User A) or **Individual** (User B), forgot-password placeholder |
 | Feed | Infinite scroll, search (title, text, company, person), filter by type / province / district (filters live in the URL), skeleton loading |
-| Posts | Create / edit / delete (confirm dialog), image upload with drag-and-drop, title, type, M/F, minimum number, maximum payment, province/district or "anywhere" |
+| Posts | Create / edit / delete (confirm dialog), image upload with drag-and-drop, title, type, gender (Male / Female / Both), contact number, minimum number, maximum payment, province/district or "anywhere" |
 | Engagement | 5 reactions with optimistic updates, feedback threads, share (copy link) |
 | Profiles | Public profile with the user's posts; settings for profile, photo and password (changing the password signs out other devices) |
-| Registration | One form with an **Individual / Company** radio; Company shows company name + company location |
-| Applications | Only companies post. Individuals **Apply** (message + profile) or **Claim** (one tap). Companies see the applicant's profile and contact details, accept/decline, chat per application and **pay** accepted applicants |
-| Notifications | Bell with unread badge (polled every 30s), notifications page; sent on apply, accept/decline, message, payment, withdrawal |
-| Wallet | Individuals get payments in a wallet (left sidebar + `/wallet`), then **Cash withdraw** (bank/eSewa/Khalti, account number, name) goes to the admin, who pays it and marks it paid |
+| Registration | One form with an **Individual / Company** radio; Company shows company name + company location. Address is **Province → District → Local level** (all 753 municipalities / rural municipalities). Individuals also give their **date of birth** |
+| Inbox | A mail-style **Inbox** (individuals) separate from notifications: **invitations** from companies and every new **vacancy** from the super admin. List on the left, message on the right, mark read, delete |
+| Invitations | Companies open **Invitations** in the sidebar, filter individuals by province / district / local level, gender and age, see how many people match, and send to their Inbox (max 10 invitations per company per day) |
+| Vacancies | The super admin posts vacancies (Admin → Vacancies). Open ones show as a compact list in the right column; tap one for details |
+| Applications | Only companies post. Individuals **Apply** (message + profile). Companies see the applicant's profile and contact details, chat per application, and **Hire** or **Decline**. **One application = one job = one payment:** Applied → Hired → the individual **Claims** an amount (up to the post's max pay) → the company either **Pays exactly that amount** (job closes) or **Declines the claim with a reason** (the individual fixes it and claims again). Paying requires a claim and can't happen twice |
+| Notifications | Bell with unread badge (polled every 30s), notifications page; sent on apply, hire/decline, claim, claim declined, message, payment, withdrawal. Each shows who it is from with a **Company / Individual / Super Admin** label |
+| Wallet | Individuals get payments in a wallet (left sidebar + `/wallet`), then **Cash withdraw** (bank/eSewa/Khalti, account or phone number, name) goes to the super admin, who verifies it and flags it **Done**, **Pending** or **Rejected** (the flag can be changed; the individual is notified) |
 | Admin (User C) | Stats overview, user search/filter with enable/disable, **ads manager** (image, link, placement, schedule) |
-| Ads | Banner (between posts) and Sidebar placements show live ads and fall back to an "Advertise here" slot |
+| Ads | Banner (between posts, 4:1, 1600 × 400 px) and Sidebar (square, 800 × 800 px) placements; the admin form previews the exact shape and warns when an image will be cropped. Empty spaces show an "Advertise here" slot |
 
 ## Project layout
 
 ```
 backend/
-  Feedora.Domain/          entities, enums, Nepal's provinces and districts
+  Feedora.Domain/          entities, enums, Nepal's provinces, districts and local levels
   Feedora.Application/     DTOs, validators, service interfaces (Auth, Posts, Reactions, Feedbacks, Users, Ads, Admin)
   Feedora.Infrastructure/  EF DbContext + migrations, Identity/JWT, service implementations, file storage
   Feedora.Api/             controllers, error handling, security headers, health check, SPA hosting
@@ -62,7 +65,7 @@ API reference (development only): http://localhost:5000/scalar · health check: 
 cd frontend && npm install && npm run dev
 ```
 
-Dev admin: `admin@feedora.local` / `Admin12345` (from `appsettings.Development.json`).
+Dev super admin (User C, opens `/admin`): `admin@feedora.local` / `Admin12345` (from `appsettings.Development.json`).
 
 ## API
 
@@ -75,7 +78,8 @@ POST /api/posts                    PUT /api/posts/{id}    DELETE /api/posts/{id}
 PUT|DELETE /api/posts/{id}/reaction
 GET|POST   /api/posts/{id}/feedback      DELETE /api/posts/feedback/{id}
 GET  /api/users/{id}               GET|PUT /api/users/me   PUT|DELETE /api/users/me/avatar
-POST /api/posts/{id}/applications                          (Individual; { kind: Apply|Claim, message })
+POST /api/posts/{id}/applications                          (Individual; { kind: "Apply", message })
+POST /api/applications/{id}/claim                          (accepted Individual; { amount, note })
 GET  /api/applications?postId=&status=     GET /api/applications/{id}
 PUT  /api/applications/{id}/status         POST /api/applications/{id}/payments      (Company)
 GET|POST /api/applications/{id}/messages

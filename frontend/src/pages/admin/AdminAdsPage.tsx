@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Alert, Badge, Button, Card, ConfirmDialog, EmptyState, PageSpinner, toast } from '@/components/ui'
 import { AdFormDialog } from '@/features/admin/AdFormDialog'
+import { adFormats } from '@/features/ads/formats'
+import { cn } from '@/lib/cn'
 import { useAdminAds, useDeleteAd } from '@/features/admin/api'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { getErrorMessage } from '@/lib/api'
@@ -57,7 +59,9 @@ export function AdminAdsPage() {
             const status = adStatus(ad)
             return (
               <Card key={ad.id} className="overflow-hidden">
-                <img src={ad.imageUrl} alt="" className="aspect-[2/1] w-full bg-slate-100 object-contain" />
+                <div className="flex aspect-[2/1] items-center justify-center bg-slate-100 p-3">
+                  <img src={ad.imageUrl} alt="" className={cn('rounded-md object-cover shadow-sm', adFormats[ad.placement].aspectClass, ad.placement === 'Banner' ? 'w-full' : 'h-full')} />
+                </div>
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-semibold text-slate-900">{ad.title}</p>

@@ -10,5 +10,7 @@ public enum NotificationType
     WithdrawalRequested = 6,
     WithdrawalPaid = 7,
     WithdrawalRejected = 8,
-    PaymentClaimed = 9
+    PaymentClaimed = 9,
+    Invitation = 10,
+    ClaimDeclined = 11
 }

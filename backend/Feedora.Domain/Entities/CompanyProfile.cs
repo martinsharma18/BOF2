@@ -8,5 +8,7 @@ public class CompanyProfile
 
     public string CompanyName { get; set; } = string.Empty;
     public string Province { get; set; } = string.Empty;
-    public string District { get; set; } = string.Empty;
+    /// <summary>Optional: null means the whole province.</summary>
+    public string? District { get; set; }
+    public string? LocalLevel { get; set; }
 }

@@ -28,7 +28,8 @@ public record WalletDto(
 
 public record WithdrawRequest(decimal Amount, string BankName, string AccountName, string AccountNumber);
 
-public record ProcessWithdrawalRequest(bool Paid, string? Note);
+/// <summary>The admin flags a request as Pending, Paid ("Done") or Rejected. The flag can be changed later.</summary>
+public record ProcessWithdrawalRequest(WithdrawalStatus Status, string? Note);
 
 public class WithdrawalQuery : PageQuery
 {
@@ -45,7 +46,7 @@ public class WithdrawValidator : AbstractValidator<WithdrawRequest>
         RuleFor(x => x.BankName).NotEmpty().MaximumLength(100);
         RuleFor(x => x.AccountName).NotEmpty().MaximumLength(100);
         RuleFor(x => x.AccountNumber).NotEmpty().MaximumLength(40)
-            .Matches(@"^[0-9A-Za-z\s-]+$").WithMessage("Use digits, letters, spaces or dashes only.");
+            .Matches(@"^\+?[0-9A-Za-z\s-]+$").WithMessage("Enter an account or phone number (digits, letters, spaces or dashes).");
     }
 }
 
@@ -53,8 +54,9 @@ public class ProcessWithdrawalValidator : AbstractValidator<ProcessWithdrawalReq
 {
     public ProcessWithdrawalValidator()
     {
+        RuleFor(x => x.Status).IsInEnum();
         RuleFor(x => x.Note).MaximumLength(300);
-        RuleFor(x => x.Note).NotEmpty().When(x => !x.Paid).WithMessage("Tell the user why the request was rejected.");
+        RuleFor(x => x.Note).NotEmpty().When(x => x.Status == WithdrawalStatus.Rejected).WithMessage("Tell the user why the request was rejected.");
     }
 }
 

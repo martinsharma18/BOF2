@@ -10,6 +10,10 @@ public class Notification
     public Guid UserId { get; set; }
     public AppUser User { get; set; } = null!;
 
+    /// <summary>Who caused it (the company, the applicant, the admin). Null for system messages.</summary>
+    public Guid? ActorId { get; set; }
+    public AppUser? Actor { get; set; }
+
     public NotificationType Type { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Body { get; set; }

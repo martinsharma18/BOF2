@@ -10,9 +10,13 @@ public record NotificationDto(
     string? Body,
     string? Link,
     bool IsRead,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    AuthorDto? Actor);
 
-public class NotificationQuery : PageQuery;
+public class NotificationQuery : PageQuery
+{
+    public bool UnreadOnly { get; set; }
+}
 
 public interface INotificationService
 {

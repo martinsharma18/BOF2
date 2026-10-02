@@ -32,12 +32,14 @@ public class UserService(
         await validator.ValidateAndThrowAsync(request, ct);
 
         var errors = new Dictionary<string, string[]>();
-        if (user.AccountType != AccountType.Admin && (request.Province is null || request.District is null))
-            errors["Province"] = ["Select your province and district."];
+        if (user.AccountType != AccountType.Admin && string.IsNullOrWhiteSpace(request.Province))
+            errors["Province"] = ["Select your province."];
         if (user.AccountType == AccountType.Company && string.IsNullOrWhiteSpace(request.CompanyName))
             errors["CompanyName"] = ["Company name is required."];
         if (user.AccountType == AccountType.Individual && request.Gender is null)
             errors["Gender"] = ["Select M or F."];
+        if (user.AccountType == AccountType.Individual && request.DateOfBirth is null)
+            errors["DateOfBirth"] = ["Enter your date of birth."];
         if (errors.Count > 0) throw new FieldErrorsException(errors);
 
         user.FullName = request.FullName.Trim();
@@ -48,7 +50,8 @@ public class UserService(
         {
             company.CompanyName = request.CompanyName!.Trim();
             company.Province = request.Province!;
-            company.District = request.District!;
+            company.District = NullIfBlank(request.District);
+            company.LocalLevel = company.District is null ? null : NullIfBlank(request.LocalLevel);
         }
 
         if (user.IndividualProfile is { } individual)
@@ -57,7 +60,9 @@ public class UserService(
             individual.SocialMediaLink = NullIfBlank(request.SocialMediaLink);
             individual.AdditionalPhoneNumber = NullIfBlank(request.AdditionalPhoneNumber);
             individual.Province = request.Province!;
-            individual.District = request.District!;
+            individual.District = NullIfBlank(request.District);
+            individual.LocalLevel = individual.District is null ? null : NullIfBlank(request.LocalLevel);
+            individual.DateOfBirth = request.DateOfBirth;
         }
 
         await db.SaveChangesAsync(ct);
@@ -97,8 +102,10 @@ public class UserService(
             user.Bio,
             user.CompanyProfile?.Province ?? user.IndividualProfile?.Province,
             user.CompanyProfile?.District ?? user.IndividualProfile?.District,
+            user.CompanyProfile?.LocalLevel ?? user.IndividualProfile?.LocalLevel,
             user.IndividualProfile?.SocialMediaLink,
             user.IndividualProfile?.Gender,
+            Age.From(user.IndividualProfile?.DateOfBirth),
             user.CreatedAt,
             postCount);
     }
@@ -107,7 +114,8 @@ public class UserService(
         new(await ToPublicAsync(user, ct),
             user.Email ?? string.Empty,
             user.PhoneNumber,
-            user.IndividualProfile?.AdditionalPhoneNumber);
+            user.IndividualProfile?.AdditionalPhoneNumber,
+            user.IndividualProfile?.DateOfBirth);
 
     private static string? NullIfBlank(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

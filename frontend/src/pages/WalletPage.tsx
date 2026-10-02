@@ -25,7 +25,9 @@ export function WalletPage() {
         description="Money companies pay you lands here. Request a cash withdrawal and the admin sends it to your bank or wallet."
         actions={
           w && (
-            <Button variant="accent" icon={<Banknote className="size-4" />} disabled={w.balance < 100 || pending} onClick={() => setOpen(true)}>
+            <Button variant="accent" icon={<Banknote className="size-4" />} disabled={w.balance < 100 || pending}
+              title={pending ? 'You already have a pending withdrawal. Wait until the admin flags it Done or Rejected.' : w.balance < 100 ? 'Minimum withdrawal is Rs. 100' : undefined}
+              onClick={() => setOpen(true)}>
               Cash withdraw
             </Button>
           )

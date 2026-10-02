@@ -23,6 +23,8 @@ export interface AuthResponse {
 export interface Province {
   name: string
   districts: string[]
+  /** District name → its local levels (municipalities / rural municipalities). */
+  localLevels: Record<string, string[]>
 }
 
 export interface Author {
@@ -43,9 +45,11 @@ export interface Post {
   acceptsFemale: boolean
   minimumNumber: number
   maximumPayment: number
+  contactNumber: string | null
   isFromAnywhere: boolean
   province: string | null
   district: string | null
+  localLevel: string | null
   requirement: string
   createdAt: string
   updatedAt: string | null
@@ -64,10 +68,12 @@ export interface MyApplication {
   /** Open payment claim waiting for the company; null when none. */
   claimedAmount: number | null
   paidAmount: number
+  claimDeclineReason: string | null
 }
 
 export type ApplicationKind = 'Apply' | 'Claim'
-export type ApplicationStatus = 'Pending' | 'Accepted' | 'Rejected'
+/** Pending (applied) → Accepted (hired) → Completed (paid). Rejected = declined. */
+export type ApplicationStatus = 'Pending' | 'Accepted' | 'Rejected' | 'Completed'
 
 export interface Applicant {
   id: string
@@ -76,6 +82,9 @@ export interface Applicant {
   gender: Gender | null
   province: string | null
   district: string | null
+  localLevel: string | null
+  /** YYYY-MM-DD */
+  dateOfBirth: string | null
   email: string | null
   phoneNumber: string | null
   additionalPhoneNumber: string | null
@@ -101,6 +110,8 @@ export interface Application {
   claimedAmount: number | null
   claimNote: string | null
   claimedAt: string | null
+  /** Why the company turned down the last claim. Cleared when the applicant claims again. */
+  claimDeclineReason: string | null
 }
 
 export interface ApplicationMessage {
@@ -121,6 +132,8 @@ export type NotificationType =
   | 'WithdrawalPaid'
   | 'WithdrawalRejected'
   | 'PaymentClaimed'
+  | 'Invitation'
+  | 'ClaimDeclined'
 
 export interface AppNotification {
   id: string
@@ -130,6 +143,8 @@ export interface AppNotification {
   link: string | null
   isRead: boolean
   createdAt: string
+  /** Who caused it; null for system messages. */
+  actor: Author | null
 }
 
 export type WithdrawalStatus = 'Pending' | 'Paid' | 'Rejected'
@@ -171,6 +186,7 @@ export interface PostFilters {
   type?: PostType
   province?: string
   district?: string
+  localLevel?: string
   authorId?: string
 }
 
@@ -196,8 +212,10 @@ export interface PublicProfile {
   bio: string | null
   province: string | null
   district: string | null
+  localLevel: string | null
   socialMediaLink: string | null
   gender: Gender | null
+  age: number | null
   joinedAt: string
   postCount: number
 }
@@ -207,6 +225,8 @@ export interface MyProfile {
   email: string
   phoneNumber: string | null
   additionalPhoneNumber: string | null
+  /** YYYY-MM-DD */
+  dateOfBirth: string | null
 }
 
 export interface Ad {
@@ -262,4 +282,48 @@ export interface ProblemDetails {
   title?: string
   status?: number
   errors?: Record<string, string[]>
+}
+
+export interface Invitation {
+  id: string
+  title: string
+  message: string
+  postId: string | null
+  postTitle: string | null
+  province: string | null
+  district: string | null
+  localLevel: string | null
+  gender: Gender | null
+  minAge: number | null
+  maxAge: number | null
+  recipientCount: number
+  createdAt: string
+}
+
+export interface Vacancy {
+  id: string
+  title: string
+  organization: string
+  location: string
+  description: string
+  howToApply: string | null
+  /** YYYY-MM-DD */
+  deadline: string | null
+  isActive: boolean
+  createdAt: string
+}
+
+export type InboxItemKind = 'Invitation' | 'Vacancy'
+
+export interface InboxItem {
+  id: string
+  kind: InboxItemKind
+  isRead: boolean
+  createdAt: string
+  /** The inviting company; null means the super admin (vacancies). */
+  sender: Author | null
+  subject: string
+  preview: string
+  invitation: { message: string; postId: string | null; postTitle: string | null } | null
+  vacancy: Vacancy | null
 }

@@ -1,10 +1,11 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useNavigate, useSearchParams } from 'react-router-dom'
-import { Bell, ClipboardList, Home, LayoutDashboard, LogOut, PenSquare, Search, Settings, UserRound, Wallet } from 'lucide-react'
+import { Bell, ClipboardList, Home, Inbox, LayoutDashboard, LogOut, Mail, PenSquare, Search, Settings, UserRound, Wallet } from 'lucide-react'
 import { Avatar, ButtonLink, Input, Menu, MenuItem, MenuSeparator } from '@/components/ui'
 import { useApplications } from '@/features/applications/api'
 import { useAuth } from '@/features/auth/AuthContext'
 import { NotificationBell, UnreadBadge } from '@/features/notifications/NotificationBell'
+import { useInboxUnreadCount } from '@/features/inbox/api'
 import { useUnreadCount } from '@/features/notifications/api'
 import { WalletCard } from '@/features/wallet/WalletCard'
 import { cn } from '@/lib/cn'
@@ -27,6 +28,7 @@ function useNavItems(): NavItem[] {
   const { user, isAdmin, canPost } = useAuth()
   const isIndividual = user?.accountType === 'Individual'
   const unread = useUnreadCount().data ?? 0
+  const inboxUnread = useInboxUnreadCount(isIndividual).data ?? 0
 
   const items: NavItem[] = [{ to: '/feed', label: 'Feed', icon: <Home className="size-5" />, mobile: true }]
   if (canPost || isIndividual)
@@ -38,6 +40,8 @@ function useNavItems(): NavItem[] {
       mobile: true,
     })
   if (isIndividual) items.push({ to: '/wallet', label: 'Wallet', icon: <Wallet className="size-5" />, mobile: true })
+  if (isIndividual) items.push({ to: '/inbox', label: 'Inbox', icon: <Inbox className="size-5" />, badge: inboxUnread })
+  if (canPost) items.push({ to: '/invitations', label: 'Invitations', short: 'Invite', icon: <Mail className="size-5" /> })
   items.push({ to: '/notifications', label: 'Notifications', icon: <Bell className="size-5" />, badge: unread })
   items.push({ to: `/u/${user?.id}`, label: 'My profile', short: 'Profile', icon: <UserRound className="size-5" />, mobile: true })
   items.push({ to: '/settings', label: 'Settings', icon: <Settings className="size-5" /> })
@@ -225,18 +229,25 @@ function MobileNavLink({ item }: { item: NavItem }) {
   )
 }
 
+/** Company to-do: new applications to answer and hired people still to pay. */
 function PendingApplicantsCard() {
   const pending = useApplications({ status: 'Pending', page: 1 }).data?.totalCount
-  if (pending === undefined) return null
+  const hired = useApplications({ status: 'Accepted', page: 1 }).data?.totalCount
+  if (pending === undefined || hired === undefined) return null
   return (
-    <Link
-      to="/applications"
-      className="block rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 p-4 text-white shadow-card transition hover:from-brand-700"
-    >
-      <p className="text-xs font-medium text-brand-100">Waiting for your reply</p>
-      <p className="mt-0.5 font-display text-2xl font-extrabold tabular-nums">{pending}</p>
-      <p className="mt-1 text-xs text-brand-100">{pending === 1 ? 'application' : 'applications'} · review now →</p>
-    </Link>
+    <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 text-white shadow-card">
+      <p className="px-4 pt-4 text-xs font-medium text-brand-100">Your to-do</p>
+      <div className="grid grid-cols-2 divide-x divide-white/15 px-1 py-2">
+        <Link to="/applications" className="rounded-lg px-3 py-1 hover:bg-white/10">
+          <p className="font-display text-2xl font-extrabold tabular-nums">{pending}</p>
+          <p className="text-xs text-brand-100">to review</p>
+        </Link>
+        <Link to="/applications" className="rounded-lg px-3 py-1 hover:bg-white/10">
+          <p className="font-display text-2xl font-extrabold tabular-nums">{hired}</p>
+          <p className="text-xs text-brand-100">hired, to pay</p>
+        </Link>
+      </div>
+    </div>
   )
 }
 

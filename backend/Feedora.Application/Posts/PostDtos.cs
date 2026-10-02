@@ -10,6 +10,7 @@ public class PostQuery : PageQuery
     public PostType? Type { get; set; }
     public string? Province { get; set; }
     public string? District { get; set; }
+    public string? LocalLevel { get; set; }
     public Guid? AuthorId { get; set; }
 }
 
@@ -22,9 +23,11 @@ public class PostFormRequest
     public bool AcceptsFemale { get; set; }
     public int MinimumNumber { get; set; }
     public decimal MaximumPayment { get; set; }
+    public string ContactNumber { get; set; } = string.Empty;
     public bool IsFromAnywhere { get; set; }
     public string? Province { get; set; }
     public string? District { get; set; }
+    public string? LocalLevel { get; set; }
     public string Requirement { get; set; } = string.Empty;
 
     /// <summary>Edit only: drop the current image without uploading a new one.</summary>
@@ -40,9 +43,11 @@ public record PostDto(
     bool AcceptsFemale,
     int MinimumNumber,
     decimal MaximumPayment,
+    string? ContactNumber,
     bool IsFromAnywhere,
     string? Province,
     string? District,
+    string? LocalLevel,
     string Requirement,
     DateTime CreatedAt,
     DateTime? UpdatedAt,
@@ -54,4 +59,4 @@ public record PostDto(
     MyApplicationDto? MyApplication);
 
 /// <summary>The signed-in individual's own application on a post, so the card can show Apply / Claim state.</summary>
-public record MyApplicationDto(Guid Id, ApplicationStatus Status, decimal? ClaimedAmount, decimal PaidAmount);
+public record MyApplicationDto(Guid Id, ApplicationStatus Status, decimal? ClaimedAmount, decimal PaidAmount, string? ClaimDeclineReason);

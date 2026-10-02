@@ -16,6 +16,28 @@ export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+/** Whole years since a YYYY-MM-DD date of birth. */
+export function ageFrom(dateOfBirth: string) {
+  const [y, m, d] = dateOfBirth.split('-').map(Number)
+  const today = new Date()
+  let age = today.getFullYear() - y
+  if (today.getMonth() + 1 < m || (today.getMonth() + 1 === m && today.getDate() < d)) age--
+  return age
+}
+
+/** YYYY-MM-DD for `years` ago today, for date input min/max. */
+export function yearsAgo(years: number) {
+  const date = new Date()
+  date.setFullYear(date.getFullYear() - years)
+  return date.toISOString().slice(0, 10)
+}
+
+/** Formats a YYYY-MM-DD date without shifting it across time zones. */
+export function formatDay(day: string) {
+  const [y, m, d] = day.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
 export function timeAgo(iso: string) {
   const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
   if (seconds < 60) return 'just now'

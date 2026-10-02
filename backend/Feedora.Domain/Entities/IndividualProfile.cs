@@ -11,6 +11,13 @@ public class IndividualProfile
     public Gender Gender { get; set; }
     public string? SocialMediaLink { get; set; }
     public string Province { get; set; } = string.Empty;
-    public string District { get; set; } = string.Empty;
+    /// <summary>Optional: null means the whole province.</summary>
+    public string? District { get; set; }
+
+    /// <summary>Municipality / rural municipality inside the district. Null for accounts made before local levels existed.</summary>
+    public string? LocalLevel { get; set; }
+
+    /// <summary>Used for the age filter when companies send invitations.</summary>
+    public DateOnly? DateOfBirth { get; set; }
     public string? AdditionalPhoneNumber { get; set; }
 }
