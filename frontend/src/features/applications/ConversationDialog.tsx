@@ -36,7 +36,7 @@ export function ConversationDialog({ application, open, onClose }: { application
   }
 
   return (
-    <Dialog open={open} onClose={onClose} size="lg" title={`Chat with ${other.name}`} description={application.postTitle}>
+    <Dialog open={open} onClose={onClose} size="lg" tall title={`Chat with ${other.name}`} description={application.postTitle}>
       <div className="space-y-3">
         {/* The application itself opens the conversation. */}
         <Bubble mine={!isCompany} name={application.applicant.fullName} avatar={application.applicant.avatarUrl} time={application.createdAt}>
@@ -61,7 +61,7 @@ export function ConversationDialog({ application, open, onClose }: { application
         <div ref={endRef} />
       </div>
 
-      <form onSubmit={submit} className="sticky bottom-0 mt-4 flex items-end gap-2 bg-white pt-2">
+      <form onSubmit={submit} className="sticky bottom-0 mt-4 flex items-end gap-2 bg-white pt-2 pb-1">
         <label htmlFor={`msg-${application.id}`} className="sr-only">
           Message
         </label>
@@ -69,6 +69,7 @@ export function ConversationDialog({ application, open, onClose }: { application
           id={`msg-${application.id}`}
           rows={2}
           maxLength={2000}
+          enterKeyHint="send"
           placeholder="Write a message…"
           value={text}
           onChange={(e) => setText(e.target.value)}

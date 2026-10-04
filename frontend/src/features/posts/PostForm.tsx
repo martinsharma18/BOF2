@@ -6,6 +6,7 @@ import { ImagePlus, X } from 'lucide-react'
 import { Alert, Button, Card, Checkbox, Field, FieldError, FormSection, Input, Textarea } from '@/components/ui'
 import { LocationFields } from '@/features/locations/LocationFields'
 import { useObjectUrl } from '@/hooks/useObjectUrl'
+import { shrinkImage } from '@/lib/image'
 import { cn } from '@/lib/cn'
 import { applyServerErrors } from '@/lib/formErrors'
 import type { Post } from '@/lib/types'
@@ -103,12 +104,14 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
 
   const shownImage = preview ?? (!removeExisting ? post?.mediaUrl : null)
 
-  const pickFile = (picked: File | undefined) => {
+  const pickFile = async (picked: File | undefined) => {
     if (!picked) return
     if (!ACCEPTED_TYPES.includes(picked.type)) return setFileError('Only JPG, PNG, WEBP or GIF images are allowed.')
-    if (picked.size > MAX_FILE_BYTES) return setFileError('The image must be 5 MB or smaller.')
+    // Shrink first: big phone photos usually end up well under the limit.
+    const image = await shrinkImage(picked)
+    if (image.size > MAX_FILE_BYTES) return setFileError('The image must be 5 MB or smaller.')
     setFileError(null)
-    setFile(picked)
+    setFile(image)
   }
 
   const clearImage = () => {
@@ -192,7 +195,7 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
             className="sr-only"
             tabIndex={-1}
             onChange={(e) => {
-              pickFile(e.target.files?.[0])
+              void pickFile(e.target.files?.[0])
               e.target.value = ''
             }}
           />
@@ -220,7 +223,7 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
               onDrop={(e) => {
                 e.preventDefault()
                 setDragging(false)
-                pickFile(e.dataTransfer.files?.[0])
+                void pickFile(e.dataTransfer.files?.[0])
               }}
               className={cn(
                 'flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition',

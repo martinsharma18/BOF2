@@ -35,6 +35,7 @@
   --animate-fade-in: fade-in 150ms ease-out;
   --animate-pop-in: pop-in 160ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
   --animate-slide-up: slide-up 200ms ease-out;
+  --animate-sheet-up: sheet-up 220ms cubic-bezier(0.2, 0.9, 0.3, 1);
 
   @keyframes fade-in {
     from { opacity: 0; }
@@ -48,11 +49,26 @@
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
   }
+  @keyframes sheet-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+}
+
+/* Horizontal strips (tabs, chips) scroll by swipe on phones; no scrollbar track. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
+    /* Stop Android/iOS enlarging text on rotate. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
   body {
     @apply bg-slate-50 font-sans text-slate-800 antialiased;

@@ -6,9 +6,26 @@ import { useAuth } from '@/features/auth/AuthContext'
 import { GuestOnly, RequireAuth } from '@/features/auth/RouteGuards'
 import { LandingPage } from '@/pages/LandingPage'
 
-/** Lazy-load a named page export so each page ships as its own chunk. */
+/**
+ * Lazy-load a named page export so each page ships as its own chunk. If a chunk is gone (a new version was
+ * deployed while the app stayed open on a phone), reload once to pick up the new files.
+ */
 function page<K extends string>(loader: () => Promise<Record<K, ComponentType>>, name: K) {
-  return lazy(() => loader().then((m) => ({ default: m[name] })))
+  return lazy(() =>
+    loader().then(
+      (m) => {
+        sessionStorage.removeItem('feedora.chunk-reload')
+        return { default: m[name] }
+      },
+      (error) => {
+        if (!sessionStorage.getItem('feedora.chunk-reload')) {
+          sessionStorage.setItem('feedora.chunk-reload', '1')
+          window.location.reload()
+        }
+        throw error
+      },
+    ),
+  )
 }
 
 const LoginPage = page(() => import('@/pages/auth/LoginPage'), 'LoginPage')

@@ -70,7 +70,7 @@ export function FeedFilters({ value, onChange }: { value: PostFilters; onChange:
         </Button>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <div className="scrollbar-none flex items-center gap-2 overflow-x-auto pb-1">
         {typeChip(undefined, 'All posts')}
         {postTypes.map((t) => typeChip(t.value, t.label))}
         {hasFilters && (

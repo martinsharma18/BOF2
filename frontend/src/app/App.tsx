@@ -4,6 +4,7 @@ import { AxiosError } from 'axios'
 import { BrowserRouter, useLocation } from 'react-router-dom'
 import { Toaster } from '@/components/ui'
 import { AuthProvider } from '@/features/auth/AuthContext'
+import { PwaBridge } from '@/features/pwa/PwaUi'
 import { AppRoutes } from './router'
 
 const queryClient = new QueryClient({
@@ -31,6 +32,7 @@ export function App() {
       <BrowserRouter>
         <AuthProvider>
           <ScrollToTop />
+          <PwaBridge />
           <AppRoutes />
           <Toaster />
         </AuthProvider>

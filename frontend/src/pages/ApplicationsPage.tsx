@@ -74,7 +74,7 @@ export function ApplicationsPage() {
       {summary && <ActionBar summary={summary} isCompany={canPost} onShow={showStage} />}
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div role="tablist" aria-label="Filter by stage" className="flex max-w-full gap-1 overflow-x-auto rounded-xl bg-slate-200/60 p-1">
+        <div role="tablist" aria-label="Filter by stage" className="scrollbar-none flex max-w-full gap-1 overflow-x-auto rounded-xl bg-slate-200/60 p-1">
           {stageTabs.map((t) => {
             const count = summary ? summary[t.stage ? countKey[t.stage] : 'all'] : undefined
             const selected = stage === t.stage

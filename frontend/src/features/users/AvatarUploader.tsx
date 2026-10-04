@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { Camera } from 'lucide-react'
 import { Avatar, Button, toast } from '@/components/ui'
 import { getErrorMessage } from '@/lib/api'
+import { shrinkImage } from '@/lib/image'
 import type { PublicProfile } from '@/lib/types'
 import { useAvatar } from './api'
 
@@ -10,11 +11,13 @@ export function AvatarUploader({ profile }: { profile: PublicProfile }) {
   const input = useRef<HTMLInputElement>(null)
   const name = profile.companyName ?? profile.fullName
 
-  const upload = (file: File | null) =>
+  const upload = async (picked: File | null) => {
+    const file = picked && (await shrinkImage(picked, 800))
     avatar.mutate(file, {
       onSuccess: () => toast.success(file ? 'Photo updated' : 'Photo removed'),
       onError: (error) => toast.error(getErrorMessage(error)),
     })
+  }
 
   return (
     <div className="flex items-center gap-5">
@@ -36,7 +39,7 @@ export function AvatarUploader({ profile }: { profile: PublicProfile }) {
             Upload photo
           </Button>
           {profile.avatarUrl && (
-            <Button size="sm" variant="ghost" disabled={avatar.isPending} onClick={() => upload(null)}>
+            <Button size="sm" variant="ghost" disabled={avatar.isPending} onClick={() => void upload(null)}>
               Remove
             </Button>
           )}
@@ -51,7 +54,7 @@ export function AvatarUploader({ profile }: { profile: PublicProfile }) {
         onChange={(e) => {
           const file = e.target.files?.[0]
           e.target.value = ''
-          if (file) upload(file)
+          if (file) void upload(file)
         }}
       />
     </div>

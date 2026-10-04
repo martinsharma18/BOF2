@@ -6,6 +6,7 @@ import { WithRail } from '@/components/layout/AppShell'
 import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications } from '@/features/notifications/api'
 import { dayGroup } from '@/features/notifications/meta'
 import { NotificationItem } from '@/features/notifications/NotificationItem'
+import { PushPrompt } from '@/features/pwa/PwaUi'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/cn'
@@ -58,6 +59,7 @@ export function NotificationsPage() {
           )
         }
       />
+      <PushPrompt />
 
       <div className="mb-4 flex w-fit gap-1 rounded-xl bg-slate-200/60 p-1" role="tablist" aria-label="Show">
         {[

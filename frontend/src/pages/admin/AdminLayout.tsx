@@ -15,7 +15,7 @@ export function AdminLayout() {
   return (
     <div>
       <PageHeader title="Super Admin" description="Verify cash withdrawals, post vacancies, monitor activity, manage users and run the advertising spaces." />
-      <nav aria-label="Admin sections" className="mb-6 flex gap-1 overflow-x-auto rounded-xl bg-slate-200/60 p-1">
+      <nav aria-label="Admin sections" className="scrollbar-none mb-6 flex gap-1 overflow-x-auto rounded-xl bg-slate-200/60 p-1">
         {tabs.map((t) => (
           <NavLink
             key={t.to}

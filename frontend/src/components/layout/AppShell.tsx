@@ -1,12 +1,13 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
-import { Link, NavLink, Outlet, useNavigate, useSearchParams } from 'react-router-dom'
-import { Bell, ClipboardList, Home, Inbox, LayoutDashboard, LogOut, Mail, PenSquare, Search, Settings, UserRound, Wallet } from 'lucide-react'
-import { Avatar, ButtonLink, Input, Menu, MenuItem, MenuSeparator } from '@/components/ui'
+import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Bell, ClipboardList, Home, Inbox, LayoutDashboard, LogOut, Mail, Menu as MenuIcon, PenSquare, Search, Settings, UserRound, Wallet } from 'lucide-react'
+import { Avatar, ButtonLink, Dialog, Input, Menu, MenuItem, MenuSeparator } from '@/components/ui'
 import { useApplications } from '@/features/applications/api'
 import { useAuth } from '@/features/auth/AuthContext'
 import { NotificationBell, UnreadBadge } from '@/features/notifications/NotificationBell'
 import { useInboxUnreadCount } from '@/features/inbox/api'
 import { useUnreadCount } from '@/features/notifications/api'
+import { InstallBanner, InstallMenuItem, OfflineBanner } from '@/features/pwa/PwaUi'
 import { WalletCard } from '@/features/wallet/WalletCard'
 import { cn } from '@/lib/cn'
 import { Logo } from './Logo'
@@ -19,7 +20,7 @@ interface NavItem {
   short?: string
   icon: ReactNode
   end?: boolean
-  /** Shown in the mobile bottom bar (keep it to 4). */
+  /** Shown in the phone bottom bar (keep it to 4 per role); the rest go under "More". */
   mobile?: boolean
   badge?: number
 }
@@ -30,6 +31,7 @@ function useNavItems(): NavItem[] {
   const unread = useUnreadCount().data ?? 0
   const inboxUnread = useInboxUnreadCount(isIndividual).data ?? 0
 
+  // `mobile` items go in the phone bottom bar (max 4); the rest live under "More".
   const items: NavItem[] = [{ to: '/feed', label: 'Feed', icon: <Home className="size-5" />, mobile: true }]
   if (canPost || isIndividual)
     items.push({
@@ -39,11 +41,11 @@ function useNavItems(): NavItem[] {
       icon: <ClipboardList className="size-5" />,
       mobile: true,
     })
+  if (isIndividual) items.push({ to: '/inbox', label: 'Inbox', icon: <Inbox className="size-5" />, badge: inboxUnread, mobile: true })
   if (isIndividual) items.push({ to: '/wallet', label: 'Wallet', icon: <Wallet className="size-5" />, mobile: true })
-  if (isIndividual) items.push({ to: '/inbox', label: 'Inbox', icon: <Inbox className="size-5" />, badge: inboxUnread })
-  if (canPost) items.push({ to: '/invitations', label: 'Invitations', short: 'Invite', icon: <Mail className="size-5" /> })
+  if (canPost) items.push({ to: '/invitations', label: 'Invitations', short: 'Invite', icon: <Mail className="size-5" />, mobile: true })
   items.push({ to: '/notifications', label: 'Notifications', icon: <Bell className="size-5" />, badge: unread })
-  items.push({ to: `/u/${user?.id}`, label: 'My profile', short: 'Profile', icon: <UserRound className="size-5" />, mobile: true })
+  items.push({ to: `/u/${user?.id}`, label: 'My profile', short: 'Profile', icon: <UserRound className="size-5" /> })
   items.push({ to: '/settings', label: 'Settings', icon: <Settings className="size-5" /> })
   if (isAdmin) items.push({ to: '/admin', label: 'Admin', icon: <LayoutDashboard className="size-5" />, mobile: true })
   return items
@@ -128,10 +130,22 @@ export function AppShell() {
   const { user, canPost } = useAuth()
   const navItems = useNavItems()
   const mobileItems = navItems.filter((item) => item.mobile)
+  const moreItems = navItems.filter((item) => !item.mobile)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const { pathname } = useLocation()
+  // Close the "More" sheet once the user picks a page.
+  const [lastPath, setLastPath] = useState(pathname)
+  if (pathname !== lastPath) {
+    setLastPath(pathname)
+    setMoreOpen(false)
+  }
+  const moreActive = moreItems.some((item) => pathname.startsWith(item.to))
+  const moreBadge = moreItems.reduce((sum, item) => sum + (item.badge ?? 0), 0)
 
   return (
-    <div className="min-h-dvh pb-20 lg:pb-0">
-      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
+    <div className="min-h-dvh pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0">
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 pt-[env(safe-area-inset-top)] backdrop-blur-md">
+        <OfflineBanner />
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
           <Logo to="/feed" />
           <div className="flex flex-1 justify-center">
@@ -139,7 +153,7 @@ export function AppShell() {
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             {canPost && (
-              <ButtonLink to="/posts/new" size="md" icon={<PenSquare className="size-4" />} className="hidden sm:inline-flex">
+              <ButtonLink to="/posts/new" size="md" icon={<PenSquare className="size-4" />} className="max-sm:hidden">
                 New post
               </ButtonLink>
             )}
@@ -181,6 +195,7 @@ export function AppShell() {
         </nav>
 
         <main className="min-w-0 flex-1">
+          <InstallBanner />
           <Outlet />
         </main>
       </div>
@@ -190,42 +205,109 @@ export function AppShell() {
         aria-label="Main"
         className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
       >
-        <div className="mx-auto flex max-w-md items-center justify-around px-2">
-          {mobileItems.slice(0, 1).map((item) => (
+        <div className="mx-auto flex max-w-md items-stretch px-1">
+          {mobileItems.slice(0, 2).map((item) => (
             <MobileNavLink key={item.to} item={item} />
           ))}
           {canPost && (
-            <NavLink
-              to="/posts/new"
-              aria-label="New post"
-              className="-mt-6 flex size-14 items-center justify-center rounded-2xl bg-accent-500 text-white shadow-pop"
-            >
-              <PenSquare className="size-6" />
-            </NavLink>
+            <div className="flex flex-1 justify-center">
+              <NavLink
+                to="/posts/new"
+                aria-label="New post"
+                className="-mt-5 flex size-14 items-center justify-center rounded-2xl bg-accent-500 text-white shadow-pop active:bg-accent-600"
+              >
+                <PenSquare className="size-6" />
+              </NavLink>
+            </div>
           )}
-          {mobileItems.slice(1).map((item) => (
+          {mobileItems.slice(2).map((item) => (
             <MobileNavLink key={item.to} item={item} />
           ))}
+          <button
+            type="button"
+            onClick={() => setMoreOpen(true)}
+            aria-haspopup="dialog"
+            className={cn(tabClass, moreOpen || moreActive ? 'text-brand-600' : 'text-slate-500')}
+          >
+            <span className="relative">
+              <MenuIcon className="size-5" />
+              {moreBadge > 0 && <span className="absolute -top-0.5 -right-1 size-2.5 rounded-full bg-accent-500 ring-2 ring-white" aria-label="New" />}
+            </span>
+            More
+          </button>
         </div>
       </nav>
+      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} items={moreItems} />
     </div>
   )
 }
 
+const tabClass = 'flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[11px] font-semibold'
+
 function MobileNavLink({ item }: { item: NavItem }) {
   return (
-    <NavLink
-      to={item.to}
-      className={({ isActive }) =>
-        cn(
-          'flex flex-col items-center gap-0.5 px-3 py-2 text-[11px] font-semibold',
-          isActive ? 'text-brand-600' : 'text-slate-500',
-        )
-      }
-    >
-      {item.icon}
+    <NavLink to={item.to} end={item.end} className={({ isActive }) => cn(tabClass, isActive ? 'text-brand-600' : 'text-slate-500')}>
+      <span className="relative">
+        {item.icon}
+        {!!item.badge && <UnreadBadge count={item.badge} className="absolute -top-1.5 left-3" />}
+      </span>
       {item.short ?? item.label}
     </NavLink>
+  )
+}
+
+/** Phone "More" menu: everything that isn't in the bottom bar, plus log out. */
+function MoreSheet({ open, onClose, items }: { open: boolean; onClose: () => void; items: NavItem[] }) {
+  const { user, signOut } = useAuth()
+  const navigate = useNavigate()
+
+  if (!user) return null
+  const name = user.companyName ?? user.fullName
+
+  return (
+    <Dialog open={open} onClose={onClose} title="Menu">
+      <Link to={`/u/${user.id}`} className="-mx-1 mb-3 flex items-center gap-3 rounded-xl p-2 active:bg-slate-100">
+        <Avatar name={name} src={user.avatarUrl} size="md" />
+        <span className="min-w-0">
+          <span className="block truncate font-semibold text-slate-900">{name}</span>
+          <span className="block truncate text-sm text-slate-500">{user.email}</span>
+        </span>
+      </Link>
+      <ul className="space-y-1">
+        {items.map((item) => (
+          <li key={item.to}>
+            <NavLink
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) =>
+                cn(
+                  'flex min-h-12 items-center gap-3 rounded-xl px-3 text-[15px] font-semibold',
+                  isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-700 active:bg-slate-100',
+                )
+              }
+            >
+              {item.icon}
+              <span className="flex-1">{item.label}</span>
+              {!!item.badge && <UnreadBadge count={item.badge} className="ring-0" />}
+            </NavLink>
+          </li>
+        ))}
+        <InstallMenuItem />
+        <li>
+          <button
+            type="button"
+            onClick={async () => {
+              await signOut()
+              navigate('/', { replace: true })
+            }}
+            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-[15px] font-semibold text-red-600 active:bg-red-50"
+          >
+            <LogOut className="size-5" />
+            Log out
+          </button>
+        </li>
+      </ul>
+    </Dialog>
   )
 }
 

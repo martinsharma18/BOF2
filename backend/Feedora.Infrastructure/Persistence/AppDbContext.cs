@@ -24,6 +24,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Vacancy> Vacancies => Set<Vacancy>();
     public DbSet<InboxItem> InboxItems => Set<InboxItem>();
     public DbSet<LocalLevel> LocalLevels => Set<LocalLevel>();
+    public DbSet<PushDevice> PushDevices => Set<PushDevice>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -135,6 +136,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .HasForeignKey(m => m.SenderId).OnDelete(DeleteBehavior.Cascade);
             e.Property(m => m.Content).HasMaxLength(2000).IsRequired();
             e.HasIndex(m => new { m.ApplicationId, m.CreatedAt });
+        });
+
+        builder.Entity<PushDevice>(e =>
+        {
+            e.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(d => d.Endpoint).HasMaxLength(1000).IsRequired();
+            e.Property(d => d.P256dh).HasMaxLength(200).IsRequired();
+            e.Property(d => d.Auth).HasMaxLength(100).IsRequired();
+            e.HasIndex(d => d.Endpoint).IsUnique();
+            e.HasIndex(d => d.UserId);
         });
 
         builder.Entity<Notification>(e =>

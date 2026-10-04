@@ -10,12 +10,14 @@ using Feedora.Application.Notifications;
 using Feedora.Application.Wallet;
 using Feedora.Application.Feedbacks;
 using Feedora.Application.Posts;
+using Feedora.Application.Push;
 using Feedora.Application.Reactions;
 using Feedora.Application.Users;
 using Feedora.Application.Vacancies;
 using Feedora.Domain.Entities;
 using Feedora.Infrastructure.Auth;
 using Feedora.Infrastructure.Persistence;
+using Feedora.Infrastructure.Push;
 using Feedora.Infrastructure.Services;
 using Feedora.Infrastructure.Storage;
 using Microsoft.AspNetCore.Identity;
@@ -32,10 +34,13 @@ public static class DependencyInjection
         IConfiguration configuration,
         string uploadsRootPath)
     {
-        services.AddDbContext<AppDbContext>(options => options
+        services.AddSingleton<PushQueue>();
+        services.AddScoped<PushOnSaveInterceptor>();
+        services.AddDbContext<AppDbContext>((sp, options) => options
             .UseNpgsql(configuration.GetConnectionString("Default"),
                 npgsql => npgsql.EnableRetryOnFailure(3))
-            .UseSnakeCaseNamingConvention());
+            .UseSnakeCaseNamingConvention()
+            .AddInterceptors(sp.GetRequiredService<PushOnSaveInterceptor>()));
 
         services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database");
 
@@ -72,6 +77,12 @@ public static class DependencyInjection
         services.AddScoped<IVacancyService, VacancyService>();
         services.AddScoped<IInboxService, InboxService>();
         services.AddScoped<ILocationService, LocationService>();
+
+        // Phone notifications (Web Push): new notifications/inbox items are queued on save and sent in the background.
+        services.Configure<PushOptions>(configuration.GetSection(PushOptions.SectionName));
+        services.AddScoped<IPushService, PushService>();
+        services.AddHttpClient("webpush", c => c.Timeout = TimeSpan.FromSeconds(15));
+        services.AddHostedService<PushSender>();
         services.AddMemoryCache();
         services.AddSingleton<IFileStorage, LocalFileStorage>();
 

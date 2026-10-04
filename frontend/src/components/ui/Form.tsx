@@ -10,7 +10,7 @@ import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
 const controlClass = cn(
-  'block w-full rounded-lg border-0 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-xs ring-1 ring-slate-300 ring-inset',
+  'block w-full rounded-lg border-0 bg-white px-3.5 py-2.5 text-base text-slate-900 shadow-xs sm:text-sm ring-1 ring-slate-300 ring-inset',
   'placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500 focus:outline-none',
   'disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400',
   'aria-invalid:ring-red-400 aria-invalid:focus:ring-red-500',

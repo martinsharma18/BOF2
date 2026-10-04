@@ -1,4 +1,5 @@
 import { Card, PageHeader, PageSpinner, Alert } from '@/components/ui'
+import { PushSettings } from '@/features/pwa/PwaUi'
 import { AvatarUploader } from '@/features/users/AvatarUploader'
 import { ChangePasswordForm } from '@/features/users/ChangePasswordForm'
 import { ProfileForm } from '@/features/users/ProfileForm'
@@ -25,6 +26,9 @@ export function SettingsPage() {
           </Section>
           <Section title="Profile" description="This information appears on your public profile (phone and email stay private).">
             <ProfileForm me={me.data} />
+          </Section>
+          <Section title="Phone notifications" description="Applies to this device only.">
+            <PushSettings />
           </Section>
           <Section title="Password" description="Changing your password signs you out on other devices.">
             <ChangePasswordForm />

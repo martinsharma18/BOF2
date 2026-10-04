@@ -20,6 +20,9 @@ A Nepal-focused marketplace for requirements. Companies and individuals post wha
 | Applications | Only companies post. Individuals **Apply** (message + profile). Companies see the applicant's profile and contact details, chat per application, and **Hire** or **Decline**. **One application = one job = one payment:** Applied → Hired → the individual **Claims** an amount (up to the post's max pay) → the company either **Pays exactly that amount** (job closes) or **Declines the claim with a reason** (the individual fixes it and claims again). Paying requires a claim and can't happen twice |
 | Notifications | Bell with unread badge (polled every 30s), notifications page; sent on apply, hire/decline, claim, claim declined, message, payment, withdrawal. Each shows who it is from with a **Company / Individual / Super Admin** label |
 | Wallet | Individuals get payments in a wallet (left sidebar + `/wallet`), then **Cash withdraw** (bank/eSewa/Khalti, account or phone number, name) goes to the super admin, who verifies it and flags it **Done**, **Pending** or **Rejected** (the flag can be changed; the individual is notified) |
+| Mobile | Phone-first layout: bottom bar per role (Individual: Feed, Applied, Inbox, Wallet; Company: Feed, Applicants, **+**, Invite) plus a **More** sheet for everything else. Dialogs open as bottom sheets, chat is full-height, inputs are 16px (no iOS zoom), safe areas respected, photos are shrunk in the browser before upload |
+| Installable app (PWA) | `manifest.webmanifest` + `public/sw.js`: "Add to Home Screen" (install banner on Android, instructions on iPhone), opens full screen, app shell and images cached for slow/offline use, offline strip. The API is never cached |
+| Phone notifications | Web Push: every new notification or inbox message is also pushed to the user's phones (Settings → Phone notifications, or the prompt on the Notifications page). Tapping opens the right page. Signing out unlinks the device. iPhone needs the app installed to the home screen (iOS 16.4+) |
 | Admin (User C) | Stats overview, user search/filter with enable/disable, **ads manager** (image, link, placement, schedule) |
 | Ads | Banner (between posts, 4:1, 1600 × 400 px) and Sidebar (square, 800 × 800 px) placements; the admin form previews the exact shape and warns when an image will be cropped. Empty spaces show an "Advertise here" slot |
 
@@ -102,7 +105,8 @@ dotnet ef migrations add <Name> -p Feedora.Infrastructure -s Feedora.Api -o Pers
 
 1. `cd frontend && npm run build`, then copy `frontend/dist/*` into `backend/Feedora.Api/wwwroot/`. The API serves the SPA on the same origin, so no CORS setup is needed.
 2. Set these environment variables: `ConnectionStrings__Default`, `Jwt__Key` (32+ random characters), `Seed__AdminEmail`, `Seed__AdminPassword`. Set `Cors__Origins__0` only if the frontend is hosted elsewhere.
-3. Put it behind HTTPS (nginx, IIS, Azure, etc.). Forwarded headers are already trusted for real client IPs.
+   For phone notifications also set `WebPush__PublicKey`, `WebPush__PrivateKey` (generate once with `npx web-push generate-vapid-keys` and keep them; changing them logs every phone out of push) and `WebPush__Subject` (`mailto:you@yourdomain`). Without them the app works and push is simply off.
+3. Put it behind HTTPS (nginx, IIS, Azure, etc.). Forwarded headers are already trusted for real client IPs. HTTPS is required for installing the app and for push.
 4. Uploaded files go to `Feedora.Api/uploads/`. Mount it as a persistent volume, or swap `LocalFileStorage` for S3, Azure Blob or Cloudinary behind `IFileStorage`.
 
 ## Next up
@@ -110,6 +114,6 @@ dotnet ef migrations add <Name> -p Feedora.Infrastructure -s Feedora.Api -o Pers
 - Password reset and email verification (needs an email provider)
 - Rename "Type 1 / Type 2" to their real meanings (one place: `frontend/src/features/posts/labels.ts`)
 - Real payment gateway (eSewa / Khalti) so companies fund payments instead of just recording them
-- Push notifications (SignalR / web push) instead of 30-second polling
+- Native app (React Native / Expo) only if the store listing or deeper phone features are needed; the API and the push backend are ready for it
 - Brand name: the logo says BOF2 while copy says Feedora; change `APP_NAME` in `frontend/src/lib/brand.ts` and the `<title>` in `index.html`
 - Reporting posts and moderation queue; automated tests (xUnit + Testcontainers, Vitest + Playwright)

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { unlinkPush } from '@/features/pwa/push'
 import { api } from '@/lib/api'
 import { tokenStore, type Session } from '@/lib/tokenStore'
 import type { AuthResponse, User } from '@/lib/types'
@@ -26,6 +27,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     const refreshToken = tokenStore.get()?.refreshToken
+    // Still signed in here, so the API knows whose device to unlink.
+    if (refreshToken) await unlinkPush()
     tokenStore.clear()
     queryClient.clear()
     if (refreshToken) await api.post('/auth/logout', { refreshToken }).catch(() => undefined)

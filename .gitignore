@@ -1,0 +1,4 @@
+# Build output for hosting uploads
+publish/
+# Production secrets live only on the server
+appsettings.Production.json
