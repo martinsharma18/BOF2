@@ -1,6 +1,6 @@
 using Npgsql;
 
-namespace Feedora.Infrastructure.Persistence;
+namespace BOF2.Infrastructure.Persistence;
 
 internal static class ConnectionString
 {

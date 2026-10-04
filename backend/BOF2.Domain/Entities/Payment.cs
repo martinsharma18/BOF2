@@ -1,4 +1,4 @@
-namespace Feedora.Domain.Entities;
+namespace BOF2.Domain.Entities;
 
 /// <summary>Money a company released to an individual for an accepted application. Credits the individual's wallet.</summary>
 public class Payment

@@ -1,7 +1,7 @@
-using Feedora.Domain.Enums;
+using BOF2.Domain.Enums;
 using FluentValidation;
 
-namespace Feedora.Application.Reactions;
+namespace BOF2.Application.Reactions;
 
 public record SetReactionRequest(ReactionType Type);
 

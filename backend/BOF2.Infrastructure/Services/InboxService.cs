@@ -1,11 +1,11 @@
-using Feedora.Application.Common;
-using Feedora.Application.Inbox;
-using Feedora.Application.Vacancies;
-using Feedora.Domain.Enums;
-using Feedora.Infrastructure.Persistence;
+using BOF2.Application.Common;
+using BOF2.Application.Inbox;
+using BOF2.Application.Vacancies;
+using BOF2.Domain.Enums;
+using BOF2.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Feedora.Infrastructure.Services;
+namespace BOF2.Infrastructure.Services;
 
 public class InboxService(AppDbContext db, ICurrentUser currentUser) : IInboxService
 {

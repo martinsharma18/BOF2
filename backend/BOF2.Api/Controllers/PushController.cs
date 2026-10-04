@@ -1,8 +1,8 @@
-using Feedora.Application.Push;
+using BOF2.Application.Push;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Feedora.Api.Controllers;
+namespace BOF2.Api.Controllers;
 
 /// <summary>Phone notifications (Web Push): link or unlink this device for the signed-in user.</summary>
 [ApiController]

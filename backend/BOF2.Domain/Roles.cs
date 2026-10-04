@@ -1,4 +1,4 @@
-namespace Feedora.Domain;
+namespace BOF2.Domain;
 
 public static class Roles
 {

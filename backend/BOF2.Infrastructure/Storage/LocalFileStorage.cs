@@ -1,7 +1,7 @@
-using Feedora.Application.Common;
+using BOF2.Application.Common;
 using Microsoft.Extensions.Options;
 
-namespace Feedora.Infrastructure.Storage;
+namespace BOF2.Infrastructure.Storage;
 
 public class FileStorageOptions
 {

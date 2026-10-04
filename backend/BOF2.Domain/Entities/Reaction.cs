@@ -1,6 +1,6 @@
-using Feedora.Domain.Enums;
+using BOF2.Domain.Enums;
 
-namespace Feedora.Domain.Entities;
+namespace BOF2.Domain.Entities;
 
 /// <summary>One reaction per user per post.</summary>
 public class Reaction

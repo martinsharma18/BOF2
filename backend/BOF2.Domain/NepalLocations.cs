@@ -1,4 +1,4 @@
-namespace Feedora.Domain;
+namespace BOF2.Domain;
 
 /// <summary>Nepal's 7 provinces and 77 districts, used for the Province / District dropdowns.</summary>
 public static class NepalLocations

@@ -1,12 +1,12 @@
-using Feedora.Application.Common;
-using Feedora.Application.Invitations;
-using Feedora.Domain.Entities;
-using Feedora.Domain.Enums;
-using Feedora.Infrastructure.Persistence;
+using BOF2.Application.Common;
+using BOF2.Application.Invitations;
+using BOF2.Domain.Entities;
+using BOF2.Domain.Enums;
+using BOF2.Infrastructure.Persistence;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
-namespace Feedora.Infrastructure.Services;
+namespace BOF2.Infrastructure.Services;
 
 public class InvitationService(
     AppDbContext db,

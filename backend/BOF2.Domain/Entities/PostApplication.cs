@@ -1,6 +1,6 @@
-using Feedora.Domain.Enums;
+using BOF2.Domain.Enums;
 
-namespace Feedora.Domain.Entities;
+namespace BOF2.Domain.Entities;
 
 /// <summary>An individual's application (or claim) on a company post. One per person per post.</summary>
 public class PostApplication

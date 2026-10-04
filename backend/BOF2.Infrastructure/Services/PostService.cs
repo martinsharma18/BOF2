@@ -1,12 +1,12 @@
-using Feedora.Application.Common;
-using Feedora.Application.Posts;
-using Feedora.Domain.Entities;
-using Feedora.Domain.Enums;
-using Feedora.Infrastructure.Persistence;
+using BOF2.Application.Common;
+using BOF2.Application.Posts;
+using BOF2.Domain.Entities;
+using BOF2.Domain.Enums;
+using BOF2.Infrastructure.Persistence;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
-namespace Feedora.Infrastructure.Services;
+namespace BOF2.Infrastructure.Services;
 
 public class PostService(
     AppDbContext db,
@@ -145,7 +145,7 @@ public class PostService(
         // (whole district / whole province) and posts open to "anywhere".
         var province = query.Province;
         if (string.IsNullOrWhiteSpace(province) && !string.IsNullOrWhiteSpace(query.District))
-            province = Feedora.Domain.NepalLocations.Provinces.FirstOrDefault(p => p.Value.Contains(query.District)).Key;
+            province = BOF2.Domain.NepalLocations.Provinces.FirstOrDefault(p => p.Value.Contains(query.District)).Key;
 
         if (!string.IsNullOrWhiteSpace(query.LocalLevel) && !string.IsNullOrWhiteSpace(query.District))
             posts = posts.Where(p => p.IsFromAnywhere

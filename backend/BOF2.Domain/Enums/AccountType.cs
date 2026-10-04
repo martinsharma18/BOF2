@@ -1,4 +1,4 @@
-namespace Feedora.Domain.Enums;
+namespace BOF2.Domain.Enums;
 
 /// <summary>The three kinds of users in the system.</summary>
 public enum AccountType

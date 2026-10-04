@@ -47,7 +47,7 @@ export function OfflineBanner() {
   )
 }
 
-const INSTALL_DISMISSED = 'feedora.install-dismissed'
+const INSTALL_DISMISSED = 'bof2.install-dismissed'
 
 /** One-time card on phones: "Install the app". Hidden once installed or dismissed. */
 export function InstallBanner() {
@@ -177,7 +177,7 @@ async function enableWithToast(enable: () => Promise<void>) {
   }
 }
 
-const PUSH_PROMPT_DISMISSED = 'feedora.push-prompt-dismissed'
+const PUSH_PROMPT_DISMISSED = 'bof2.push-prompt-dismissed'
 
 /** Gentle prompt above the notifications list until the person turns push on or says "not now". */
 export function PushPrompt() {

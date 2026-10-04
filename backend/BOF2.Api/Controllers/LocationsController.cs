@@ -1,7 +1,7 @@
-using Feedora.Application.Locations;
+using BOF2.Application.Locations;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Feedora.Api.Controllers;
+namespace BOF2.Api.Controllers;
 
 [ApiController]
 [Route("api/locations")]

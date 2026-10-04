@@ -1,8 +1,8 @@
-# Render Blueprint for the Feedora API (free plan, Singapore = closest region to Nepal).
+# Render Blueprint for the BOF2 API (free plan, Singapore = closest region to Nepal).
 # Render → New → Blueprint → pick this repo. Values marked `sync: false` are asked for once in the dashboard.
 services:
   - type: web
-    name: feedora-api
+    name: bof2-api
     runtime: docker
     plan: free
     region: singapore

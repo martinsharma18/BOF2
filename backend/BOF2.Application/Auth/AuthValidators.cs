@@ -1,7 +1,7 @@
-using Feedora.Application.Common;
+using BOF2.Application.Common;
 using FluentValidation;
 
-namespace Feedora.Application.Auth;
+namespace BOF2.Application.Auth;
 
 public class RegisterCompanyValidator : AbstractValidator<RegisterCompanyRequest>
 {

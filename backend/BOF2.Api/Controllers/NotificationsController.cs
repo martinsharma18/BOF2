@@ -1,9 +1,9 @@
-using Feedora.Application.Common;
-using Feedora.Application.Notifications;
+using BOF2.Application.Common;
+using BOF2.Application.Notifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Feedora.Api.Controllers;
+namespace BOF2.Api.Controllers;
 
 [ApiController]
 [Route("api/notifications")]

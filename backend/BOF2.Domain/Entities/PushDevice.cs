@@ -1,4 +1,4 @@
-namespace Feedora.Domain.Entities;
+namespace BOF2.Domain.Entities;
 
 /// <summary>
 /// A browser/phone that allowed notifications (a Web Push subscription). Pushes for <see cref="UserId"/>

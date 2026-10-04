@@ -1,11 +1,11 @@
-using Feedora.Application.Common;
-using Feedora.Application.Feedbacks;
-using Feedora.Domain.Entities;
-using Feedora.Infrastructure.Persistence;
+using BOF2.Application.Common;
+using BOF2.Application.Feedbacks;
+using BOF2.Domain.Entities;
+using BOF2.Infrastructure.Persistence;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
-namespace Feedora.Infrastructure.Services;
+namespace BOF2.Infrastructure.Services;
 
 public class FeedbackService(
     AppDbContext db,

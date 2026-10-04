@@ -1,4 +1,4 @@
-namespace Feedora.Domain.Enums;
+namespace BOF2.Domain.Enums;
 
 public enum ReactionType
 {

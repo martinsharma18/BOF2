@@ -1,7 +1,7 @@
-using Feedora.Application.Vacancies;
+using BOF2.Application.Vacancies;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Feedora.Api.Controllers;
+namespace BOF2.Api.Controllers;
 
 [ApiController]
 [Route("api/vacancies")]

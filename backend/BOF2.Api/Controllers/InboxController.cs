@@ -1,9 +1,9 @@
-using Feedora.Application.Common;
-using Feedora.Application.Inbox;
+using BOF2.Application.Common;
+using BOF2.Application.Inbox;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Feedora.Api.Controllers;
+namespace BOF2.Api.Controllers;
 
 /// <summary>Mail-style inbox: invitations from companies and vacancies from the super admin.</summary>
 [ApiController]

@@ -1,10 +1,10 @@
-using Feedora.Application.Applications;
-using Feedora.Application.Common;
-using Feedora.Domain;
+using BOF2.Application.Applications;
+using BOF2.Application.Common;
+using BOF2.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Feedora.Api.Controllers;
+namespace BOF2.Api.Controllers;
 
 /// <summary>Applications on company posts, their chat thread and payouts.</summary>
 [ApiController]

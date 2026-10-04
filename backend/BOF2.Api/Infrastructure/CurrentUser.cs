@@ -1,9 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Feedora.Application.Common;
-using Feedora.Domain;
+using BOF2.Application.Common;
+using BOF2.Domain;
 
-namespace Feedora.Api.Infrastructure;
+namespace BOF2.Api.Infrastructure;
 
 public class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
 {

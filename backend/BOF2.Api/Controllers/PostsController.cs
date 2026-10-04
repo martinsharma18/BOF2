@@ -1,14 +1,14 @@
-using Feedora.Api.Infrastructure;
-using Feedora.Application.Applications;
-using Feedora.Application.Common;
-using Feedora.Application.Feedbacks;
-using Feedora.Application.Posts;
-using Feedora.Application.Reactions;
-using Feedora.Domain;
+using BOF2.Api.Infrastructure;
+using BOF2.Application.Applications;
+using BOF2.Application.Common;
+using BOF2.Application.Feedbacks;
+using BOF2.Application.Posts;
+using BOF2.Application.Reactions;
+using BOF2.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Feedora.Api.Controllers;
+namespace BOF2.Api.Controllers;
 
 [ApiController]
 [Route("api/posts")]

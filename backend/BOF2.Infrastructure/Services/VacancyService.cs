@@ -1,12 +1,12 @@
-using Feedora.Application.Common;
-using Feedora.Application.Vacancies;
-using Feedora.Domain.Entities;
-using Feedora.Domain.Enums;
-using Feedora.Infrastructure.Persistence;
+using BOF2.Application.Common;
+using BOF2.Application.Vacancies;
+using BOF2.Domain.Entities;
+using BOF2.Domain.Enums;
+using BOF2.Infrastructure.Persistence;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
-namespace Feedora.Infrastructure.Services;
+namespace BOF2.Infrastructure.Services;
 
 public class VacancyService(AppDbContext db, IValidator<VacancyRequest> validator) : IVacancyService
 {

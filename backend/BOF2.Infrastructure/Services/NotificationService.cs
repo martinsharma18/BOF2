@@ -1,9 +1,9 @@
-using Feedora.Application.Common;
-using Feedora.Application.Notifications;
-using Feedora.Infrastructure.Persistence;
+using BOF2.Application.Common;
+using BOF2.Application.Notifications;
+using BOF2.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Feedora.Infrastructure.Services;
+namespace BOF2.Infrastructure.Services;
 
 public class NotificationService(AppDbContext db, ICurrentUser currentUser) : INotificationService
 {

@@ -1,9 +1,9 @@
-using Feedora.Application.Invitations;
-using Feedora.Domain;
+using BOF2.Application.Invitations;
+using BOF2.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Feedora.Api.Controllers;
+namespace BOF2.Api.Controllers;
 
 /// <summary>Companies invite matching individuals; each one gets a notification.</summary>
 [ApiController]

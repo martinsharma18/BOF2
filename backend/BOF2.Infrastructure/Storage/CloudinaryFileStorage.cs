@@ -1,9 +1,9 @@
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
-using Feedora.Application.Common;
+using BOF2.Application.Common;
 using Microsoft.Extensions.Logging;
 
-namespace Feedora.Infrastructure.Storage;
+namespace BOF2.Infrastructure.Storage;
 
 /// <summary>
 /// Stores images on Cloudinary (used when <c>Cloudinary:Url</c> is set, e.g. on Render where the disk is wiped
@@ -12,7 +12,7 @@ namespace Feedora.Infrastructure.Storage;
 /// </summary>
 public class CloudinaryFileStorage(Cloudinary cloudinary, ILogger<CloudinaryFileStorage> logger) : IFileStorage
 {
-    private const string RootFolder = "feedora";
+    private const string RootFolder = "bof2";
     private const string Delivery = "f_auto,q_auto";
 
     public async Task<string> SaveAsync(FileUpload file, string folder, CancellationToken ct = default)
@@ -48,7 +48,7 @@ public class CloudinaryFileStorage(Cloudinary cloudinary, ILogger<CloudinaryFile
     }
 
     /// <summary>
-    /// ".../image/upload/f_auto,q_auto/v1712/feedora/posts/abc.jpg" → "feedora/posts/abc".
+    /// ".../image/upload/f_auto,q_auto/v1712/bof2/posts/abc.jpg" → "bof2/posts/abc".
     /// Returns null for anything that isn't one of our Cloudinary images (e.g. old /uploads/ paths).
     /// </summary>
     internal static string? PublicIdFrom(string? url)
@@ -57,7 +57,7 @@ public class CloudinaryFileStorage(Cloudinary cloudinary, ILogger<CloudinaryFile
         var marker = url.IndexOf("/upload/", StringComparison.Ordinal);
         if (marker < 0) return null;
 
-        // Everything we upload lives under "feedora/", after any transformation and version segments.
+        // Everything we upload lives under "bof2/", after any transformation and version segments.
         var root = url.IndexOf($"/{RootFolder}/", marker, StringComparison.Ordinal);
         if (root < 0) return null;
         var path = url[(root + 1)..];

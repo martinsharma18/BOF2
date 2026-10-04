@@ -1,13 +1,13 @@
 using System.Data;
-using Feedora.Application.Common;
-using Feedora.Application.Wallet;
-using Feedora.Domain.Entities;
-using Feedora.Domain.Enums;
-using Feedora.Infrastructure.Persistence;
+using BOF2.Application.Common;
+using BOF2.Application.Wallet;
+using BOF2.Domain.Entities;
+using BOF2.Domain.Enums;
+using BOF2.Infrastructure.Persistence;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
-namespace Feedora.Infrastructure.Services;
+namespace BOF2.Infrastructure.Services;
 
 public class WalletService(
     AppDbContext db,

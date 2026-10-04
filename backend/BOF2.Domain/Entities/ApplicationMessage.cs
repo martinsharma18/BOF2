@@ -1,4 +1,4 @@
-namespace Feedora.Domain.Entities;
+namespace BOF2.Domain.Entities;
 
 /// <summary>A chat message between the company and the applicant on one application.</summary>
 public class ApplicationMessage

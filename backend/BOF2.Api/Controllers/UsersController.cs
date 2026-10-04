@@ -1,9 +1,9 @@
-using Feedora.Api.Infrastructure;
-using Feedora.Application.Users;
+using BOF2.Api.Infrastructure;
+using BOF2.Application.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Feedora.Api.Controllers;
+namespace BOF2.Api.Controllers;
 
 [ApiController]
 [Route("api/users")]

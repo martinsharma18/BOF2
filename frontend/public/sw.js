@@ -1,5 +1,5 @@
 /*
- * Feedora service worker: makes the site installable, opens fast on slow mobile data, keeps working
+ * BOF2 service worker: makes the site installable, opens fast on slow mobile data, keeps working
  * offline with what was already loaded, and shows push notifications.
  *
  * Caching rules (the API is never cached, so data is always live):
@@ -8,10 +8,10 @@
  *   /uploads/*      show the saved copy at once, refresh in the background (capped)
  *   icons, fonts    same as uploads
  */
-const SHELL = 'feedora-shell-v1'
-const ASSETS = 'feedora-assets-v1'
-const IMAGES = 'feedora-images-v1'
-const FONTS = 'feedora-fonts-v1'
+const SHELL = 'bof2-shell-v1'
+const ASSETS = 'bof2-assets-v1'
+const IMAGES = 'bof2-images-v1'
+const FONTS = 'bof2-fonts-v1'
 const KNOWN = [SHELL, ASSETS, IMAGES, FONTS]
 
 const SHELL_FILES = ['/index.html', '/manifest.webmanifest', '/logo.png', '/icons/icon-192.png', '/icons/badge-96.png']
@@ -124,7 +124,7 @@ self.addEventListener('push', (event) => {
 
   event.waitUntil(
     (async () => {
-      await self.registration.showNotification(data.title || 'Feedora', {
+      await self.registration.showNotification(data.title || 'BOF2', {
         body: data.body || '',
         icon: '/icons/icon-192.png',
         badge: '/icons/badge-96.png',

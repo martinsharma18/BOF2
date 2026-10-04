@@ -2,11 +2,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Feedora.Domain.Entities;
+using BOF2.Domain.Entities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Feedora.Infrastructure.Auth;
+namespace BOF2.Infrastructure.Auth;
 
 public class TokenService(IOptions<JwtOptions> options)
 {

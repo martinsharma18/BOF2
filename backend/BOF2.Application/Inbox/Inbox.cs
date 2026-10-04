@@ -1,8 +1,8 @@
-using Feedora.Application.Common;
-using Feedora.Application.Vacancies;
-using Feedora.Domain.Enums;
+using BOF2.Application.Common;
+using BOF2.Application.Vacancies;
+using BOF2.Domain.Enums;
 
-namespace Feedora.Application.Inbox;
+namespace BOF2.Application.Inbox;
 
 public record InboxInvitationDto(string Message, Guid? PostId, string? PostTitle);
 

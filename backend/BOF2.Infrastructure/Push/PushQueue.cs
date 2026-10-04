@@ -1,6 +1,6 @@
 using System.Threading.Channels;
 
-namespace Feedora.Infrastructure.Push;
+namespace BOF2.Infrastructure.Push;
 
 /// <summary>What one push says. <see cref="Url"/> is the app route opened when it is tapped.</summary>
 public record PushNote(Guid UserId, string Title, string? Body, string Url, string Tag);

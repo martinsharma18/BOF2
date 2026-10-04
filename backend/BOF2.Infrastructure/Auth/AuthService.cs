@@ -1,15 +1,15 @@
-using Feedora.Application.Auth;
-using Feedora.Application.Common;
-using Feedora.Application.Users;
-using Feedora.Domain;
-using Feedora.Domain.Entities;
-using Feedora.Domain.Enums;
-using Feedora.Infrastructure.Persistence;
+using BOF2.Application.Auth;
+using BOF2.Application.Common;
+using BOF2.Application.Users;
+using BOF2.Domain;
+using BOF2.Domain.Entities;
+using BOF2.Domain.Enums;
+using BOF2.Infrastructure.Persistence;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace Feedora.Infrastructure.Auth;
+namespace BOF2.Infrastructure.Auth;
 
 public class AuthService(
     AppDbContext db,

@@ -1,15 +1,15 @@
 using System.Data;
 using System.Linq.Expressions;
-using Feedora.Application.Applications;
-using Feedora.Application.Common;
-using Feedora.Domain.Entities;
-using Feedora.Domain.Enums;
-using Feedora.Infrastructure.Persistence;
+using BOF2.Application.Applications;
+using BOF2.Application.Common;
+using BOF2.Domain.Entities;
+using BOF2.Domain.Enums;
+using BOF2.Infrastructure.Persistence;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
-namespace Feedora.Infrastructure.Services;
+namespace BOF2.Infrastructure.Services;
 
 public class ApplicationService(
     AppDbContext db,

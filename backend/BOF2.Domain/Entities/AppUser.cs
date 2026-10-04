@@ -1,7 +1,7 @@
-using Feedora.Domain.Enums;
+using BOF2.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 
-namespace Feedora.Domain.Entities;
+namespace BOF2.Domain.Entities;
 
 public class AppUser : IdentityUser<Guid>
 {

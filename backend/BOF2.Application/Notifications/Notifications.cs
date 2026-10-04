@@ -1,7 +1,7 @@
-using Feedora.Application.Common;
-using Feedora.Domain.Enums;
+using BOF2.Application.Common;
+using BOF2.Domain.Enums;
 
-namespace Feedora.Application.Notifications;
+namespace BOF2.Application.Notifications;
 
 public record NotificationDto(
     Guid Id,

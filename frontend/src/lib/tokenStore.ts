@@ -1,6 +1,6 @@
 import type { AuthResponse, User } from './types'
 
-const KEY = 'feedora.session'
+const KEY = 'bof2.session'
 
 export interface Session {
   accessToken: string

@@ -1,10 +1,10 @@
-using Feedora.Application.Admin;
-using Feedora.Application.Common;
-using Feedora.Domain.Enums;
-using Feedora.Infrastructure.Persistence;
+using BOF2.Application.Admin;
+using BOF2.Application.Common;
+using BOF2.Domain.Enums;
+using BOF2.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Feedora.Infrastructure.Services;
+namespace BOF2.Infrastructure.Services;
 
 public class AdminService(AppDbContext db, ICurrentUser currentUser) : IAdminService
 {

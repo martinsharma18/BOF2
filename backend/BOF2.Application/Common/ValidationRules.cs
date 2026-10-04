@@ -1,7 +1,7 @@
-using Feedora.Domain;
+using BOF2.Domain;
 using FluentValidation;
 
-namespace Feedora.Application.Common;
+namespace BOF2.Application.Common;
 
 public static class ValidationRules
 {

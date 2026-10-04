@@ -1,31 +1,31 @@
-using Feedora.Application.Auth;
-using Feedora.Application.Common;
-using Feedora.Application.Admin;
-using Feedora.Application.Ads;
-using Feedora.Application.Applications;
-using Feedora.Application.Inbox;
-using Feedora.Application.Invitations;
-using Feedora.Application.Locations;
-using Feedora.Application.Notifications;
-using Feedora.Application.Wallet;
-using Feedora.Application.Feedbacks;
-using Feedora.Application.Posts;
-using Feedora.Application.Push;
-using Feedora.Application.Reactions;
-using Feedora.Application.Users;
-using Feedora.Application.Vacancies;
-using Feedora.Domain.Entities;
-using Feedora.Infrastructure.Auth;
-using Feedora.Infrastructure.Persistence;
-using Feedora.Infrastructure.Push;
-using Feedora.Infrastructure.Services;
-using Feedora.Infrastructure.Storage;
+using BOF2.Application.Auth;
+using BOF2.Application.Common;
+using BOF2.Application.Admin;
+using BOF2.Application.Ads;
+using BOF2.Application.Applications;
+using BOF2.Application.Inbox;
+using BOF2.Application.Invitations;
+using BOF2.Application.Locations;
+using BOF2.Application.Notifications;
+using BOF2.Application.Wallet;
+using BOF2.Application.Feedbacks;
+using BOF2.Application.Posts;
+using BOF2.Application.Push;
+using BOF2.Application.Reactions;
+using BOF2.Application.Users;
+using BOF2.Application.Vacancies;
+using BOF2.Domain.Entities;
+using BOF2.Infrastructure.Auth;
+using BOF2.Infrastructure.Persistence;
+using BOF2.Infrastructure.Push;
+using BOF2.Infrastructure.Services;
+using BOF2.Infrastructure.Storage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Feedora.Infrastructure;
+namespace BOF2.Infrastructure;
 
 public static class DependencyInjection
 {

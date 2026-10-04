@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text.Json;
-using Feedora.Infrastructure.Persistence;
+using BOF2.Infrastructure.Persistence;
 using Lib.Net.Http.WebPush;
 using Lib.Net.Http.WebPush.Authentication;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Feedora.Infrastructure.Push;
+namespace BOF2.Infrastructure.Push;
 
 /// <summary>
 /// Background worker: takes pushes from <see cref="PushQueue"/> and delivers them to each of the user's devices.
@@ -39,7 +39,7 @@ public class PushSender(
         {
             DefaultAuthentication = new VapidAuthentication(config.PublicKey, config.PrivateKey)
             {
-                Subject = string.IsNullOrWhiteSpace(config.Subject) ? "mailto:admin@feedora.local" : config.Subject,
+                Subject = string.IsNullOrWhiteSpace(config.Subject) ? "mailto:admin@bof2.local" : config.Subject,
             },
         };
 

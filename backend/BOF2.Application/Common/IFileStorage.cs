@@ -1,4 +1,4 @@
-namespace Feedora.Application.Common;
+namespace BOF2.Application.Common;
 
 public record FileUpload(Stream Content, string FileName, string ContentType, long Length);
 

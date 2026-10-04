@@ -4,8 +4,8 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://feedora-api.onrender.com/api/:path*" },
-    { "source": "/uploads/:path*", "destination": "https://feedora-api.onrender.com/uploads/:path*" },
+    { "source": "/api/:path*", "destination": "https://bof2-api.onrender.com/api/:path*" },
+    { "source": "/uploads/:path*", "destination": "https://bof2-api.onrender.com/uploads/:path*" },
     { "source": "/((?!api/|uploads/|assets/|icons/).*)", "destination": "/index.html" }
   ],
   "headers": [

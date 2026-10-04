@@ -1,11 +1,11 @@
-using Feedora.Application.Auth;
-using Feedora.Application.Common;
-using Feedora.Application.Users;
+using BOF2.Application.Auth;
+using BOF2.Application.Common;
+using BOF2.Application.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
-namespace Feedora.Api.Controllers;
+namespace BOF2.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]

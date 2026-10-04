@@ -1,9 +1,9 @@
-using Feedora.Domain.Entities;
+using BOF2.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Feedora.Infrastructure.Persistence;
+namespace BOF2.Infrastructure.Persistence;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options)
     : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options)

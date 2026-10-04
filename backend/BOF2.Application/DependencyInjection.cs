@@ -1,7 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Feedora.Application;
+namespace BOF2.Application;
 
 public static class DependencyInjection
 {

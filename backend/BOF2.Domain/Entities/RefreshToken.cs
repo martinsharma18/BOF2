@@ -1,4 +1,4 @@
-namespace Feedora.Domain.Entities;
+namespace BOF2.Domain.Entities;
 
 public class RefreshToken
 {

@@ -1,20 +1,20 @@
-# Feedora API — container image for Render (or any Docker host).
-# Build context is this backend/ folder:  docker build -t feedora-api backend
+# BOF2 API — container image for Render (or any Docker host).
+# Build context is this backend/ folder:  docker build -t bof2-api backend
 
 # ---- build ----
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Restore first so this layer is cached until a project file changes.
-COPY global.json Feedora.sln ./
-COPY Feedora.Domain/Feedora.Domain.csproj Feedora.Domain/
-COPY Feedora.Application/Feedora.Application.csproj Feedora.Application/
-COPY Feedora.Infrastructure/Feedora.Infrastructure.csproj Feedora.Infrastructure/
-COPY Feedora.Api/Feedora.Api.csproj Feedora.Api/
-RUN dotnet restore Feedora.Api/Feedora.Api.csproj
+COPY global.json BOF2.sln ./
+COPY BOF2.Domain/BOF2.Domain.csproj BOF2.Domain/
+COPY BOF2.Application/BOF2.Application.csproj BOF2.Application/
+COPY BOF2.Infrastructure/BOF2.Infrastructure.csproj BOF2.Infrastructure/
+COPY BOF2.Api/BOF2.Api.csproj BOF2.Api/
+RUN dotnet restore BOF2.Api/BOF2.Api.csproj
 
 COPY . .
-RUN dotnet publish Feedora.Api/Feedora.Api.csproj -c Release -o /app --no-restore /p:UseAppHost=false
+RUN dotnet publish BOF2.Api/BOF2.Api.csproj -c Release -o /app --no-restore /p:UseAppHost=false
 
 # ---- run ----
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
@@ -32,4 +32,4 @@ ENV ASPNETCORE_HTTP_PORTS=10000 \
     DOTNET_gcServer=0
 EXPOSE 10000
 
-ENTRYPOINT ["dotnet", "Feedora.Api.dll"]
+ENTRYPOINT ["dotnet", "BOF2.Api.dll"]

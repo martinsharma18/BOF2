@@ -1,4 +1,4 @@
-namespace Feedora.Application.Common;
+namespace BOF2.Application.Common;
 
 public interface ICurrentUser
 {

@@ -1,9 +1,9 @@
-using Feedora.Domain.Entities;
-using Feedora.Domain.Enums;
+using BOF2.Domain.Entities;
+using BOF2.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace Feedora.Infrastructure.Push;
+namespace BOF2.Infrastructure.Push;
 
 /// <summary>
 /// Turns every new notification and inbox message into a phone push, once it is safely saved. Hooking

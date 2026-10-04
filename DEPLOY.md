@@ -1,4 +1,4 @@
-# Deploying Feedora (free)
+# Deploying BOF2 (free)
 
 ```
  phone / browser
@@ -21,7 +21,7 @@ Do the steps **in this order**. Steps 1–3 only need doing once.
 ## 1. Database — Neon (free, no expiry)
 
 1. Sign up at **neon.tech** (GitHub login is fine).
-2. **Create project** → name `feedora`, Postgres 17, region **AWS Asia Pacific (Singapore)**.
+2. **Create project** → name `bof2`, Postgres 17, region **AWS Asia Pacific (Singapore)**.
 3. Open **Connect**. Turn **Connection pooling OFF** (the API runs migrations on start and needs a direct connection).
 4. Copy the connection string. It looks like
    `postgresql://neondb_owner:xxxx@ep-xxxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require`
@@ -51,7 +51,7 @@ Changing them later turns phone notifications off for everyone until they turn t
 
 1. Push the code to GitHub (`main` branch).
 2. Render → **New** → **Blueprint** → choose the `BOF2` repo. Render reads `render.yaml` and
-   shows one web service, `feedora-api` (free, Singapore, Docker).
+   shows one web service, `bof2-api` (free, Singapore, Docker).
 3. Fill in the values it asks for:
 
    | Key | Value |
@@ -68,7 +68,7 @@ Changing them later turns phone notifications off for everyone until they turn t
 4. **Apply**. The first build takes ~5–8 minutes. When it is live, open
    `https://<your-service>.onrender.com/health`. It should say `Healthy`.
 5. Note the exact address Render gave the service (top of the service page). If it is **not**
-   `https://feedora-api.onrender.com`, change both addresses in `frontend/vercel.json` to yours and push.
+   `https://bof2-api.onrender.com`, change both addresses in `frontend/vercel.json` to yours and push.
 
 > Free plan: the API sleeps after 15 minutes without visitors, and the first request after that takes
 > ~30–50 s. Keep it awake for free: **uptimerobot.com** → New monitor → HTTP(s) →

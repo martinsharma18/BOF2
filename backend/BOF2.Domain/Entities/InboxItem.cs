@@ -1,6 +1,6 @@
-using Feedora.Domain.Enums;
+using BOF2.Domain.Enums;
 
-namespace Feedora.Domain.Entities;
+namespace BOF2.Domain.Entities;
 
 /// <summary>
 /// One message in a user's mail-style inbox. The content lives on the invitation or vacancy it points to,

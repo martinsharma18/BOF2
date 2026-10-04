@@ -1,4 +1,4 @@
-namespace Feedora.Domain.Entities;
+namespace BOF2.Domain.Entities;
 
 /// <summary>Extra details for User A (company) accounts.</summary>
 public class CompanyProfile

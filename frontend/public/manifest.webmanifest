@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Feedora — Work across Nepal",
-  "short_name": "Feedora",
+  "name": "BOF2 — Work across Nepal",
+  "short_name": "BOF2",
   "description": "Companies post opportunities across Nepal. People apply in one tap, chat, get hired and get paid.",
   "start_url": "/?source=pwa",
   "scope": "/",

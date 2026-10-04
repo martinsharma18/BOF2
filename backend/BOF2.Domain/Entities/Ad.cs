@@ -1,6 +1,6 @@
-using Feedora.Domain.Enums;
+using BOF2.Domain.Enums;
 
-namespace Feedora.Domain.Entities;
+namespace BOF2.Domain.Entities;
 
 /// <summary>An advertisement managed by the admin and shown in the advertising spaces.</summary>
 public class Ad

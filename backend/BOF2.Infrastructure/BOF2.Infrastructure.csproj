@@ -5,8 +5,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Feedora.Application\Feedora.Application.csproj" />
-    <ProjectReference Include="..\Feedora.Domain\Feedora.Domain.csproj" />
+    <ProjectReference Include="..\BOF2.Application\BOF2.Application.csproj" />
+    <ProjectReference Include="..\BOF2.Domain\BOF2.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

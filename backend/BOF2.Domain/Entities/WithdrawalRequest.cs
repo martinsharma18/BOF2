@@ -1,6 +1,6 @@
-using Feedora.Domain.Enums;
+using BOF2.Domain.Enums;
 
-namespace Feedora.Domain.Entities;
+namespace BOF2.Domain.Entities;
 
 /// <summary>An individual asking to cash out their wallet. An admin sends the money and marks it paid.</summary>
 public class WithdrawalRequest

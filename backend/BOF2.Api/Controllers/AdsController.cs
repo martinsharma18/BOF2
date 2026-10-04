@@ -1,8 +1,8 @@
-using Feedora.Application.Ads;
-using Feedora.Domain.Enums;
+using BOF2.Application.Ads;
+using BOF2.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Feedora.Api.Controllers;
+namespace BOF2.Api.Controllers;
 
 [ApiController]
 [Route("api/ads")]

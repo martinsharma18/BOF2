@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace Feedora.Application.Vacancies;
+namespace BOF2.Application.Vacancies;
 
 public record VacancyDto(
     Guid Id,

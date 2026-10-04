@@ -1,7 +1,7 @@
-using Feedora.Application.Common;
+using BOF2.Application.Common;
 using FluentValidation;
 
-namespace Feedora.Application.Posts;
+namespace BOF2.Application.Posts;
 
 public class PostFormValidator : AbstractValidator<PostFormRequest>
 {

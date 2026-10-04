@@ -1,6 +1,6 @@
-using Feedora.Domain.Enums;
+using BOF2.Domain.Enums;
 
-namespace Feedora.Application.Auth;
+namespace BOF2.Application.Auth;
 
 /// <summary>User A (company) registration form.</summary>
 public record RegisterCompanyRequest(

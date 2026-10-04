@@ -1,10 +1,10 @@
-using Feedora.Application.Locations;
-using Feedora.Domain;
-using Feedora.Infrastructure.Persistence;
+using BOF2.Application.Locations;
+using BOF2.Domain;
+using BOF2.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace Feedora.Infrastructure.Services;
+namespace BOF2.Infrastructure.Services;
 
 /// <summary>Provinces → districts → local levels. Local levels are read from the database and cached.</summary>
 public class LocationService(AppDbContext db, IMemoryCache cache) : ILocationService

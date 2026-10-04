@@ -1,13 +1,13 @@
-using Feedora.Domain;
-using Feedora.Domain.Entities;
-using Feedora.Domain.Enums;
+using BOF2.Domain;
+using BOF2.Domain.Entities;
+using BOF2.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Feedora.Infrastructure.Persistence;
+namespace BOF2.Infrastructure.Persistence;
 
 public static class DbSeeder
 {

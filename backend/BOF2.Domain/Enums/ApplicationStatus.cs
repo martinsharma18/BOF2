@@ -1,4 +1,4 @@
-namespace Feedora.Domain.Enums;
+namespace BOF2.Domain.Enums;
 
 /// <summary>How an individual responded to a post.</summary>
 public enum ApplicationKind

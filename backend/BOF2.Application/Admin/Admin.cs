@@ -1,7 +1,7 @@
-using Feedora.Application.Common;
-using Feedora.Domain.Enums;
+using BOF2.Application.Common;
+using BOF2.Domain.Enums;
 
-namespace Feedora.Application.Admin;
+namespace BOF2.Application.Admin;
 
 public record AdminStatsDto(
     int TotalUsers,

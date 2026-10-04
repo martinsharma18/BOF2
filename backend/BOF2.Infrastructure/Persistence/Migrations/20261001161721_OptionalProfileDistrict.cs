@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace Feedora.Infrastructure.Persistence.Migrations
+namespace BOF2.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
     public partial class OptionalProfileDistrict : Migration

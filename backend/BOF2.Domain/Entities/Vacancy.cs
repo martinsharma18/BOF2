@@ -1,4 +1,4 @@
-namespace Feedora.Domain.Entities;
+namespace BOF2.Domain.Entities;
 
 /// <summary>A job vacancy posted by the super admin and listed in the side rail for everyone.</summary>
 public class Vacancy

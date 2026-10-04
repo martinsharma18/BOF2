@@ -1,8 +1,8 @@
-using Feedora.Application.Common;
-using Feedora.Domain.Enums;
+using BOF2.Application.Common;
+using BOF2.Domain.Enums;
 using FluentValidation;
 
-namespace Feedora.Application.Applications;
+namespace BOF2.Application.Applications;
 
 public record ApplyRequest(ApplicationKind Kind, string? Message);
 

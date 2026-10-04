@@ -1,7 +1,7 @@
-using Feedora.Application.Common;
+using BOF2.Application.Common;
 using FluentValidation;
 
-namespace Feedora.Application.Feedbacks;
+namespace BOF2.Application.Feedbacks;
 
 public record CreateFeedbackRequest(string Content);
 

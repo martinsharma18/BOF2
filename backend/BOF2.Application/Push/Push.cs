@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace Feedora.Application.Push;
+namespace BOF2.Application.Push;
 
 /// <summary>A browser push subscription (from <c>PushSubscription.toJSON()</c>).</summary>
 public record PushSubscribeRequest(string Endpoint, string P256dh, string Auth);

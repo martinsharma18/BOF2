@@ -1,7 +1,7 @@
-using Feedora.Application.Common;
-using Feedora.Domain.Enums;
+using BOF2.Application.Common;
+using BOF2.Domain.Enums;
 
-namespace Feedora.Application.Posts;
+namespace BOF2.Application.Posts;
 
 /// <summary>Feed filters. All are optional.</summary>
 public class PostQuery : PageQuery

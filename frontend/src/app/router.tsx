@@ -14,12 +14,12 @@ function page<K extends string>(loader: () => Promise<Record<K, ComponentType>>,
   return lazy(() =>
     loader().then(
       (m) => {
-        sessionStorage.removeItem('feedora.chunk-reload')
+        sessionStorage.removeItem('bof2.chunk-reload')
         return { default: m[name] }
       },
       (error) => {
-        if (!sessionStorage.getItem('feedora.chunk-reload')) {
-          sessionStorage.setItem('feedora.chunk-reload', '1')
+        if (!sessionStorage.getItem('bof2.chunk-reload')) {
+          sessionStorage.setItem('bof2.chunk-reload', '1')
           window.location.reload()
         }
         throw error

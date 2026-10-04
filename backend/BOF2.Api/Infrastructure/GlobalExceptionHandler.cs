@@ -1,9 +1,9 @@
-using Feedora.Application.Common;
+using BOF2.Application.Common;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Feedora.Api.Infrastructure;
+namespace BOF2.Api.Infrastructure;
 
 /// <summary>Maps application exceptions to RFC 7807 problem responses.</summary>
 public class GlobalExceptionHandler(IProblemDetailsService problemDetails, ILogger<GlobalExceptionHandler> logger)

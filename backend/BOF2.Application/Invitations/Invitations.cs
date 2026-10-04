@@ -1,8 +1,8 @@
-using Feedora.Application.Common;
-using Feedora.Domain.Enums;
+using BOF2.Application.Common;
+using BOF2.Domain.Enums;
 using FluentValidation;
 
-namespace Feedora.Application.Invitations;
+namespace BOF2.Application.Invitations;
 
 /// <summary>Who receives an invitation (in their inbox). Every filter is optional; none at all means every individual.</summary>
 public class InvitationAudience
@@ -46,11 +46,11 @@ public class InvitationAudienceValidator : AbstractValidator<InvitationAudience>
 
     public InvitationAudienceValidator()
     {
-        RuleFor(x => x.Province).Must(p => Feedora.Domain.NepalLocations.Provinces.ContainsKey(p!))
+        RuleFor(x => x.Province).Must(p => BOF2.Domain.NepalLocations.Provinces.ContainsKey(p!))
             .When(x => !string.IsNullOrEmpty(x.Province)).WithMessage("Unknown province.");
-        RuleFor(x => x.District).Must((x, d) => Feedora.Domain.NepalLocations.IsValid(x.Province, d))
+        RuleFor(x => x.District).Must((x, d) => BOF2.Domain.NepalLocations.IsValid(x.Province, d))
             .When(x => !string.IsNullOrEmpty(x.District)).WithMessage("District does not belong to the selected province.");
-        RuleFor(x => x.LocalLevel).Must((x, l) => Feedora.Domain.NepalLocalLevels.IsValid(x.District, l))
+        RuleFor(x => x.LocalLevel).Must((x, l) => BOF2.Domain.NepalLocalLevels.IsValid(x.District, l))
             .When(x => !string.IsNullOrEmpty(x.LocalLevel)).WithMessage("Local level does not belong to the selected district.");
         RuleFor(x => x.Gender).IsInEnum().When(x => x.Gender.HasValue);
         RuleFor(x => x.MinAge).InclusiveBetween(MinimumAge, MaximumAge).When(x => x.MinAge.HasValue);

@@ -1,12 +1,12 @@
-using Feedora.Application.Common;
-using Feedora.Application.Push;
-using Feedora.Domain.Entities;
-using Feedora.Infrastructure.Persistence;
+using BOF2.Application.Common;
+using BOF2.Application.Push;
+using BOF2.Domain.Entities;
+using BOF2.Infrastructure.Persistence;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace Feedora.Infrastructure.Push;
+namespace BOF2.Infrastructure.Push;
 
 public class PushService(
     AppDbContext db,

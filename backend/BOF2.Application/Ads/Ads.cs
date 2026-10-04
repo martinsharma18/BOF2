@@ -1,8 +1,8 @@
-using Feedora.Application.Common;
-using Feedora.Domain.Enums;
+using BOF2.Application.Common;
+using BOF2.Domain.Enums;
 using FluentValidation;
 
-namespace Feedora.Application.Ads;
+namespace BOF2.Application.Ads;
 
 public record AdDto(
     Guid Id,

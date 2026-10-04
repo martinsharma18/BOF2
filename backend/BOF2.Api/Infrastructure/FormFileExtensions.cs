@@ -1,6 +1,6 @@
-using Feedora.Application.Common;
+using BOF2.Application.Common;
 
-namespace Feedora.Api.Infrastructure;
+namespace BOF2.Api.Infrastructure;
 
 public static class FormFileExtensions
 {

@@ -1,8 +1,8 @@
-using Feedora.Application.Common;
-using Feedora.Domain.Enums;
+using BOF2.Application.Common;
+using BOF2.Domain.Enums;
 using FluentValidation;
 
-namespace Feedora.Application.Wallet;
+namespace BOF2.Application.Wallet;
 
 public record PaymentDto(Guid Id, decimal Amount, string? Note, DateTime CreatedAt, AuthorDto Payer, Guid PostId, string PostTitle);
 

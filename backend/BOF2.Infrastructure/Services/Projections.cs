@@ -1,10 +1,10 @@
 using System.Linq.Expressions;
-using Feedora.Application.Common;
-using Feedora.Domain.Entities;
-using Feedora.Infrastructure.Persistence;
+using BOF2.Application.Common;
+using BOF2.Domain.Entities;
+using BOF2.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Feedora.Infrastructure.Services;
+namespace BOF2.Infrastructure.Services;
 
 internal static class Projections
 {

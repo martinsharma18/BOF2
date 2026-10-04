@@ -1,14 +1,14 @@
-using Feedora.Api.Infrastructure;
-using Feedora.Application.Admin;
-using Feedora.Application.Ads;
-using Feedora.Application.Common;
-using Feedora.Application.Vacancies;
-using Feedora.Application.Wallet;
-using Feedora.Domain;
+using BOF2.Api.Infrastructure;
+using BOF2.Application.Admin;
+using BOF2.Application.Ads;
+using BOF2.Application.Common;
+using BOF2.Application.Vacancies;
+using BOF2.Application.Wallet;
+using BOF2.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Feedora.Api.Controllers;
+namespace BOF2.Api.Controllers;
 
 [ApiController]
 [Route("api/admin")]

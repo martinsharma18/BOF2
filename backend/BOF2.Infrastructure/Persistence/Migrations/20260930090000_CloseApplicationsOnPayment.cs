@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Feedora.Infrastructure.Persistence.Migrations
+namespace BOF2.Infrastructure.Persistence.Migrations
 {
     /// <summary>
     /// Data only: one application is now one job with one payment. Applications that were already

@@ -1,6 +1,6 @@
-using Feedora.Application.Common;
+using BOF2.Application.Common;
 
-namespace Feedora.Application.Posts;
+namespace BOF2.Application.Posts;
 
 public interface IPostService
 {

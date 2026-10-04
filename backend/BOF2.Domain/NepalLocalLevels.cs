@@ -1,4 +1,4 @@
-namespace Feedora.Domain;
+namespace BOF2.Domain;
 
 /// <summary>
 /// Nepal's 753 local levels (metropolitan, sub-metropolitan, municipality, rural municipality) by district.

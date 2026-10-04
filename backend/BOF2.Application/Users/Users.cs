@@ -1,8 +1,8 @@
-using Feedora.Application.Common;
-using Feedora.Domain.Enums;
+using BOF2.Application.Common;
+using BOF2.Domain.Enums;
 using FluentValidation;
 
-namespace Feedora.Application.Users;
+namespace BOF2.Application.Users;
 
 /// <summary>What anyone logged in can see about a user. Contact details are not included.</summary>
 public record PublicProfileDto(

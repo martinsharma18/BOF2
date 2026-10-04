@@ -1,4 +1,4 @@
-# Feedora
+# BOF2
 
 A Nepal-focused marketplace for requirements. Companies and individuals post what they need (how many people, budget, gender, location), and everyone else reacts and leaves feedback. It started from the sketches in `docs/sketches/`.
 
@@ -30,10 +30,10 @@ A Nepal-focused marketplace for requirements. Companies and individuals post wha
 
 ```
 backend/
-  Feedora.Domain/          entities, enums, Nepal's provinces, districts and local levels
-  Feedora.Application/     DTOs, validators, service interfaces (Auth, Posts, Reactions, Feedbacks, Users, Ads, Admin)
-  Feedora.Infrastructure/  EF DbContext + migrations, Identity/JWT, service implementations, file storage
-  Feedora.Api/             controllers, error handling, security headers, health check, SPA hosting
+  BOF2.Domain/          entities, enums, Nepal's provinces, districts and local levels
+  BOF2.Application/     DTOs, validators, service interfaces (Auth, Posts, Reactions, Feedbacks, Users, Ads, Admin)
+  BOF2.Infrastructure/  EF DbContext + migrations, Identity/JWT, service implementations, file storage
+  BOF2.Api/             controllers, error handling, security headers, health check, SPA hosting
 frontend/src/
   app/                     App providers + lazy-loaded router
   components/ui/           design system (Button, Form controls, Dialog, Menu, Toast, Card, Badge, Avatar…)
@@ -49,7 +49,7 @@ frontend/src/
 
 ```bash
 cd backend
-dotnet user-secrets set "ConnectionStrings:Default" "Host=localhost;Port=5432;Database=feedora;Username=postgres;Password=YOUR_PASSWORD" --project Feedora.Api
+dotnet user-secrets set "ConnectionStrings:Default" "Host=localhost;Port=5432;Database=bof2;Username=postgres;Password=YOUR_PASSWORD" --project BOF2.Api
 ```
 
 Or use `docker compose up -d` for a Postgres on port 5433.
@@ -57,7 +57,7 @@ Or use `docker compose up -d` for a Postgres on port 5433.
 **2. API** runs on http://localhost:5000. On start it applies migrations and seeds roles and the admin account.
 
 ```bash
-dotnet run --project Feedora.Api --launch-profile http
+dotnet run --project BOF2.Api --launch-profile http
 ```
 
 API reference (development only): http://localhost:5000/scalar · health check: http://localhost:5000/health
@@ -68,7 +68,7 @@ API reference (development only): http://localhost:5000/scalar · health check: 
 cd frontend && npm install && npm run dev
 ```
 
-Dev super admin (User C, opens `/admin`): `admin@feedora.local` / `Admin12345` (from `appsettings.Development.json`).
+Dev super admin (User C, opens `/admin`): `admin@bof2.local` / `Admin12345` (from `appsettings.Development.json`).
 
 ## API
 
@@ -98,7 +98,7 @@ GET|POST /api/admin/ads            PUT|DELETE /api/admin/ads/{id}
 
 ```bash
 cd backend
-dotnet ef migrations add <Name> -p Feedora.Infrastructure -s Feedora.Api -o Persistence/Migrations
+dotnet ef migrations add <Name> -p BOF2.Infrastructure -s BOF2.Api -o Persistence/Migrations
 ```
 
 ## Deploying
@@ -106,7 +106,7 @@ dotnet ef migrations add <Name> -p Feedora.Infrastructure -s Feedora.Api -o Pers
 Free hosting: **Vercel** (frontend) + **Render** (API, Docker) + **Neon** (PostgreSQL) + **Cloudinary** (photos).
 Step-by-step guide: [DEPLOY.md](DEPLOY.md). Files: `render.yaml`, `backend/Dockerfile`, `frontend/vercel.json`.
 
-Self-hosting on one server also works: build the frontend, copy `frontend/dist/*` into `backend/Feedora.Api/wwwroot/`,
+Self-hosting on one server also works: build the frontend, copy `frontend/dist/*` into `backend/BOF2.Api/wwwroot/`,
 and the API serves both from one origin (same environment variables as in DEPLOY.md).
 
 ## Next up
@@ -115,5 +115,4 @@ and the API serves both from one origin (same environment variables as in DEPLOY
 - Rename "Type 1 / Type 2" to their real meanings (one place: `frontend/src/features/posts/labels.ts`)
 - Real payment gateway (eSewa / Khalti) so companies fund payments instead of just recording them
 - Native app (React Native / Expo) only if the store listing or deeper phone features are needed; the API and the push backend are ready for it
-- Brand name: the logo says BOF2 while copy says Feedora; change `APP_NAME` in `frontend/src/lib/brand.ts` and the `<title>` in `index.html`
 - Reporting posts and moderation queue; automated tests (xUnit + Testcontainers, Vitest + Playwright)

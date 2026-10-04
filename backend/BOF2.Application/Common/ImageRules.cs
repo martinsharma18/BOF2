@@ -1,4 +1,4 @@
-namespace Feedora.Application.Common;
+namespace BOF2.Application.Common;
 
 /// <summary>Shared rules for uploaded images (post media, avatars, ads).</summary>
 public static class ImageRules

@@ -1,6 +1,6 @@
-using Feedora.Application.Users;
+using BOF2.Application.Users;
 
-namespace Feedora.Application.Auth;
+namespace BOF2.Application.Auth;
 
 public interface IAuthService
 {
