@@ -24,6 +24,7 @@ public class PostFormRequest
     public int MinimumNumber { get; set; }
     public decimal MaximumPayment { get; set; }
     public string ContactNumber { get; set; } = string.Empty;
+    public string WitnessContactNumber { get; set; } = string.Empty;
     public bool IsFromAnywhere { get; set; }
     public string? Province { get; set; }
     public string? District { get; set; }
@@ -44,6 +45,7 @@ public record PostDto(
     int MinimumNumber,
     decimal MaximumPayment,
     string? ContactNumber,
+    string? WitnessContactNumber,
     bool IsFromAnywhere,
     string? Province,
     string? District,

@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CheckCircle2, ClipboardList, Download, Hand, ImageIcon, Link2, ListChecks, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Send, Trash2, Users, VenusAndMars, Wallet } from 'lucide-react'
+import { CheckCircle2, ClipboardList, Download, Hand, ImageIcon, Link2, ListChecks, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Send, Trash2, UserCheck, Users, VenusAndMars, Wallet } from 'lucide-react'
 import { Avatar, Badge, Button, ButtonLink, Card, ConfirmDialog, Dialog, Menu, MenuItem, MenuSeparator, Skeleton, Spinner, Textarea, toast } from '@/components/ui'
 import { useApply } from '@/features/applications/api'
 import { ClaimPaymentDialog } from '@/features/applications/ClaimPaymentDialog'
@@ -198,6 +198,9 @@ export function PostCard({
           <Detail icon={<MapPin className="size-4" />} label="Area" value={locationLabel(post)} />
           {post.contactNumber && (
             <Detail icon={<Phone className="size-4" />} label="Contact" value={post.contactNumber} href={`tel:${post.contactNumber.replace(/[\s-]/g, '')}`} />
+          )}
+          {post.witnessContactNumber && (
+            <Detail icon={<UserCheck className="size-4" />} label="Witness contact" value={post.witnessContactNumber} href={`tel:${post.witnessContactNumber.replace(/[\s-]/g, '')}`} />
           )}
           </dl>
         </div>

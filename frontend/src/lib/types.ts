@@ -46,6 +46,7 @@ export interface Post {
   minimumNumber: number
   maximumPayment: number
   contactNumber: string | null
+  witnessContactNumber: string | null
   isFromAnywhere: boolean
   province: string | null
   district: string | null

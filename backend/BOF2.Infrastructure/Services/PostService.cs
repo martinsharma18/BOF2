@@ -126,6 +126,7 @@ public class PostService(
         post.MinimumNumber = request.MinimumNumber;
         post.MaximumPayment = request.MaximumPayment;
         post.ContactNumber = request.ContactNumber.Trim();
+        post.WitnessContactNumber = request.WitnessContactNumber.Trim();
         post.IsFromAnywhere = request.IsFromAnywhere;
         post.Province = request.IsFromAnywhere ? null : request.Province;
         post.District = request.IsFromAnywhere || string.IsNullOrWhiteSpace(request.District) ? null : request.District;
@@ -219,7 +220,7 @@ public class PostService(
             p.Id, p.Type, p.Title, p.MediaUrl,
             p.GenderPreference.HasFlag(GenderPreference.Male),
             p.GenderPreference.HasFlag(GenderPreference.Female),
-            p.MinimumNumber, p.MaximumPayment, p.ContactNumber, p.IsFromAnywhere, p.Province, p.District, p.LocalLevel,
+            p.MinimumNumber, p.MaximumPayment, p.ContactNumber, p.WitnessContactNumber, p.IsFromAnywhere, p.Province, p.District, p.LocalLevel,
             p.Requirement, p.CreatedAt, p.UpdatedAt,
             authors[p.AuthorId],
             reactionCounts[p.Id].ToDictionary(c => c.Type, c => c.Count),

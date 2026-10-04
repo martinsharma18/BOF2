@@ -33,6 +33,11 @@ const schema = z
       .trim()
       .min(1, 'Enter a contact number')
       .regex(/^\+?[0-9][0-9\s-]{5,18}$/, 'Enter a valid phone number'),
+    witnessContactNumber: z
+      .string()
+      .trim()
+      .min(1, 'Enter a witness contact number')
+      .regex(/^\+?[0-9][0-9\s-]{5,18}$/, 'Enter a valid phone number'),
     minimumNumber: z.number('Enter a number').int('Whole numbers only').min(1, 'At least 1').max(10000, 'Too large'),
     maximumPayment: z.number('Enter an amount').min(0, 'Cannot be negative').max(999_999_999, 'Too large'),
     isFromAnywhere: z.boolean(),
@@ -49,6 +54,7 @@ const fieldNames: (keyof Values)[] = [
   'requirement',
   'gender',
   'contactNumber',
+  'witnessContactNumber',
   'minimumNumber',
   'maximumPayment',
   'isFromAnywhere',
@@ -59,7 +65,7 @@ const fieldNames: (keyof Values)[] = [
 
 function toDefaults(post?: Post): Partial<Values> {
   if (!post) {
-    return { contactNumber: '', isFromAnywhere: false, province: '', district: '', localLevel: '', title: '', requirement: '' }
+    return { contactNumber: '', witnessContactNumber: '', isFromAnywhere: false, province: '', district: '', localLevel: '', title: '', requirement: '' }
   }
   return {
     type: post.type,
@@ -67,6 +73,7 @@ function toDefaults(post?: Post): Partial<Values> {
     requirement: post.requirement,
     gender: post.acceptsMale && post.acceptsFemale ? 'Both' : post.acceptsMale ? 'Male' : 'Female',
     contactNumber: post.contactNumber ?? '',
+    witnessContactNumber: post.witnessContactNumber ?? '',
     minimumNumber: post.minimumNumber,
     maximumPayment: post.maximumPayment,
     isFromAnywhere: post.isFromAnywhere,
@@ -128,6 +135,7 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
     form.append('acceptsMale', String(values.gender !== 'Female'))
     form.append('acceptsFemale', String(values.gender !== 'Male'))
     form.append('contactNumber', values.contactNumber)
+    form.append('witnessContactNumber', values.witnessContactNumber)
     form.append('minimumNumber', String(values.minimumNumber))
     form.append('maximumPayment', String(values.maximumPayment))
     form.append('isFromAnywhere', String(values.isFromAnywhere))
@@ -266,6 +274,9 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
           </div>
           <Field label="Contact number" htmlFor="contactNumber" error={errors.contactNumber?.message} hint="Phone number people can call about this post.">
             <Input id="contactNumber" type="tel" inputMode="tel" autoComplete="tel" maxLength={20} placeholder="e.g. 98XXXXXXXX" {...register('contactNumber')} aria-invalid={!!errors.contactNumber} />
+          </Field>
+          <Field label="Witness contact number" htmlFor="witnessContactNumber" error={errors.witnessContactNumber?.message} hint="A person who can confirm this post is genuine.">
+            <Input id="witnessContactNumber" type="tel" inputMode="tel" maxLength={20} placeholder="e.g. 98XXXXXXXX" {...register('witnessContactNumber')} aria-invalid={!!errors.witnessContactNumber} />
           </Field>
         </FormSection>
 

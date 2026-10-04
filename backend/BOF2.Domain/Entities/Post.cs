@@ -19,6 +19,9 @@ public class Post
     /// <summary>Phone number people can call about this post.</summary>
     public string? ContactNumber { get; set; }
 
+    /// <summary>Phone number of a witness who can vouch for the post.</summary>
+    public string? WitnessContactNumber { get; set; }
+
     /// <summary>When true, Province/District are ignored ("From Anywhere").</summary>
     public bool IsFromAnywhere { get; set; }
     public string? Province { get; set; }
