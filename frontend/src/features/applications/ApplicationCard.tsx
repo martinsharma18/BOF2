@@ -1,24 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  Banknote,
-  BriefcaseBusiness,
-  Check,
-  ChevronDown,
-  CircleAlert,
-  Clock,
-  ExternalLink,
-  Hand,
-  Mail,
-  MapPin,
-  MessageSquare,
-  Phone,
-  UserPlus,
-  UserRound,
-  X,
-  XCircle,
-} from 'lucide-react'
-import { Avatar, Badge, Button, ButtonLink, Card, Dialog, Field, Input, Textarea, toast } from '@/components/ui'
+import { Banknote, BriefcaseBusiness, Check, CircleAlert, Clock, Hand, MessageSquare, Phone, UserPlus, X, XCircle } from 'lucide-react'
+import { Avatar, Badge, Button, ButtonLink, buttonClasses, Card, ConfirmDialog, Dialog, Field, Input, Textarea, toast } from '@/components/ui'
 import { useAuth } from '@/features/auth/AuthContext'
 import { getErrorMessage, getProblem } from '@/lib/api'
 import { cn } from '@/lib/cn'
@@ -26,127 +9,266 @@ import { ageFrom, formatMoney, timeAgo } from '@/lib/format'
 import type { Application } from '@/lib/types'
 import { useDeclineClaim, usePayApplicant, useSetApplicationStatus } from './api'
 import { ClaimPaymentDialog } from './ClaimPaymentDialog'
-import { ConversationDialog } from './ConversationDialog'
 import { JobProgress } from './JobProgress'
 import { stageMeta, stageOf, type Tone } from './labels'
 
 /**
- * One application = one job = one payment.
- * Applied → company Hires → applicant Claims (amount + what they did) → company Pays that exact amount → Paid (closed).
- * The company can decline the claim with a reason; the applicant then fixes it and claims again.
+ * One application = one job = one payment: Applied → Hired → Claimed → Paid.
+ * The card answers three things at a glance: who / which job, where it stands, and what to do next.
+ * Talking happens in Messages (one conversation per application); the card links there.
  */
-export function ApplicationCard({ application, highlighted, autoOpenChat }: { application: Application; highlighted?: boolean; autoOpenChat?: boolean }) {
+export function ApplicationCard({ application, highlighted }: { application: Application; highlighted?: boolean }) {
   const { user } = useAuth()
-  const [chatOpen, setChatOpen] = useState(!!autoOpenChat)
-  const [dialog, setDialog] = useState<'pay' | 'decline-claim' | 'claim' | null>(null)
-  const setStatus = useSetApplicationStatus()
-
   const a = application
   const isCompany = user?.id === a.company.id
   const stage = stageOf(a)
-  const badge = stageMeta[stage]
-  const other = isCompany
-    ? { id: a.applicant.id, name: a.applicant.fullName, avatar: a.applicant.avatarUrl }
-    : { id: a.company.id, name: a.company.displayName, avatar: a.company.avatarUrl }
+  const phone = isCompany ? a.applicant.phoneNumber : null
 
+  return (
+    <Card className={cn('animate-fade-in overflow-hidden', highlighted && 'ring-2 ring-accent-400')}>
+      <div className="space-y-3 p-4">
+        {isCompany ? <ApplicantHeader application={a} /> : <JobHeader application={a} />}
+
+        {stage !== 'Declined' && <JobProgress status={a.status} claimed={stage === 'Claimed'} />}
+
+        <NextStep application={a} isCompany={isCompany} />
+
+        {/* A new applicant's note is what the company decides on, so show it right away. */}
+        {isCompany && stage === 'New' && a.message && (
+          <p className="line-clamp-3 border-l-2 border-slate-200 pl-3 text-sm whitespace-pre-line text-slate-600">{a.message}</p>
+        )}
+      </div>
+
+      <div className="flex items-center gap-1 border-t border-slate-100 px-2 py-2 sm:px-3">
+        <ButtonLink to={`/messages/${a.id}`} variant="ghost" size="sm" icon={<MessageSquare className="size-4" />}>
+          Chat{a.messageCount > 0 && <span className="text-slate-400">{a.messageCount}</span>}
+        </ButtonLink>
+        {phone && (
+          <a href={`tel:${phone}`} className={buttonClasses({ variant: 'ghost', size: 'sm' })} aria-label={`Call ${a.applicant.fullName}`}>
+            <Phone className="size-4" />
+            <span className="max-sm:hidden">Call</span>
+          </a>
+        )}
+        <div className="ml-auto flex items-center gap-2">
+          <JobActions application={a} />
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+/** Company view: the person first (name, age, gender, place), the job as a small line under it. */
+function ApplicantHeader({ application: a }: { application: Application }) {
+  const p = a.applicant
+  const stage = stageOf(a)
+  const facts = [p.dateOfBirth && `${ageFrom(p.dateOfBirth)} yrs`, p.gender, p.district ?? p.province].filter(Boolean)
+
+  return (
+    <div className="flex items-start gap-3">
+      <Link to={`/u/${p.id}`} className="shrink-0">
+        <Avatar name={p.fullName} src={p.avatarUrl} />
+      </Link>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <Link to={`/u/${p.id}`} className="truncate font-semibold text-slate-900 hover:underline">
+            {p.fullName}
+          </Link>
+          <Badge tone={stageMeta[stage].tone} className="shrink-0">
+            {stageMeta[stage].company}
+          </Badge>
+        </div>
+        {facts.length > 0 && <p className="text-sm text-slate-500">{facts.join(' · ')}</p>}
+        <p className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-slate-400">
+          <BriefcaseBusiness className="size-3 shrink-0" />
+          <Link to={`/posts/${a.postId}`} className="truncate hover:text-brand-700 hover:underline">
+            {a.postTitle}
+          </Link>
+          <span className="shrink-0">· {timeAgo(a.createdAt)}</span>
+        </p>
+      </div>
+    </div>
+  )
+}
+
+/** Individual view: the job first, then who posted it and the pay. */
+function JobHeader({ application: a }: { application: Application }) {
+  const stage = stageOf(a)
+  return (
+    <div className="flex items-start gap-3">
+      <Link to={`/u/${a.company.id}`} className="shrink-0">
+        <Avatar name={a.company.displayName} src={a.company.avatarUrl} />
+      </Link>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <Link to={`/posts/${a.postId}`} className="truncate font-semibold text-slate-900 hover:underline">
+            {a.postTitle}
+          </Link>
+          <Badge tone={stageMeta[stage].tone} className="shrink-0">
+            {stageMeta[stage].individual}
+          </Badge>
+        </div>
+        <p className="truncate text-sm text-slate-500">
+          {a.company.displayName}
+          {a.postMaximumPayment > 0 && <> · up to {formatMoney(a.postMaximumPayment)}</>}
+        </p>
+        <p className="mt-0.5 text-xs text-slate-400">Applied {timeAgo(a.createdAt)}</p>
+      </div>
+    </div>
+  )
+}
+
+const toneText: Record<Tone, string> = {
+  brand: 'text-brand-700 [&_svg]:text-brand-500',
+  green: 'text-emerald-700 [&_svg]:text-emerald-500',
+  amber: 'text-amber-800 [&_svg]:text-amber-500',
+  red: 'text-red-700 [&_svg]:text-red-500',
+  slate: 'text-slate-600 [&_svg]:text-slate-400',
+}
+
+/** One plain sentence: where the job is and what happens next, worded for whoever is looking. */
+function NextStep({ application: a, isCompany }: { application: Application; isCompany: boolean }) {
+  const stage = stageOf(a)
+  const company = a.company.displayName
+  let step: { tone: Tone; icon: ReactNode; text: ReactNode }
+
+  if (stage === 'New')
+    step = isCompany
+      ? { tone: 'brand', icon: <UserPlus />, text: 'New applicant. Read their note, then hire or decline.' }
+      : { tone: 'brand', icon: <Clock />, text: `Waiting for ${company} to reply.` }
+  else if (stage === 'Hired' && a.claimDeclineReason)
+    step = isCompany
+      ? { tone: 'red', icon: <CircleAlert />, text: <>You declined the claim: “{a.claimDeclineReason}”</> }
+      : { tone: 'red', icon: <CircleAlert />, text: <>Claim declined: “{a.claimDeclineReason}”. Fix it and claim again.</> }
+  else if (stage === 'Hired')
+    step = isCompany
+      ? { tone: 'green', icon: <BriefcaseBusiness />, text: 'Working. They claim payment when the work is done.' }
+      : { tone: 'green', icon: <BriefcaseBusiness />, text: 'You’re hired! Claim payment when the work is done.' }
+  else if (stage === 'Claimed')
+    step = isCompany
+      ? { tone: 'amber', icon: <Hand />, text: <>Claimed {formatMoney(a.claimedAmount!)}{a.claimNote && <> · “{a.claimNote}”</>}. Pay or decline.</> }
+      : { tone: 'amber', icon: <Hand />, text: `You claimed ${formatMoney(a.claimedAmount!)}. Waiting for payment.` }
+  else if (stage === 'Paid')
+    step = isCompany
+      ? { tone: 'green', icon: <Banknote />, text: `Paid ${formatMoney(a.paidAmount)}. Job closed.` }
+      : { tone: 'green', icon: <Banknote />, text: `${formatMoney(a.paidAmount)} is in your wallet.` }
+  else
+    step = isCompany
+      ? { tone: 'slate', icon: <XCircle />, text: 'You declined this application.' }
+      : { tone: 'slate', icon: <XCircle />, text: 'Not selected this time. Keep applying!' }
+
+  return (
+    <p className={cn('flex items-start gap-2 text-sm font-medium [&_svg]:mt-0.5 [&_svg]:size-4 [&_svg]:shrink-0', toneText[step.tone])}>
+      {step.icon}
+      <span className="min-w-0">{step.text}</span>
+    </p>
+  )
+}
+
+/**
+ * The next step for whoever is looking: Hire/Decline, Pay/Decline claim, Claim payment…
+ * Used on the application card and at the top of the chat, so the job can move on from either place.
+ */
+export function JobActions({ application: a }: { application: Application }) {
+  const { user } = useAuth()
+  const [dialog, setDialog] = useState<'pay' | 'decline-claim' | 'claim' | 'hire' | 'decline' | 'cancel-hire' | null>(null)
+  const setStatus = useSetApplicationStatus()
+  const isCompany = user?.id === a.company.id
+  const stage = stageOf(a)
+  const name = a.applicant.fullName
+
+  // Hiring and declining notify the other person, so ask first.
   const changeStatus = (to: 'Accepted' | 'Rejected') =>
     setStatus.mutate(
       { id: a.id, status: to },
       {
-        onSuccess: () => toast.success(to === 'Accepted' ? `${a.applicant.fullName} is hired and was notified.` : 'Done. They were notified.'),
+        onSuccess: () => {
+          setDialog(null)
+          toast.success(to === 'Accepted' ? `${name} is hired and was notified.` : 'Done. They were notified.')
+        },
         onError: (error) => toast.error(getProblem(error)?.errors?.Status?.[0] ?? getErrorMessage(error)),
       },
     )
-  const busy = (to: 'Accepted' | 'Rejected') => setStatus.isPending && setStatus.variables?.status === to
+  const confirm = {
+    hire: {
+      title: `Hire ${name}?`,
+      description: `${name} will be notified and can start the work. When it's done they claim payment, and you pay from here.`,
+      label: 'Yes, hire',
+      to: 'Accepted' as const,
+    },
+    decline: {
+      title: `Decline ${name}?`,
+      description: 'They will be told you chose someone else. You can still hire them later.',
+      label: 'Decline',
+      to: 'Rejected' as const,
+    },
+    'cancel-hire': {
+      title: `Cancel hiring ${name}?`,
+      description: 'They will be told the job is off. You can hire them again later.',
+      label: 'Cancel hire',
+      to: 'Rejected' as const,
+    },
+  }
+  const asking = dialog === 'hire' || dialog === 'decline' || dialog === 'cancel-hire' ? confirm[dialog] : null
 
   return (
-    <Card className={cn('animate-fade-in overflow-hidden', highlighted && 'ring-2 ring-accent-400')}>
-      <div className="space-y-4 p-4 sm:p-5">
-        {/* Who + which job */}
-        <div className="flex items-start gap-3">
-          <Link to={`/u/${other.id}`} className="shrink-0">
-            <Avatar name={other.name} src={other.avatar} />
-          </Link>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <Link to={`/u/${other.id}`} className="truncate font-semibold text-slate-900 hover:underline">
-                {other.name}
-              </Link>
-              <Badge tone={badge.tone}>{isCompany ? badge.company : badge.individual}</Badge>
-            </div>
-            <p className="mt-0.5 truncate text-sm text-slate-500">
-              <Link to={`/posts/${a.postId}`} className="font-medium text-slate-700 hover:text-brand-700 hover:underline">
-                {a.postTitle}
-              </Link>
-              {a.postMaximumPayment > 0 && <> · up to {formatMoney(a.postMaximumPayment)}</>}
-              <> · applied {timeAgo(a.createdAt)}</>
-            </p>
-          </div>
-        </div>
-
-        {stage !== 'Declined' && <JobProgress status={a.status} claimed={stage === 'Claimed'} />}
-
-        <StatusPanel application={a} isCompany={isCompany} />
-
-        <Details application={a} isCompany={isCompany} defaultOpen={isCompany && stage === 'New'} />
-      </div>
-
-      {/* Actions: chat on the left, the one thing to do next on the right. */}
-      <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/70 px-4 py-3 sm:px-5">
-        <Button variant="secondary" size="sm" icon={<MessageSquare className="size-4" />} onClick={() => setChatOpen(true)}>
-          Chat{a.messageCount > 0 && ` (${a.messageCount})`}
+    <>
+      {isCompany && stage === 'New' && (
+        <>
+          <Button variant="ghost" size="sm" icon={<X className="size-4" />} onClick={() => setDialog('decline')}>
+            Decline
+          </Button>
+          <Button size="sm" icon={<Check className="size-4" />} onClick={() => setDialog('hire')}>
+            Hire
+          </Button>
+        </>
+      )}
+      {isCompany && stage === 'Declined' && (
+        <Button variant="secondary" size="sm" icon={<Check className="size-4" />} onClick={() => setDialog('hire')}>
+          Hire anyway
         </Button>
-        <div className="ml-auto flex flex-wrap justify-end gap-2">
-          {isCompany && stage === 'New' && (
-            <>
-              <Button variant="ghost" size="sm" icon={<X className="size-4" />} loading={busy('Rejected')} onClick={() => changeStatus('Rejected')}>
-                Decline
-              </Button>
-              <Button size="sm" icon={<Check className="size-4" />} loading={busy('Accepted')} onClick={() => changeStatus('Accepted')}>
-                Hire
-              </Button>
-            </>
-          )}
-          {isCompany && stage === 'Declined' && (
-            <Button variant="secondary" size="sm" icon={<Check className="size-4" />} loading={busy('Accepted')} onClick={() => changeStatus('Accepted')}>
-              Hire anyway
-            </Button>
-          )}
-          {isCompany && stage === 'Hired' && (
-            <Button variant="ghost" size="sm" icon={<X className="size-4" />} loading={busy('Rejected')} onClick={() => changeStatus('Rejected')}>
-              Cancel hire
-            </Button>
-          )}
-          {isCompany && stage === 'Claimed' && (
-            <>
-              <Button variant="ghost" size="sm" icon={<X className="size-4" />} onClick={() => setDialog('decline-claim')}>
-                Decline claim
-              </Button>
-              <Button variant="accent" size="sm" icon={<Banknote className="size-4" />} onClick={() => setDialog('pay')}>
-                Pay {formatMoney(a.claimedAmount!)}
-              </Button>
-            </>
-          )}
+      )}
+      {isCompany && stage === 'Hired' && (
+        <Button variant="ghost" size="sm" icon={<X className="size-4" />} onClick={() => setDialog('cancel-hire')}>
+          Cancel hire
+        </Button>
+      )}
+      {isCompany && stage === 'Claimed' && (
+        <>
+          <Button variant="ghost" size="sm" icon={<X className="size-4" />} onClick={() => setDialog('decline-claim')}>
+            Decline claim
+          </Button>
+          <Button variant="accent" size="sm" icon={<Banknote className="size-4" />} onClick={() => setDialog('pay')}>
+            Pay {formatMoney(a.claimedAmount!)}
+          </Button>
+        </>
+      )}
 
-          {!isCompany && stage === 'Hired' && (
-            <Button variant="accent" size="sm" icon={<Hand className="size-4" />} onClick={() => setDialog('claim')}>
-              {a.claimDeclineReason ? 'Claim again' : 'Claim payment'}
-            </Button>
-          )}
-          {!isCompany && stage === 'Paid' && (
-            <ButtonLink to="/wallet" variant="soft" size="sm" icon={<Banknote className="size-4" />}>
-              Open wallet
-            </ButtonLink>
-          )}
-          {!isCompany && stage === 'Declined' && (
-            <ButtonLink to="/feed" variant="secondary" size="sm">
-              Find other jobs
-            </ButtonLink>
-          )}
-        </div>
-      </div>
+      {!isCompany && stage === 'Hired' && (
+        <Button variant="accent" size="sm" icon={<Hand className="size-4" />} onClick={() => setDialog('claim')}>
+          {a.claimDeclineReason ? 'Claim again' : 'Claim payment'}
+        </Button>
+      )}
+      {!isCompany && stage === 'Paid' && (
+        <ButtonLink to="/wallet" variant="soft" size="sm" icon={<Banknote className="size-4" />}>
+          Open wallet
+        </ButtonLink>
+      )}
+      {!isCompany && stage === 'Declined' && (
+        <ButtonLink to="/feed" variant="secondary" size="sm">
+          Find other jobs
+        </ButtonLink>
+      )}
 
-      <ConversationDialog application={a} open={chatOpen} onClose={() => setChatOpen(false)} />
+      <ConfirmDialog
+        open={!!asking}
+        onClose={() => setDialog(null)}
+        onConfirm={() => asking && changeStatus(asking.to)}
+        title={asking?.title ?? ''}
+        description={asking?.description}
+        confirmLabel={asking?.label}
+        danger={asking?.to === 'Rejected'}
+        loading={setStatus.isPending}
+      />
       {dialog === 'pay' && <PayDialog application={a} onClose={() => setDialog(null)} />}
       {dialog === 'decline-claim' && <DeclineClaimDialog application={a} onClose={() => setDialog(null)} />}
       <ClaimPaymentDialog
@@ -157,154 +279,7 @@ export function ApplicationCard({ application, highlighted, autoOpenChat }: { ap
         open={dialog === 'claim'}
         onClose={() => setDialog(null)}
       />
-    </Card>
-  )
-}
-
-const panelTones: Record<Tone, string> = {
-  brand: 'bg-brand-50 text-brand-900 ring-brand-200 [&_svg]:text-brand-600',
-  green: 'bg-emerald-50 text-emerald-900 ring-emerald-200 [&_svg]:text-emerald-600',
-  amber: 'bg-amber-50 text-amber-900 ring-amber-200 [&_svg]:text-amber-600',
-  red: 'bg-red-50 text-red-900 ring-red-200 [&_svg]:text-red-600',
-  slate: 'bg-slate-50 text-slate-700 ring-slate-200 [&_svg]:text-slate-500',
-}
-
-/** One box that says where the job is and what happens next, worded for whoever is looking. */
-function StatusPanel({ application: a, isCompany }: { application: Application; isCompany: boolean }) {
-  const stage = stageOf(a)
-  const person = a.applicant.fullName
-  const company = a.company.displayName
-  let panel: { tone: Tone; icon: ReactNode; title: string; text?: ReactNode }
-
-  if (stage === 'New')
-    panel = isCompany
-      ? { tone: 'brand', icon: <UserPlus />, title: 'New applicant', text: `Read ${person}'s message and profile below, then hire or decline.` }
-      : { tone: 'brand', icon: <Clock />, title: 'Application sent', text: `Waiting for ${company} to reply. You'll get a notification.` }
-  else if (stage === 'Hired' && a.claimDeclineReason)
-    panel = isCompany
-      ? { tone: 'red', icon: <CircleAlert />, title: 'You declined the last claim', text: <>“{a.claimDeclineReason}” Waiting for a corrected claim.</> }
-      : { tone: 'red', icon: <CircleAlert />, title: `${company} declined your claim`, text: <>“{a.claimDeclineReason}” Fix it and tap Claim again.</> }
-  else if (stage === 'Hired')
-    panel = isCompany
-      ? { tone: 'green', icon: <BriefcaseBusiness />, title: `${person} is working on this job`, text: 'When the work is done they claim payment, and you pay from here.' }
-      : {
-          tone: 'green',
-          icon: <BriefcaseBusiness />,
-          title: "You're hired!",
-          text: `Do the work, then tap Claim payment${a.postMaximumPayment > 0 ? ` (up to ${formatMoney(a.postMaximumPayment)})` : ''}.`,
-        }
-  else if (stage === 'Claimed')
-    panel = {
-      tone: 'amber',
-      icon: <Hand />,
-      title: `${isCompany ? `${person} claimed` : 'You claimed'} ${formatMoney(a.claimedAmount!)}`,
-      text: (
-        <>
-          {a.claimNote && <span className="block">“{a.claimNote}”</span>}
-          {isCompany ? 'Check the work, then pay this amount or decline the claim with a reason.' : `Waiting for ${company} to pay. You'll get a notification.`}
-        </>
-      ),
-    }
-  else if (stage === 'Paid')
-    panel = isCompany
-      ? { tone: 'green', icon: <Banknote />, title: `Paid ${formatMoney(a.paidAmount)}`, text: 'This job is closed.' }
-      : { tone: 'green', icon: <Banknote />, title: `${formatMoney(a.paidAmount)} is in your wallet`, text: 'Cash it out whenever you like.' }
-  else
-    panel = isCompany
-      ? { tone: 'slate', icon: <XCircle />, title: 'You declined this application', text: 'You can still hire them if you change your mind.' }
-      : { tone: 'slate', icon: <XCircle />, title: 'Not selected this time', text: `${company} chose someone else. Keep applying to other jobs.` }
-
-  return (
-    <div className={cn('flex gap-3 rounded-xl px-4 py-3 text-sm ring-1 [&_svg]:size-5', panelTones[panel.tone])}>
-      <span className="mt-0.5 shrink-0" aria-hidden>
-        {panel.icon}
-      </span>
-      <div className="min-w-0">
-        <p className="font-semibold">{panel.title}</p>
-        {panel.text && <p className="mt-0.5 opacity-90">{panel.text}</p>}
-      </div>
-    </div>
-  )
-}
-
-/** The application message (and, for companies, the applicant's contact details). Folded once it's no longer needed. */
-function Details({ application: a, isCompany, defaultOpen }: { application: Application; isCompany: boolean; defaultOpen: boolean }) {
-  const [open, setOpen] = useState(defaultOpen)
-  return (
-    <div className="rounded-xl ring-1 ring-slate-200/70">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"
-      >
-        {isCompany ? 'Message, profile & contact' : 'Your application message'}
-        <ChevronDown className={cn('size-4 text-slate-400 transition', open && 'rotate-180')} />
-      </button>
-      {open && (
-        <div className="space-y-3 border-t border-slate-100 px-4 py-3">
-          <p className="text-sm whitespace-pre-line text-slate-700">{a.message}</p>
-          {isCompany && <ContactList application={a} />}
-        </div>
-      )}
-    </div>
-  )
-}
-
-/** What the company sees about the person who applied. */
-function ContactList({ application }: { application: Application }) {
-  const p = application.applicant
-  return (
-    <div>
-      {p.bio && <p className="mb-2 text-sm text-slate-500 italic">{p.bio}</p>}
-      <ul className="grid gap-x-4 gap-y-1.5 text-sm text-slate-600 sm:grid-cols-2">
-        {p.gender && (
-          <Info icon={<UserRound className="size-3.5" />}>
-            {p.gender}
-            {p.dateOfBirth && ` · ${ageFrom(p.dateOfBirth)} years`}
-          </Info>
-        )}
-        {p.province && <Info icon={<MapPin className="size-3.5" />}>{[p.localLevel, p.district, p.province].filter(Boolean).join(', ')}</Info>}
-        {p.phoneNumber && (
-          <Info icon={<Phone className="size-3.5" />}>
-            <a href={`tel:${p.phoneNumber}`} className="hover:text-brand-700 hover:underline">
-              {p.phoneNumber}
-            </a>
-            {p.additionalPhoneNumber && `, ${p.additionalPhoneNumber}`}
-          </Info>
-        )}
-        {p.email && (
-          <Info icon={<Mail className="size-3.5" />}>
-            <a href={`mailto:${p.email}`} className="truncate hover:text-brand-700 hover:underline">
-              {p.email}
-            </a>
-          </Info>
-        )}
-        {p.socialMediaLink && (
-          <Info icon={<ExternalLink className="size-3.5" />}>
-            <a href={p.socialMediaLink} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-600 hover:underline">
-              Social profile
-            </a>
-          </Info>
-        )}
-        <Info icon={<UserRound className="size-3.5" />}>
-          <Link to={`/u/${p.id}`} className="font-medium text-brand-600 hover:underline">
-            Full profile
-          </Link>
-        </Info>
-      </ul>
-    </div>
-  )
-}
-
-function Info({ icon, children }: { icon: ReactNode; children: ReactNode }) {
-  return (
-    <li className="flex min-w-0 items-center gap-1.5">
-      <span className="shrink-0 text-slate-400" aria-hidden>
-        {icon}
-      </span>
-      <span className="min-w-0 truncate">{children}</span>
-    </li>
+    </>
   )
 }
 

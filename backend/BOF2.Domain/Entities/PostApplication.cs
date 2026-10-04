@@ -25,6 +25,10 @@ public class PostApplication
     /// <summary>Why the company turned down the last claim. Cleared when the applicant claims again.</summary>
     public string? ClaimDeclineReason { get; set; }
 
+    /// <summary>When each side last opened the chat; newer messages from the other side count as unread.</summary>
+    public DateTime? ApplicantReadAt { get; set; }
+    public DateTime? CompanyReadAt { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

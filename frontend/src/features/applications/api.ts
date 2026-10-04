@@ -1,8 +1,9 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { chatKeys } from '@/features/chat/api'
 import { postKeys } from '@/features/posts/api'
 import { walletKeys } from '@/features/wallet/api'
 import { api } from '@/lib/api'
-import type { Application, ApplicationKind, ApplicationMessage, ApplicationStatus, PagedResult } from '@/lib/types'
+import type { Application, ApplicationKind, ApplicationMessage, ApplicationPost, ApplicationStatus, PagedResult } from '@/lib/types'
 import type { ApplicationStage } from './labels'
 
 export const applicationKeys = {
@@ -11,6 +12,7 @@ export const applicationKeys = {
   detail: (id: string) => ['applications', 'detail', id] as const,
   summary: (postId?: string) => ['applications', 'summary', postId ?? 'all'] as const,
   messages: (id: string) => ['applications', 'messages', id] as const,
+  posts: ['applications', 'posts'] as const,
 }
 
 export interface ApplicationParams {
@@ -47,7 +49,16 @@ export function useApplications(params: ApplicationParams) {
   })
 }
 
-export function useApplication(id: string | null) {
+/** Company: its posts that have applications, with counts (the "Your posts" strip). */
+export function useApplicationPosts(enabled: boolean) {
+  return useQuery({
+    queryKey: applicationKeys.posts,
+    queryFn: async () => (await api.get<ApplicationPost[]>('/applications/posts')).data,
+    enabled,
+  })
+}
+
+export function useApplication(id: string | null | undefined) {
   return useQuery({
     queryKey: applicationKeys.detail(id ?? ''),
     queryFn: async () => (await api.get<Application>(`/applications/${id}`)).data,
@@ -155,6 +166,8 @@ export function useSendMessage(id: string) {
           ? { ...data, items: data.items.map((a) => (a.id === id ? { ...a, messageCount: a.messageCount + 1 } : a)) }
           : data,
       )
+      // The conversation jumps to the top of Messages with this as its last line.
+      void queryClient.invalidateQueries({ queryKey: chatKeys.list })
     },
   })
 }

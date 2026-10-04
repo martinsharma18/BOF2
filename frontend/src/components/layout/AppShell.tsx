@@ -1,9 +1,10 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Bell, ClipboardList, Home, Inbox, LayoutDashboard, LogOut, Mail, Menu as MenuIcon, PenSquare, Search, Settings, UserRound, Wallet } from 'lucide-react'
-import { Avatar, ButtonLink, Dialog, Input, Menu, MenuItem, MenuSeparator } from '@/components/ui'
+import { Bell, ClipboardList, Home, Inbox, LayoutDashboard, LogOut, Mail, Menu as MenuIcon, MessageCircle, PenSquare, Search, Settings, UserRound, Wallet } from 'lucide-react'
+import { Avatar, ButtonLink, ConfirmDialog, Dialog, Input, Menu, MenuItem, MenuSeparator } from '@/components/ui'
 import { useApplications } from '@/features/applications/api'
 import { useAuth } from '@/features/auth/AuthContext'
+import { useChatUnreadCount } from '@/features/chat/api'
 import { NotificationBell, UnreadBadge } from '@/features/notifications/NotificationBell'
 import { useInboxUnreadCount } from '@/features/inbox/api'
 import { useUnreadCount } from '@/features/notifications/api'
@@ -30,6 +31,7 @@ function useNavItems(): NavItem[] {
   const isIndividual = user?.accountType === 'Individual'
   const unread = useUnreadCount().data ?? 0
   const inboxUnread = useInboxUnreadCount(isIndividual).data ?? 0
+  const chatUnread = useChatUnreadCount(canPost || isIndividual).data ?? 0
 
   // `mobile` items go in the phone bottom bar (max 4); the rest live under "More".
   const items: NavItem[] = [{ to: '/feed', label: 'Feed', icon: <Home className="size-5" />, mobile: true }]
@@ -41,9 +43,12 @@ function useNavItems(): NavItem[] {
       icon: <ClipboardList className="size-5" />,
       mobile: true,
     })
-  if (isIndividual) items.push({ to: '/inbox', label: 'Inbox', icon: <Inbox className="size-5" />, badge: inboxUnread, mobile: true })
+  // Chat with companies / applicants. Notifications stay in the bell; conversations live here.
+  if (canPost || isIndividual)
+    items.push({ to: '/messages', label: 'Messages', short: 'Chats', icon: <MessageCircle className="size-5" />, badge: chatUnread, mobile: true })
   if (isIndividual) items.push({ to: '/wallet', label: 'Wallet', icon: <Wallet className="size-5" />, mobile: true })
-  if (canPost) items.push({ to: '/invitations', label: 'Invitations', short: 'Invite', icon: <Mail className="size-5" />, mobile: true })
+  if (isIndividual) items.push({ to: '/inbox', label: 'Inbox', icon: <Inbox className="size-5" />, badge: inboxUnread })
+  if (canPost) items.push({ to: '/invitations', label: 'Invitations', short: 'Invite', icon: <Mail className="size-5" /> })
   items.push({ to: '/notifications', label: 'Notifications', icon: <Bell className="size-5" />, badge: unread })
   items.push({ to: `/u/${user?.id}`, label: 'My profile', short: 'Profile', icon: <UserRound className="size-5" /> })
   items.push({ to: '/settings', label: 'Settings', icon: <Settings className="size-5" /> })
@@ -81,48 +86,71 @@ function HeaderSearch() {
 }
 
 function UserMenu() {
-  const { user, isAdmin, signOut } = useAuth()
-  const navigate = useNavigate()
+  const { user, isAdmin } = useAuth()
+  const [loggingOut, setLoggingOut] = useState(false)
   if (!user) return null
   const name = user.companyName ?? user.fullName
 
   return (
-    <Menu
-      label="Account menu"
-      trigger={<Avatar name={name} src={user.avatarUrl} size="sm" className="ring-2 ring-white hover:ring-brand-200" />}
-    >
-      <div className="px-3 py-2">
-        <p className="truncate text-sm font-semibold text-slate-900">{name}</p>
-        <p className="truncate text-xs text-slate-500">{user.email}</p>
-      </div>
-      <MenuSeparator />
-      <MenuItem to={`/u/${user.id}`} icon={<UserRound className="size-4" />}>
-        My profile
-      </MenuItem>
-      {user.accountType === 'Individual' && (
-        <MenuItem to="/wallet" icon={<Wallet className="size-4" />}>
-          Wallet
-        </MenuItem>
-      )}
-      <MenuItem to="/settings" icon={<Settings className="size-4" />}>
-        Settings
-      </MenuItem>
-      {isAdmin && (
-        <MenuItem to="/admin" icon={<LayoutDashboard className="size-4" />}>
-          Admin dashboard
-        </MenuItem>
-      )}
-      <MenuSeparator />
-      <MenuItem
-        icon={<LogOut className="size-4" />}
-        onClick={async () => {
-          await signOut()
-          navigate('/', { replace: true })
-        }}
+    <>
+      <Menu
+        label="Account menu"
+        trigger={<Avatar name={name} src={user.avatarUrl} size="sm" className="ring-2 ring-white hover:ring-brand-200" />}
       >
-        Log out
-      </MenuItem>
-    </Menu>
+        <div className="px-3 py-2">
+          <p className="truncate text-sm font-semibold text-slate-900">{name}</p>
+          <p className="truncate text-xs text-slate-500">{user.email}</p>
+        </div>
+        <MenuSeparator />
+        <MenuItem to={`/u/${user.id}`} icon={<UserRound className="size-4" />}>
+          My profile
+        </MenuItem>
+        {user.accountType === 'Individual' && (
+          <MenuItem to="/wallet" icon={<Wallet className="size-4" />}>
+            Wallet
+          </MenuItem>
+        )}
+        <MenuItem to="/settings" icon={<Settings className="size-4" />}>
+          Settings
+        </MenuItem>
+        {isAdmin && (
+          <MenuItem to="/admin" icon={<LayoutDashboard className="size-4" />}>
+            Admin dashboard
+          </MenuItem>
+        )}
+        <MenuSeparator />
+        <MenuItem
+          icon={<LogOut className="size-4" />}
+          onClick={() => setLoggingOut(true)}
+        >
+          Log out
+        </MenuItem>
+      </Menu>
+      <LogoutConfirm open={loggingOut} onClose={() => setLoggingOut(false)} />
+    </>
+  )
+}
+
+/** "Log out?" Signing out also stops phone notifications on this device, so it's worth one extra tap. */
+function LogoutConfirm({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { signOut } = useAuth()
+  const navigate = useNavigate()
+  const [busy, setBusy] = useState(false)
+  return (
+    <ConfirmDialog
+      open={open}
+      onClose={onClose}
+      onConfirm={async () => {
+        setBusy(true)
+        await signOut()
+        navigate('/', { replace: true })
+      }}
+      title="Log out?"
+      description="You will stop getting notifications on this device until you log in again."
+      confirmLabel="Log out"
+      danger
+      loading={busy}
+    />
   )
 }
 
@@ -258,56 +286,56 @@ function MobileNavLink({ item }: { item: NavItem }) {
 
 /** Phone "More" menu: everything that isn't in the bottom bar, plus log out. */
 function MoreSheet({ open, onClose, items }: { open: boolean; onClose: () => void; items: NavItem[] }) {
-  const { user, signOut } = useAuth()
-  const navigate = useNavigate()
+  const { user } = useAuth()
+  const [loggingOut, setLoggingOut] = useState(false)
 
   if (!user) return null
   const name = user.companyName ?? user.fullName
 
   return (
-    <Dialog open={open} onClose={onClose} title="Menu">
-      <Link to={`/u/${user.id}`} className="-mx-1 mb-3 flex items-center gap-3 rounded-xl p-2 active:bg-slate-100">
-        <Avatar name={name} src={user.avatarUrl} size="md" />
-        <span className="min-w-0">
-          <span className="block truncate font-semibold text-slate-900">{name}</span>
-          <span className="block truncate text-sm text-slate-500">{user.email}</span>
-        </span>
-      </Link>
-      <ul className="space-y-1">
-        {items.map((item) => (
-          <li key={item.to}>
-            <NavLink
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                cn(
-                  'flex min-h-12 items-center gap-3 rounded-xl px-3 text-[15px] font-semibold',
-                  isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-700 active:bg-slate-100',
-                )
-              }
+    <>
+      <Dialog open={open} onClose={onClose} title="Menu">
+        <Link to={`/u/${user.id}`} className="-mx-1 mb-3 flex items-center gap-3 rounded-xl p-2 active:bg-slate-100">
+          <Avatar name={name} src={user.avatarUrl} size="md" />
+          <span className="min-w-0">
+            <span className="block truncate font-semibold text-slate-900">{name}</span>
+            <span className="block truncate text-sm text-slate-500">{user.email}</span>
+          </span>
+        </Link>
+        <ul className="space-y-1">
+          {items.map((item) => (
+            <li key={item.to}>
+              <NavLink
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  cn(
+                    'flex min-h-12 items-center gap-3 rounded-xl px-3 text-[15px] font-semibold',
+                    isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-700 active:bg-slate-100',
+                  )
+                }
+              >
+                {item.icon}
+                <span className="flex-1">{item.label}</span>
+                {!!item.badge && <UnreadBadge count={item.badge} className="ring-0" />}
+              </NavLink>
+            </li>
+          ))}
+          <InstallMenuItem />
+          <li>
+            <button
+              type="button"
+              onClick={() => setLoggingOut(true)}
+              className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-[15px] font-semibold text-red-600 active:bg-red-50"
             >
-              {item.icon}
-              <span className="flex-1">{item.label}</span>
-              {!!item.badge && <UnreadBadge count={item.badge} className="ring-0" />}
-            </NavLink>
+              <LogOut className="size-5" />
+              Log out
+            </button>
           </li>
-        ))}
-        <InstallMenuItem />
-        <li>
-          <button
-            type="button"
-            onClick={async () => {
-              await signOut()
-              navigate('/', { replace: true })
-            }}
-            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-[15px] font-semibold text-red-600 active:bg-red-50"
-          >
-            <LogOut className="size-5" />
-            Log out
-          </button>
-        </li>
-      </ul>
-    </Dialog>
+        </ul>
+      </Dialog>
+      <LogoutConfirm open={loggingOut} onClose={() => setLoggingOut(false)} />
+    </>
   )
 }
 

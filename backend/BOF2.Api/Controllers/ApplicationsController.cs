@@ -21,6 +21,11 @@ public class ApplicationsController(IApplicationService applications) : Controll
     [HttpGet("summary")]
     public Task<ApplicationSummaryDto> Summary(Guid? postId, CancellationToken ct) => applications.SummaryAsync(postId, ct);
 
+    /// <summary>Company: its posts that have applications, with counts (the "Your posts" strip).</summary>
+    [HttpGet("posts")]
+    [Authorize(Roles = Roles.Company)]
+    public Task<IReadOnlyList<ApplicationPostDto>> Posts(CancellationToken ct) => applications.ListPostsAsync(ct);
+
     [HttpGet("{id:guid}")]
     public Task<ApplicationDto> Get(Guid id, CancellationToken ct) => applications.GetAsync(id, ct);
 

@@ -122,6 +122,30 @@ export interface ApplicationMessage {
   sender: Author
 }
 
+/** One conversation in Messages. Every application is a chat that starts with the application message. */
+export interface ChatSummary {
+  applicationId: string
+  postId: string
+  postTitle: string
+  status: ApplicationStatus
+  claimedAmount: number | null
+  /** The applicant (for companies) or the company (for individuals). */
+  other: Author
+  lastMessage: string
+  lastFromMe: boolean
+  lastAt: string
+  unread: number
+}
+
+/** A company post that has applications, for the "Your posts" strip. */
+export interface ApplicationPost {
+  postId: string
+  title: string
+  total: number
+  new: number
+  toPay: number
+}
+
 export type NotificationType =
   | 'ApplicationReceived'
   | 'ApplicationAccepted'

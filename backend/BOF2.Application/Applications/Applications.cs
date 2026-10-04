@@ -57,6 +57,27 @@ public record ApplicationDto(
 
 public record ApplicationMessageDto(Guid Id, Guid ApplicationId, string Content, DateTime CreatedAt, AuthorDto Sender);
 
+/// <summary>
+/// One row in the Messages list. Every application is a conversation: it starts with the application message,
+/// and <see cref="Other"/> is the person on the other side (the applicant for companies, the company for individuals).
+/// </summary>
+public record ChatSummaryDto(
+    Guid ApplicationId,
+    Guid PostId,
+    string PostTitle,
+    ApplicationStatus Status,
+    decimal? ClaimedAmount,
+    AuthorDto Other,
+    string LastMessage,
+    bool LastFromMe,
+    DateTime LastAt,
+    int Unread);
+
+public class ChatQuery : PageQuery;
+
+/// <summary>A company post that has applications, with counts for the "Your posts" strip.</summary>
+public record ApplicationPostDto(Guid PostId, string Title, int Total, int New, int ToPay);
+
 /// <summary>Where a job really is. "Hired" splits into Hired (working) and Claimed (waiting to be paid).</summary>
 public enum ApplicationStage
 {
@@ -143,6 +164,17 @@ public interface IApplicationService
     Task<ApplicationSummaryDto> SummaryAsync(Guid? postId, CancellationToken ct = default);
     Task<ApplicationDto> UpdateStatusAsync(Guid id, UpdateApplicationStatusRequest request, CancellationToken ct = default);
     Task<IReadOnlyList<ApplicationMessageDto>> ListMessagesAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>The signed-in user's conversations, most recent activity first.</summary>
+    Task<PagedResult<ChatSummaryDto>> ListChatsAsync(ChatQuery query, CancellationToken ct = default);
+
+    /// <summary>How many conversations have messages the user hasn't seen.</summary>
+    Task<int> UnreadChatCountAsync(CancellationToken ct = default);
+
+    Task MarkChatReadAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>Company: its posts that have applications, with counts.</summary>
+    Task<IReadOnlyList<ApplicationPostDto>> ListPostsAsync(CancellationToken ct = default);
     Task<ApplicationMessageDto> SendMessageAsync(Guid id, SendMessageRequest request, CancellationToken ct = default);
 
     /// <summary>Accepted applicant claims payment for their work. Notifies the company.</summary>

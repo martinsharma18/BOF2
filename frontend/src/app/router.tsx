@@ -42,6 +42,7 @@ const NotificationsPage = page(() => import('@/pages/NotificationsPage'), 'Notif
 const WalletPage = page(() => import('@/pages/WalletPage'), 'WalletPage')
 const InvitationsPage = page(() => import('@/pages/InvitationsPage'), 'InvitationsPage')
 const InboxPage = page(() => import('@/pages/InboxPage'), 'InboxPage')
+const MessagesPage = page(() => import('@/pages/MessagesPage'), 'MessagesPage')
 const TermsPage = page(() => import('@/pages/LegalPage'), 'TermsPage')
 const PrivacyPage = page(() => import('@/pages/LegalPage'), 'PrivacyPage')
 const AdminLayout = page(() => import('@/pages/admin/AdminLayout'), 'AdminLayout')
@@ -84,6 +85,8 @@ export function AppRoutes() {
 
             <Route element={<RequireAuth allow={['Company', 'Individual']} />}>
               <Route path="applications" element={<ApplicationsPage />} />
+              <Route path="messages" element={<MessagesPage />} />
+              <Route path="messages/:id" element={<MessagesPage />} />
             </Route>
 
             <Route element={<RequireAuth allow={['Individual']} />}>

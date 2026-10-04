@@ -1,5 +1,6 @@
 using BOF2.Application.Common;
 using BOF2.Application.Notifications;
+using BOF2.Domain.Enums;
 using BOF2.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,7 +10,8 @@ public class NotificationService(AppDbContext db, ICurrentUser currentUser) : IN
 {
     public async Task<PagedResult<NotificationDto>> ListAsync(NotificationQuery query, CancellationToken ct = default)
     {
-        var mine = db.Notifications.AsNoTracking().Where(n => n.UserId == currentUser.RequireUserId());
+        var mine = db.Notifications.AsNoTracking()
+            .Where(n => n.UserId == currentUser.RequireUserId() && n.Type != NotificationType.NewMessage);
         if (query.UnreadOnly) mine = mine.Where(n => !n.IsRead);
         var total = await mine.CountAsync(ct);
         var rows = await mine
@@ -27,7 +29,7 @@ public class NotificationService(AppDbContext db, ICurrentUser currentUser) : IN
     public Task<int> UnreadCountAsync(CancellationToken ct = default)
     {
         var userId = currentUser.RequireUserId();
-        return db.Notifications.CountAsync(n => n.UserId == userId && !n.IsRead, ct);
+        return db.Notifications.CountAsync(n => n.UserId == userId && !n.IsRead && n.Type != NotificationType.NewMessage, ct);
     }
 
     public async Task MarkReadAsync(Guid id, CancellationToken ct = default)

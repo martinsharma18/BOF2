@@ -45,14 +45,19 @@ export const isStandalone = () =>
 export const isIos = () =>
   /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 
+export const isAndroid = () => /android/i.test(navigator.userAgent)
+
 export function useInstall() {
   const prompt = useSyncExternalStore(subscribe, () => deferredPrompt)
   const installed = isStandalone()
   return {
     /** Android/desktop: we can show the browser's install dialog. */
     canPrompt: !!prompt && !installed,
-    /** iPhone: show "Share → Add to Home Screen" instructions. */
-    needsIosSteps: !installed && !prompt && isIos(),
+    /**
+     * No browser prompt available: show how to add it by hand. Android Chrome only offers its prompt after
+     * some use, never in some browsers, and not again after a dismissal, so Android needs steps too.
+     */
+    manualSteps: installed || prompt ? null : isIos() ? ('ios' as const) : isAndroid() ? ('android' as const) : null,
     installed,
     install: async () => {
       if (!prompt) return false

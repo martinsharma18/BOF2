@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { BellRing, Download, Share, SquarePlus, WifiOff, X } from 'lucide-react'
+import { BellRing, Download, EllipsisVertical, Share, SquarePlus, WifiOff, X } from 'lucide-react'
 import { Button, Dialog, toast } from '@/components/ui'
 import { useAuth } from '@/features/auth/AuthContext'
 import { APP_NAME } from '@/lib/brand'
@@ -21,7 +21,7 @@ export function PwaBridge() {
     if (!('serviceWorker' in navigator)) return
     const onMessage = (event: MessageEvent<{ type?: string; url?: string }>) => {
       if (event.data?.type === 'push') {
-        for (const key of ['notifications', 'inbox', 'applications', 'wallet']) void queryClient.invalidateQueries({ queryKey: [key] })
+        for (const key of ['notifications', 'inbox', 'applications', 'wallet', 'chats']) void queryClient.invalidateQueries({ queryKey: [key] })
       }
       if (event.data?.type === 'open' && event.data.url) navigate(event.data.url)
     }
@@ -51,10 +51,10 @@ const INSTALL_DISMISSED = 'bof2.install-dismissed'
 
 /** One-time card on phones: "Install the app". Hidden once installed or dismissed. */
 export function InstallBanner() {
-  const { canPrompt, needsIosSteps, install } = useInstall()
+  const { canPrompt, manualSteps, install } = useInstall()
   const [dismissed, setDismissed] = useState(() => readFlag(INSTALL_DISMISSED))
-  const [iosOpen, setIosOpen] = useState(false)
-  if (dismissed || (!canPrompt && !needsIosSteps)) return null
+  const [stepsOpen, setStepsOpen] = useState(false)
+  if (dismissed || (!canPrompt && !manualSteps)) return null
 
   const close = () => {
     writeFlag(INSTALL_DISMISSED)
@@ -74,7 +74,7 @@ export function InstallBanner() {
         onClick={async () => {
           if (canPrompt) {
             if (await install()) close()
-          } else setIosOpen(true)
+          } else setStepsOpen(true)
         }}
       >
         Install
@@ -82,53 +82,63 @@ export function InstallBanner() {
       <button type="button" onClick={close} aria-label="Not now" className="-mr-1 rounded-lg p-1.5 text-brand-100 active:bg-white/10">
         <X className="size-4" />
       </button>
-      <IosInstallDialog open={iosOpen} onClose={() => setIosOpen(false)} />
+      {manualSteps && <InstallStepsDialog platform={manualSteps} open={stepsOpen} onClose={() => setStepsOpen(false)} />}
     </div>
   )
 }
 
 /** "Install app" row for the phone menu; renders nothing when there is nothing to install. */
 export function InstallMenuItem() {
-  const { canPrompt, needsIosSteps, install } = useInstall()
-  const [iosOpen, setIosOpen] = useState(false)
-  if (!canPrompt && !needsIosSteps) return null
+  const { canPrompt, manualSteps, install } = useInstall()
+  const [stepsOpen, setStepsOpen] = useState(false)
+  if (!canPrompt && !manualSteps) return null
   return (
     <li>
       <button
         type="button"
-        onClick={() => (canPrompt ? void install() : setIosOpen(true))}
+        onClick={() => (canPrompt ? void install() : setStepsOpen(true))}
         className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-[15px] font-semibold text-brand-700 active:bg-brand-50"
       >
         <Download className="size-5" />
         Install app
       </button>
-      <IosInstallDialog open={iosOpen} onClose={() => setIosOpen(false)} />
+      {manualSteps && <InstallStepsDialog platform={manualSteps} open={stepsOpen} onClose={() => setStepsOpen(false)} />}
     </li>
   )
 }
 
-function IosInstallDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+const installSteps = {
+  ios: {
+    description: 'On iPhone it takes two taps in Safari.',
+    steps: [
+      { icon: <Share className="size-5" />, text: <>Tap the <b>Share</b> button at the bottom of Safari.</> },
+      { icon: <SquarePlus className="size-5" />, text: <>Choose <b>Add to Home Screen</b>, then <b>Add</b>.</> },
+    ],
+    note: `Open ${APP_NAME} from the new icon to get notifications on your iPhone.`,
+  },
+  android: {
+    description: 'On Android it takes two taps in Chrome.',
+    steps: [
+      { icon: <EllipsisVertical className="size-5" />, text: <>Tap the <b>⋮</b> menu at the top right of Chrome.</> },
+      { icon: <Download className="size-5" />, text: <>Choose <b>Install app</b> (or <b>Add to Home screen</b>), then <b>Install</b>.</> },
+    ],
+    note: `In Samsung Internet: tap ☰, then Add page to → Home screen. Then open ${APP_NAME} from the new icon.`,
+  },
+}
+
+function InstallStepsDialog({ platform, open, onClose }: { platform: 'ios' | 'android'; open: boolean; onClose: () => void }) {
+  const guide = installSteps[platform]
   return (
-    <Dialog open={open} onClose={onClose} title={`Install ${APP_NAME}`} description="On iPhone it takes two taps in Safari.">
+    <Dialog open={open} onClose={onClose} title={`Install ${APP_NAME}`} description={guide.description}>
       <ol className="space-y-4 text-[15px] text-slate-700">
-        <li className="flex items-center gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
-            <Share className="size-5" />
-          </span>
-          <span>
-            Tap the <b>Share</b> button at the bottom of Safari.
-          </span>
-        </li>
-        <li className="flex items-center gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
-            <SquarePlus className="size-5" />
-          </span>
-          <span>
-            Choose <b>Add to Home Screen</b>, then <b>Add</b>.
-          </span>
-        </li>
+        {guide.steps.map((step, i) => (
+          <li key={i} className="flex items-center gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">{step.icon}</span>
+            <span>{step.text}</span>
+          </li>
+        ))}
       </ol>
-      <p className="mt-5 text-sm text-slate-500">Open {APP_NAME} from the new icon to get notifications on your iPhone.</p>
+      <p className="mt-5 text-sm text-slate-500">{guide.note}</p>
     </Dialog>
   )
 }

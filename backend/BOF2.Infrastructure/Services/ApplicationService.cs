@@ -5,6 +5,7 @@ using BOF2.Application.Common;
 using BOF2.Domain.Entities;
 using BOF2.Domain.Enums;
 using BOF2.Infrastructure.Persistence;
+using BOF2.Infrastructure.Push;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -19,7 +20,8 @@ public class ApplicationService(
     IValidator<SendMessageRequest> messageValidator,
     IValidator<PayApplicantRequest> payValidator,
     IValidator<ClaimPaymentRequest> claimValidator,
-    IValidator<DeclineClaimRequest> declineClaimValidator) : IApplicationService
+    IValidator<DeclineClaimRequest> declineClaimValidator,
+    PushQueue pushQueue) : IApplicationService
 {
     private const string DefaultClaimMessage = "I would like to claim this opportunity.";
 
@@ -218,15 +220,112 @@ public class ApplicationService(
 
         var message = new ApplicationMessage { ApplicationId = id, SenderId = userId, Content = request.Content.Trim() };
         db.ApplicationMessages.Add(message);
-
-        var senders = await db.LoadAuthorsAsync([userId], ct);
-        var sender = senders[userId];
-        db.Notify(userId == applicantId ? companyId : applicantId, NotificationType.NewMessage,
-            $"New message from {sender.DisplayName}", $"{postTitle}: {message.Content}", Link(id), actorId: userId);
-
         await db.SaveChangesAsync(ct);
+
+        // Sending means you've seen the conversation up to here.
+        await SetReadAsync(id, userId == applicantId, message.CreatedAt, ct);
+
+        var sender = (await db.LoadAuthorsAsync([userId], ct))[userId];
+        // Chat lives in Messages (with its own badge), not in the notification list; the phone still gets a push.
+        // One tag per conversation, so a burst of messages shows as one notification.
+        pushQueue.Enqueue(new PushNote(userId == applicantId ? companyId : applicantId,
+            sender.DisplayName, $"{postTitle}: {message.Content}", ChatLink(id), $"chat-{id}"));
+
         return new ApplicationMessageDto(message.Id, id, message.Content, message.CreatedAt, sender);
     }
+
+    public async Task<PagedResult<ChatSummaryDto>> ListChatsAsync(ChatQuery query, CancellationToken ct = default)
+    {
+        var userId = currentUser.RequireUserId();
+        var chats = MyChats(userId);
+        var total = await chats.CountAsync(ct);
+
+        var rows = await chats
+            .OrderByDescending(c => c.LastAt)
+            .Skip(query.Skip)
+            .Take(query.PageSize)
+            .Select(c => new
+            {
+                c.App.Id,
+                c.App.PostId,
+                c.App.Post.Title,
+                c.App.Status,
+                c.App.ClaimedAmount,
+                c.App.ApplicantId,
+                CompanyId = c.App.Post.AuthorId,
+                Last = c.App.Messages.OrderByDescending(m => m.CreatedAt).Select(m => new { m.Content, m.SenderId }).FirstOrDefault(),
+                c.App.Message,
+                c.LastAt,
+                c.Unread,
+            })
+            .ToListAsync(ct);
+
+        var people = await db.LoadAuthorsAsync(rows.Select(r => r.ApplicantId == userId ? r.CompanyId : r.ApplicantId), ct);
+        var items = rows.Select(r => new ChatSummaryDto(
+            r.Id, r.PostId, r.Title, r.Status, r.ClaimedAmount,
+            people[r.ApplicantId == userId ? r.CompanyId : r.ApplicantId],
+            r.Last?.Content ?? r.Message,
+            (r.Last?.SenderId ?? r.ApplicantId) == userId,
+            r.LastAt,
+            r.Unread)).ToList();
+
+        return new PagedResult<ChatSummaryDto>(items, query.Page, query.PageSize, total);
+    }
+
+    public Task<int> UnreadChatCountAsync(CancellationToken ct = default) =>
+        MyChats(currentUser.RequireUserId()).CountAsync(c => c.Unread > 0, ct);
+
+    public async Task MarkChatReadAsync(Guid id, CancellationToken ct = default)
+    {
+        var userId = currentUser.RequireUserId();
+        var (applicantId, _, _) = await EnsureParticipantAsync(id, ct);
+        await SetReadAsync(id, userId == applicantId, DateTime.UtcNow, ct);
+    }
+
+    public async Task<IReadOnlyList<ApplicationPostDto>> ListPostsAsync(CancellationToken ct = default)
+    {
+        var userId = currentUser.RequireUserId();
+        return await db.Posts.AsNoTracking()
+            .Where(p => p.AuthorId == userId && p.Applications.Any())
+            .OrderByDescending(p => p.Applications.Max(a => a.CreatedAt))
+            .Select(p => new ApplicationPostDto(
+                p.Id,
+                p.Title,
+                p.Applications.Count(),
+                p.Applications.Count(a => a.Status == ApplicationStatus.Pending),
+                p.Applications.Count(a => a.Status == ApplicationStatus.Accepted && a.ClaimedAmount != null)))
+            .Take(50)
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Conversations the user takes part in (as applicant or as the posting company), with the time of the last
+    /// activity and how many messages from the other side arrived after the user last opened the chat.
+    /// The application message itself counts as the first message from the applicant.
+    /// </summary>
+    private IQueryable<ChatRow> MyChats(Guid userId) =>
+        db.Applications.AsNoTracking()
+            .Where(a => a.ApplicantId == userId || a.Post.AuthorId == userId)
+            .Select(a => new { App = a, ReadAt = a.ApplicantId == userId ? a.ApplicantReadAt : a.CompanyReadAt })
+            .Select(x => new ChatRow
+            {
+                App = x.App,
+                LastAt = x.App.Messages.Max(m => (DateTime?)m.CreatedAt) ?? x.App.CreatedAt,
+                Unread = x.App.Messages.Count(m => m.SenderId != userId && (x.ReadAt == null || m.CreatedAt > x.ReadAt))
+                         + (x.App.ApplicantId != userId && x.ReadAt == null ? 1 : 0),
+            });
+
+    private sealed class ChatRow
+    {
+        public PostApplication App { get; init; } = null!;
+        public DateTime LastAt { get; init; }
+        public int Unread { get; init; }
+    }
+
+    private Task SetReadAsync(Guid id, bool asApplicant, DateTime at, CancellationToken ct) =>
+        asApplicant
+            ? db.Applications.Where(a => a.Id == id).ExecuteUpdateAsync(s => s.SetProperty(a => a.ApplicantReadAt, at), ct)
+            : db.Applications.Where(a => a.Id == id).ExecuteUpdateAsync(s => s.SetProperty(a => a.CompanyReadAt, at), ct);
 
     public async Task<ApplicationDto> ClaimAsync(Guid id, ClaimPaymentRequest request, CancellationToken ct = default)
     {
@@ -395,6 +494,8 @@ public class ApplicationService(
             .FirstAsync(ct);
 
     private static string Link(Guid applicationId) => $"/applications?id={applicationId}";
+
+    private static string ChatLink(Guid applicationId) => $"/messages/{applicationId}";
 
     private static FieldErrorsException AmountError(string message) =>
         new(new Dictionary<string, string[]> { ["Amount"] = [message] });

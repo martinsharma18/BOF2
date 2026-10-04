@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Briefcase, CalendarClock, CheckCheck, ExternalLink, Inbox, Mail, MapPin, ShieldCheck, Trash2 } from 'lucide-react'
-import { AccountTypeBadge, Alert, Avatar, Button, ButtonLink, Card, EmptyState, PageHeader, Skeleton, toast } from '@/components/ui'
+import { AccountTypeBadge, Alert, Avatar, Button, ButtonLink, Card, ConfirmDialog, EmptyState, PageHeader, Skeleton, toast } from '@/components/ui'
 import { useDeleteInboxItem, useInbox, useMarkAllInboxRead, useMarkInboxRead } from '@/features/inbox/api'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { getErrorMessage } from '@/lib/api'
@@ -156,6 +156,7 @@ function InboxRow({ item, active, onSelect }: { item: InboxItem; active: boolean
 
 function Message({ item, onBack, onDeleted }: { item: InboxItem; onBack: () => void; onDeleted: () => void }) {
   const remove = useDeleteInboxItem()
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const v = item.vacancy
   const inv = item.invitation
 
@@ -169,20 +170,30 @@ function Message({ item, onBack, onDeleted }: { item: InboxItem; onBack: () => v
           variant="ghost"
           size="sm"
           icon={<Trash2 className="size-4" />}
-          loading={remove.isPending}
           className="ml-auto text-red-600 hover:bg-red-50 hover:text-red-700"
-          onClick={() =>
+          onClick={() => setConfirmDelete(true)}
+        >
+          Delete
+        </Button>
+        <ConfirmDialog
+          open={confirmDelete}
+          onClose={() => setConfirmDelete(false)}
+          onConfirm={() =>
             remove.mutate(item.id, {
               onSuccess: () => {
+                setConfirmDelete(false)
                 toast.success('Message deleted')
                 onDeleted()
               },
               onError: (e) => toast.error(getErrorMessage(e)),
             })
           }
-        >
-          Delete
-        </Button>
+          title="Delete this message?"
+          description="It will be removed from your inbox. This can't be undone."
+          confirmLabel="Delete"
+          danger
+          loading={remove.isPending}
+        />
       </div>
 
       <div className="space-y-5 px-4 py-5 sm:px-6">

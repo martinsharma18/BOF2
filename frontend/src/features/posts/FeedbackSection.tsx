@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { SendHorizontal, Trash2 } from 'lucide-react'
-import { Avatar, Button, Skeleton, Textarea, toast } from '@/components/ui'
+import { Avatar, Button, ConfirmDialog, Skeleton, Textarea, toast } from '@/components/ui'
 import { useAuth } from '@/features/auth/AuthContext'
 import { getErrorMessage } from '@/lib/api'
 import { timeAgo } from '@/lib/format'
@@ -14,6 +14,7 @@ export function FeedbackSection({ postId, autoFocus }: { postId: string; autoFoc
   const feedback = useFeedback(postId)
   const add = useAddFeedback(postId)
   const remove = useDeleteFeedback(postId)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [content, setContent] = useState('')
 
   const items = feedback.data?.pages.flatMap((p) => p.items) ?? []
@@ -97,7 +98,7 @@ export function FeedbackSection({ postId, autoFocus }: { postId: string; autoFoc
                   {(f.author.id === user?.id || isAdmin) && (
                     <button
                       type="button"
-                      onClick={() => remove.mutate(f.id, { onSuccess: () => toast.success('Feedback deleted') })}
+                      onClick={() => setDeletingId(f.id)}
                       disabled={remove.isPending}
                       className="inline-flex items-center gap-1 font-medium hover:text-red-600"
                     >
@@ -118,6 +119,25 @@ export function FeedbackSection({ postId, autoFocus }: { postId: string; autoFoc
           </Button>
         </div>
       )}
+      <ConfirmDialog
+        open={!!deletingId}
+        onClose={() => setDeletingId(null)}
+        onConfirm={() =>
+          deletingId &&
+          remove.mutate(deletingId, {
+            onSuccess: () => {
+              setDeletingId(null)
+              toast.success('Feedback deleted')
+            },
+            onError: (e) => toast.error(getErrorMessage(e)),
+          })
+        }
+        title="Delete this feedback?"
+        description="It will be removed for everyone. This can't be undone."
+        confirmLabel="Delete"
+        danger
+        loading={remove.isPending}
+      />
     </div>
   )
 }
