@@ -37,7 +37,7 @@ public static class DependencyInjection
         services.AddSingleton<PushQueue>();
         services.AddScoped<PushOnSaveInterceptor>();
         services.AddDbContext<AppDbContext>((sp, options) => options
-            .UseNpgsql(configuration.GetConnectionString("Default"),
+            .UseNpgsql(ConnectionString.Normalize(configuration.GetConnectionString("Default")),
                 npgsql => npgsql.EnableRetryOnFailure(3))
             .UseSnakeCaseNamingConvention()
             .AddInterceptors(sp.GetRequiredService<PushOnSaveInterceptor>()));
@@ -84,7 +84,15 @@ public static class DependencyInjection
         services.AddHttpClient("webpush", c => c.Timeout = TimeSpan.FromSeconds(15));
         services.AddHostedService<PushSender>();
         services.AddMemoryCache();
-        services.AddSingleton<IFileStorage, LocalFileStorage>();
+        // Cloudinary when configured (hosted: Render's disk is wiped on deploy), local ./uploads otherwise.
+        var cloudinaryUrl = configuration["Cloudinary:Url"];
+        if (!string.IsNullOrWhiteSpace(cloudinaryUrl))
+        {
+            services.AddSingleton(new CloudinaryDotNet.Cloudinary(cloudinaryUrl) { Api = { Secure = true } });
+            services.AddSingleton<IFileStorage, CloudinaryFileStorage>();
+        }
+        else
+            services.AddSingleton<IFileStorage, LocalFileStorage>();
 
         return services;
     }

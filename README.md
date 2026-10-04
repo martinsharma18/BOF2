@@ -103,11 +103,11 @@ dotnet ef migrations add <Name> -p Feedora.Infrastructure -s Feedora.Api -o Pers
 
 ## Deploying
 
-1. `cd frontend && npm run build`, then copy `frontend/dist/*` into `backend/Feedora.Api/wwwroot/`. The API serves the SPA on the same origin, so no CORS setup is needed.
-2. Set these environment variables: `ConnectionStrings__Default`, `Jwt__Key` (32+ random characters), `Seed__AdminEmail`, `Seed__AdminPassword`. Set `Cors__Origins__0` only if the frontend is hosted elsewhere.
-   For phone notifications also set `WebPush__PublicKey`, `WebPush__PrivateKey` (generate once with `npx web-push generate-vapid-keys` and keep them; changing them logs every phone out of push) and `WebPush__Subject` (`mailto:you@yourdomain`). Without them the app works and push is simply off.
-3. Put it behind HTTPS (nginx, IIS, Azure, etc.). Forwarded headers are already trusted for real client IPs. HTTPS is required for installing the app and for push.
-4. Uploaded files go to `Feedora.Api/uploads/`. Mount it as a persistent volume, or swap `LocalFileStorage` for S3, Azure Blob or Cloudinary behind `IFileStorage`.
+Free hosting: **Vercel** (frontend) + **Render** (API, Docker) + **Neon** (PostgreSQL) + **Cloudinary** (photos).
+Step-by-step guide: [DEPLOY.md](DEPLOY.md). Files: `render.yaml`, `backend/Dockerfile`, `frontend/vercel.json`.
+
+Self-hosting on one server also works: build the frontend, copy `frontend/dist/*` into `backend/Feedora.Api/wwwroot/`,
+and the API serves both from one origin (same environment variables as in DEPLOY.md).
 
 ## Next up
 

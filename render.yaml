@@ -1,0 +1,36 @@
+# Render Blueprint for the Feedora API (free plan, Singapore = closest region to Nepal).
+# Render → New → Blueprint → pick this repo. Values marked `sync: false` are asked for once in the dashboard.
+services:
+  - type: web
+    name: feedora-api
+    runtime: docker
+    plan: free
+    region: singapore
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # PostgreSQL link from Neon (Dashboard → Connect). Either form works:
+      # postgresql://user:pass@host/db?sslmode=require   or   Host=...;Database=...;Username=...;Password=...
+      - key: ConnectionStrings__Default
+        sync: false
+      # Signs login tokens. Render generates a random value; never share it.
+      - key: Jwt__Key
+        generateValue: true
+      # The super admin account created on first start.
+      - key: Seed__AdminEmail
+        sync: false
+      - key: Seed__AdminPassword
+        sync: false
+      # Photo storage: Cloudinary → Dashboard → "API environment variable" (cloudinary://key:secret@cloud).
+      - key: Cloudinary__Url
+        sync: false
+      # Phone notifications: `npx web-push generate-vapid-keys` once, keep the pair forever.
+      - key: WebPush__PublicKey
+        sync: false
+      - key: WebPush__PrivateKey
+        sync: false
+      - key: WebPush__Subject
+        sync: false

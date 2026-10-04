@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/uploads/
+**/wwwroot/
+**/*.user
+**/.vs/
+**/appsettings.Development.json
+**/appsettings.Production.json
+Dockerfile
+.dockerignore
