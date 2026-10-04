@@ -23,7 +23,8 @@ COPY --from=build /app .
 
 # The image runs as the non-root "app" user; it needs a writable uploads folder (only used without Cloudinary).
 USER root
-RUN mkdir -p /app/uploads && chown -R app:app /app/uploads
+# libgssapi-krb5-2: Npgsql may load it while negotiating a connection; without it the process crashes (exit 139).
+RUN apt-get update     && apt-get install -y --no-install-recommends libgssapi-krb5-2     && rm -rf /var/lib/apt/lists/*     && mkdir -p /app/uploads && chown -R app:app /app/uploads
 USER app
 
 # Render sends traffic to port 10000 by default.

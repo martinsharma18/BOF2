@@ -10,11 +10,22 @@ internal static class ConnectionString
     /// </summary>
     public static string? Normalize(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value) ||
-            !(value.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
-              value.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase)))
-            return value;
+        if (string.IsNullOrWhiteSpace(value)) return value;
+        var builder = value.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+                      value.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase)
+            ? FromUri(value)
+            : new NpgsqlConnectionStringBuilder(value);
 
+        // Npgsql tries Kerberos (GSS) encryption first by default, which needs libgssapi_krb5. Slim Linux
+        // containers don't ship it and the process crashes on connect; nobody here uses Kerberos, SSL is enough.
+        if (!value.Contains("GSS Encryption Mode", StringComparison.OrdinalIgnoreCase))
+            builder.GssEncryptionMode = GssEncryptionMode.Disable;
+
+        return builder.ConnectionString;
+    }
+
+    private static NpgsqlConnectionStringBuilder FromUri(string value)
+    {
         var uri = new Uri(value);
         var userInfo = uri.UserInfo.Split(':', 2);
         var builder = new NpgsqlConnectionStringBuilder
@@ -35,6 +46,6 @@ internal static class ConnectionString
                 builder.SslMode = mode;
         }
 
-        return builder.ConnectionString;
+        return builder;
     }
 }
