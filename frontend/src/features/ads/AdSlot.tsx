@@ -77,3 +77,35 @@ export function AdSlot({ placement, index = 0, className }: { placement: AdPlace
     </aside>
   )
 }
+
+/**
+ * Ad between feed posts (slot 0 = after post 4, slot 1 = after post 8, ...).
+ * Phones have no right column, so every other slot shows a square ad there instead of a banner while one is
+ * running. Wide screens keep banners here and square ads in the right column.
+ */
+export function FeedAd({ slot }: { slot: number }) {
+  const { data: squares = [] } = useAds('Sidebar')
+  if (slot % 2 === 0 || squares.length === 0) return <AdSlot placement="Banner" index={slot} />
+
+  return (
+    <>
+      <div className="hidden xl:block">
+        <AdSlot placement="Banner" index={slot} />
+      </div>
+      <div className="mx-auto w-full max-w-md xl:hidden">
+        <AdSlot placement="Sidebar" index={(slot - 1) / 2} />
+      </div>
+    </>
+  )
+}
+
+/** A square ad for phones and tablets on pages whose right column is hidden. Only shows a live ad, no placeholder. */
+export function PhoneSquareAd({ className }: { className?: string }) {
+  const { data: squares = [] } = useAds('Sidebar')
+  if (squares.length === 0) return null
+  return (
+    <div className={cn('mx-auto w-full max-w-md xl:hidden', className)}>
+      <AdSlot placement="Sidebar" />
+    </div>
+  )
+}

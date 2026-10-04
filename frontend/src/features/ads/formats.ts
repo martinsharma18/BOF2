@@ -6,7 +6,7 @@ import type { AdPlacement } from '@/lib/types'
  */
 export const adFormats: Record<AdPlacement, { ratio: number; aspectClass: string; size: string; label: string }> = {
   Banner: { ratio: 4, aspectClass: 'aspect-[4/1]', size: '1600 × 400 px', label: 'Banner (between posts) · wide 4:1' },
-  Sidebar: { ratio: 1, aspectClass: 'aspect-square', size: '800 × 800 px', label: 'Sidebar (right column) · square 1:1' },
+  Sidebar: { ratio: 1, aspectClass: 'aspect-square', size: '800 × 800 px', label: 'Square · right column on computers, between posts on phones · 1:1' },
 }
 
 /** True when an image is within 10% of the placement's shape. */

@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom'
 import { CalendarDays, ExternalLink, FileText, MapPin, PenSquare, Settings, UserX } from 'lucide-react'
 import { Avatar, Badge, ButtonLink, Card, EmptyState, Skeleton } from '@/components/ui'
 import { WithRail } from '@/components/layout/AppShell'
-import { AdSlot } from '@/features/ads/AdSlot'
+import { AdSlot, PhoneSquareAd } from '@/features/ads/AdSlot'
 import { useAuth } from '@/features/auth/AuthContext'
 import { PostList } from '@/features/posts/PostList'
 import { useProfile } from '@/features/users/api'
@@ -83,6 +83,9 @@ export function ProfilePage() {
           )}
         </div>
       </Card>
+
+      {/* The right-column ad, for screens that don't show that column. */}
+      <PhoneSquareAd className="mt-6" />
 
       <h2 className="mt-8 mb-4 text-lg font-bold">{isMe ? 'My posts' : 'Posts'}</h2>
       <PostList

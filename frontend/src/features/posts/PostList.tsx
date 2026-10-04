@@ -1,14 +1,14 @@
 import { Fragment, useEffect, type ReactNode } from 'react'
 import { FileText } from 'lucide-react'
 import { Alert, Card, EmptyState, Spinner } from '@/components/ui'
-import { AdSlot } from '@/features/ads/AdSlot'
+import { FeedAd } from '@/features/ads/AdSlot'
 import { useInView } from '@/hooks/useInView'
 import { getErrorMessage } from '@/lib/api'
 import type { PostFilters } from '@/lib/types'
 import { usePosts } from './api'
 import { PostCard, PostCardSkeleton } from './PostCard'
 
-/** Infinite-scrolling list of posts, with a banner ad after every few posts. */
+/** Infinite-scrolling list of posts, with an ad after every 4 posts (banner, or square on phones). */
 export function PostList({
   filters,
   empty,
@@ -51,7 +51,7 @@ export function PostList({
       {items.map((post, i) => (
         <Fragment key={post.id}>
           <PostCard post={post} />
-          {showAds && (i + 1) % 4 === 0 && <AdSlot placement="Banner" index={Math.floor(i / 4)} />}
+          {showAds && (i + 1) % 4 === 0 && <FeedAd slot={Math.floor(i / 4)} />}
         </Fragment>
       ))}
       <div ref={sentinel} className="flex justify-center py-4 text-brand-500">
