@@ -26,22 +26,13 @@ public class PushSender(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var config = options.Value;
-        if (!config.IsConfigured)
+        var client = CreateClient(options.Value);
+        if (client is null)
         {
-            logger.LogInformation("Web Push keys are not configured; phone notifications are off.");
-            // Keep draining so the queue never fills up.
+            // Keep draining so the queue never fills up; the rest of the API works without push.
             await foreach (var _ in queue.Reader.ReadAllAsync(stoppingToken)) { }
             return;
         }
-
-        var client = new PushServiceClient(httpClients.CreateClient("webpush"))
-        {
-            DefaultAuthentication = new VapidAuthentication(config.PublicKey, config.PrivateKey)
-            {
-                Subject = string.IsNullOrWhiteSpace(config.Subject) ? "mailto:admin@bof2.local" : config.Subject,
-            },
-        };
 
         await foreach (var note in queue.Reader.ReadAllAsync(stoppingToken))
         {
@@ -53,6 +44,30 @@ public class PushSender(
             {
                 logger.LogWarning(ex, "Push to user {UserId} failed", note.UserId);
             }
+        }
+    }
+
+    private PushServiceClient? CreateClient(PushOptions config)
+    {
+        if (!config.IsConfigured)
+        {
+            logger.LogInformation("Web Push keys are not configured; phone notifications are off.");
+            return null;
+        }
+        try
+        {
+            return new PushServiceClient(httpClients.CreateClient("webpush"))
+            {
+                DefaultAuthentication = new VapidAuthentication(config.PublicKey.Trim(), config.PrivateKey.Trim())
+                {
+                    Subject = string.IsNullOrWhiteSpace(config.Subject) ? "mailto:admin@bof2.local" : config.Subject.Trim(),
+                },
+            };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Web Push keys are invalid (check WebPush__PublicKey/PrivateKey/Subject); phone notifications are off.");
+            return null;
         }
     }
 

@@ -125,6 +125,17 @@ app.MapHealthChecks("/health");
 // SPA routes only; unknown /api and /uploads URLs must stay 404s.
 app.MapFallbackToFile("{*path:regex(^(?!api/|uploads/).*$):nonfile}", "index.html");
 
-await DbSeeder.SeedAsync(app.Services);
-
-app.Run();
+// Open the port first, then migrate/seed: hosts like Render stop an app that hasn't bound its port within
+// a short time, and the first start on an empty database (tables + 753 local levels) can take a while.
+await app.StartAsync();
+try
+{
+    await DbSeeder.SeedAsync(app.Services);
+}
+catch (Exception ex)
+{
+    app.Logger.LogCritical(ex, "Database migration/seed failed; shutting down");
+    await app.StopAsync();
+    throw;
+}
+await app.WaitForShutdownAsync();
