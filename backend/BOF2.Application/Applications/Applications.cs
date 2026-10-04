@@ -16,8 +16,12 @@ public record PayApplicantRequest(string? Note);
 /// <summary>The company turns down a claim (wrong amount, work not finished…). The applicant can claim again.</summary>
 public record DeclineClaimRequest(string Reason);
 
-/// <summary>An accepted applicant asks the company to pay them.</summary>
-public record ClaimPaymentRequest(decimal Amount, string? Note);
+/// <summary>An accepted applicant asks the company to pay them. Bound from multipart/form-data; the proof file is passed separately.</summary>
+public class ClaimPaymentRequest
+{
+    public decimal Amount { get; set; }
+    public string? Note { get; set; }
+}
 
 /// <summary>The applicant's profile as the company sees it, contact details included.</summary>
 public record ApplicantDto(
@@ -53,6 +57,8 @@ public record ApplicationDto(
     decimal? ClaimedAmount,
     string? ClaimNote,
     DateTime? ClaimedAt,
+    string? ClaimAttachmentUrl,
+    string? ClaimAttachmentName,
     string? ClaimDeclineReason);
 
 public record ApplicationMessageDto(Guid Id, Guid ApplicationId, string Content, DateTime CreatedAt, AuthorDto Sender);
@@ -178,7 +184,7 @@ public interface IApplicationService
     Task<ApplicationMessageDto> SendMessageAsync(Guid id, SendMessageRequest request, CancellationToken ct = default);
 
     /// <summary>Accepted applicant claims payment for their work. Notifies the company.</summary>
-    Task<ApplicationDto> ClaimAsync(Guid id, ClaimPaymentRequest request, CancellationToken ct = default);
+    Task<ApplicationDto> ClaimAsync(Guid id, ClaimPaymentRequest request, FileUpload? proof, CancellationToken ct = default);
 
     /// <summary>Company turns down the claim with a reason; the applicant can claim again.</summary>
     Task<ApplicationDto> DeclineClaimAsync(Guid id, DeclineClaimRequest request, CancellationToken ct = default);

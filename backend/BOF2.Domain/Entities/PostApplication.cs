@@ -22,6 +22,10 @@ public class PostApplication
     public string? ClaimNote { get; set; }
     public DateTime? ClaimedAt { get; set; }
 
+    /// <summary>Optional proof sent with the claim (a photo or PDF of the finished work).</summary>
+    public string? ClaimAttachmentUrl { get; set; }
+    public string? ClaimAttachmentName { get; set; }
+
     /// <summary>Why the company turned down the last claim. Cleared when the applicant claims again.</summary>
     public string? ClaimDeclineReason { get; set; }
 

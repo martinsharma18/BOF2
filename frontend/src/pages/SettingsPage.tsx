@@ -2,6 +2,7 @@ import { Card, PageHeader, PageSpinner, Alert } from '@/components/ui'
 import { PushSettings } from '@/features/pwa/PwaUi'
 import { AvatarUploader } from '@/features/users/AvatarUploader'
 import { ChangePasswordForm } from '@/features/users/ChangePasswordForm'
+import { LockedProfile, PhoneForm } from '@/features/users/IndividualProfile'
 import { ProfileForm } from '@/features/users/ProfileForm'
 import { useMyProfile } from '@/features/users/api'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
@@ -14,19 +15,32 @@ export function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title="Settings" description="Manage your profile and account security." />
+      <PageHeader title="Settings" description="Your profile, phone number and account security." />
       {me.isLoading ? (
         <PageSpinner />
       ) : me.isError || !me.data ? (
         <Alert>{getErrorMessage(me.error)}</Alert>
       ) : (
         <div className="space-y-6">
-          <Section title="Profile photo">
-            <AvatarUploader profile={me.data.profile} />
-          </Section>
-          <Section title="Profile" description="This information appears on your public profile (phone and email stay private).">
-            <ProfileForm me={me.data} />
-          </Section>
+          {me.data.profile.accountType === 'Individual' ? (
+            <>
+              <Section title="Profile" description="What companies see when you apply.">
+                <LockedProfile me={me.data} />
+              </Section>
+              <Section title="Phone number" description="Only you and the companies you apply to see it.">
+                <PhoneForm me={me.data} />
+              </Section>
+            </>
+          ) : (
+            <>
+              <Section title="Profile photo">
+                <AvatarUploader profile={me.data.profile} />
+              </Section>
+              <Section title="Profile" description="This information appears on your public profile (phone and email stay private).">
+                <ProfileForm me={me.data} />
+              </Section>
+            </>
+          )}
           <Section title="Phone notifications" description="Applies to this device only.">
             <PushSettings />
           </Section>

@@ -1,3 +1,4 @@
+using BOF2.Api.Infrastructure;
 using BOF2.Application.Applications;
 using BOF2.Application.Common;
 using BOF2.Domain;
@@ -42,11 +43,15 @@ public class ApplicationsController(IApplicationService applications) : Controll
     public async Task<ActionResult<ApplicationMessageDto>> SendMessage(Guid id, SendMessageRequest request, CancellationToken ct) =>
         StatusCode(StatusCodes.Status201Created, await applications.SendMessageAsync(id, request, ct));
 
-    /// <summary>Accepted applicant claims payment; the company is notified and pays from Applicants.</summary>
+    /// <summary>
+    /// Accepted applicant claims payment (multipart/form-data with an optional photo or PDF in <c>proof</c>);
+    /// the company is notified and pays from Applicants.
+    /// </summary>
     [HttpPost("{id:guid}/claim")]
     [Authorize(Roles = Roles.Individual)]
-    public Task<ApplicationDto> Claim(Guid id, ClaimPaymentRequest request, CancellationToken ct) =>
-        applications.ClaimAsync(id, request, ct);
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    public Task<ApplicationDto> Claim(Guid id, [FromForm] ClaimPaymentRequest request, IFormFile? proof, CancellationToken ct) =>
+        proof.WithUploadAsync(upload => applications.ClaimAsync(id, request, upload, ct));
 
     /// <summary>Company turns down the claim with a reason. The applicant can then claim again.</summary>
     [HttpPost("{id:guid}/claim/decline")]

@@ -1,9 +1,14 @@
-import { useState } from 'react'
-import { CircleAlert, Info } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { CircleAlert, FileText, Info, Paperclip, X } from 'lucide-react'
 import { Button, Dialog, Field, Input, toast } from '@/components/ui'
+import { useObjectUrl } from '@/hooks/useObjectUrl'
 import { getErrorMessage, getProblem } from '@/lib/api'
 import { formatMoney } from '@/lib/format'
+import { shrinkImage } from '@/lib/image'
 import { useClaimPayment } from './api'
+
+const MAX_PROOF_BYTES = 5 * 1024 * 1024
+const PROOF_TYPES = 'image/jpeg,image/png,image/webp,image/gif,application/pdf'
 
 /**
  * A hired applicant asks the company to pay for the finished job. One claim per job:
@@ -29,20 +34,37 @@ export function ClaimPaymentDialog({
   const claim = useClaimPayment()
   const [amount, setAmount] = useState(maxAmount > 0 ? String(maxAmount) : '')
   const [note, setNote] = useState('')
+  const [proof, setProof] = useState<File | null>(null)
+  const [proofError, setProofError] = useState<string>()
+  const proofInput = useRef<HTMLInputElement>(null)
+  const proofPreview = useObjectUrl(proof?.type.startsWith('image/') ? proof : null)
   const [error, setError] = useState<string>()
   const value = Number(amount)
   const tooMuch = maxAmount > 0 && value > maxAmount
 
+  const pickProof = async (picked: File) => {
+    setProofError(undefined)
+    if (!PROOF_TYPES.split(',').includes(picked.type)) return setProofError('Choose a photo (JPG, PNG, WEBP) or a PDF.')
+    // Photos are shrunk on the phone first so they upload quickly on slow data.
+    const file = picked.type.startsWith('image/') ? await shrinkImage(picked, 1600) : picked
+    if (file.size > MAX_PROOF_BYTES) return setProofError('The file must be 5 MB or smaller.')
+    setProof(file)
+  }
+
   const submit = () => {
     setError(undefined)
     claim.mutate(
-      { id: applicationId, amount: value, note: note.trim() || undefined },
+      { id: applicationId, amount: value, note: note.trim() || undefined, proof },
       {
         onSuccess: () => {
           toast.success(`Claim sent. ${companyName} will pay ${formatMoney(value)} to your wallet.`)
           onClose()
         },
-        onError: (e) => setError(getProblem(e)?.errors?.Amount?.[0] ?? getErrorMessage(e)),
+        onError: (e) => {
+          const errors = getProblem(e)?.errors
+          if (errors?.Proof?.[0]) setProofError(errors.Proof[0])
+          else setError(errors?.Amount?.[0] ?? getErrorMessage(e))
+        },
       },
     )
   }
@@ -97,6 +119,42 @@ export function ClaimPaymentDialog({
             placeholder="e.g. Worked 3 days, 12 to 14 Oct"
             value={note}
             onChange={(e) => setNote(e.target.value)}
+          />
+        </Field>
+        <Field label="Photo or file of the work" htmlFor={`claim-proof-${applicationId}`} optional error={proofError} hint={proof ? undefined : 'A photo of the finished work, a receipt or a PDF. Max 5 MB.'}>
+          {proof ? (
+            <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-2 ring-1 ring-slate-200">
+              {proofPreview ? (
+                <img src={proofPreview} alt="" className="size-14 shrink-0 rounded-md object-cover" />
+              ) : (
+                <span className="flex size-14 shrink-0 items-center justify-center rounded-md bg-white text-brand-500 ring-1 ring-slate-200">
+                  <FileText className="size-6" aria-hidden />
+                </span>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-slate-900">{proof.name}</p>
+                <p className="text-xs text-slate-500">{(proof.size / 1024 / 1024).toFixed(1)} MB</p>
+              </div>
+              <Button size="icon" variant="ghost" className="size-8" aria-label="Remove file" onClick={() => setProof(null)}>
+                <X className="size-4" />
+              </Button>
+            </div>
+          ) : (
+            <Button id={`claim-proof-${applicationId}`} variant="secondary" className="w-full" icon={<Paperclip className="size-4" />} onClick={() => proofInput.current?.click()}>
+              Add photo or file
+            </Button>
+          )}
+          <input
+            ref={proofInput}
+            type="file"
+            accept={PROOF_TYPES}
+            className="sr-only"
+            tabIndex={-1}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              e.target.value = ''
+              if (file) void pickProof(file)
+            }}
           />
         </Field>
         <p className="flex gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">

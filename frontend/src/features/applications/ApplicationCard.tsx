@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { Banknote, BriefcaseBusiness, Check, CircleAlert, Clock, Hand, MessageSquare, Phone, UserPlus, X, XCircle } from 'lucide-react'
+import { Banknote, BriefcaseBusiness, Check, CircleAlert, Clock, Hand, MessageSquare, Paperclip, Phone, UserPlus, X, XCircle } from 'lucide-react'
 import { Avatar, Badge, Button, ButtonLink, buttonClasses, Card, ConfirmDialog, Dialog, Field, Input, Textarea, toast } from '@/components/ui'
 import { useAuth } from '@/features/auth/AuthContext'
 import { getErrorMessage, getProblem } from '@/lib/api'
@@ -145,8 +145,8 @@ function NextStep({ application: a, isCompany }: { application: Application; isC
       : { tone: 'green', icon: <BriefcaseBusiness />, text: 'You’re hired! Claim payment when the work is done.' }
   else if (stage === 'Claimed')
     step = isCompany
-      ? { tone: 'amber', icon: <Hand />, text: <>Claimed {formatMoney(a.claimedAmount!)}{a.claimNote && <> · “{a.claimNote}”</>}. Pay or decline.</> }
-      : { tone: 'amber', icon: <Hand />, text: `You claimed ${formatMoney(a.claimedAmount!)}. Waiting for payment.` }
+      ? { tone: 'amber', icon: <Hand />, text: <>Claimed {formatMoney(a.claimedAmount!)}{a.claimNote && <> · “{a.claimNote}”</>}. Pay or decline.<ClaimProofLink application={a} /></> }
+      : { tone: 'amber', icon: <Hand />, text: <>You claimed {formatMoney(a.claimedAmount!)}. Waiting for payment.<ClaimProofLink application={a} /></> }
   else if (stage === 'Paid')
     step = isCompany
       ? { tone: 'green', icon: <Banknote />, text: `Paid ${formatMoney(a.paidAmount)}. Job closed.` }
@@ -161,6 +161,22 @@ function NextStep({ application: a, isCompany }: { application: Application; isC
       {step.icon}
       <span className="min-w-0">{step.text}</span>
     </p>
+  )
+}
+
+/** The photo or PDF sent with the claim, opened in a new tab. */
+function ClaimProofLink({ application: a }: { application: Application }) {
+  if (!a.claimAttachmentUrl) return null
+  return (
+    <a
+      href={a.claimAttachmentUrl}
+      target="_blank"
+      rel="noreferrer"
+      className="mt-1 flex w-fit max-w-full items-center gap-1.5 rounded-md bg-white px-2 py-1 text-xs font-semibold text-brand-700 ring-1 ring-slate-200 hover:bg-brand-50"
+    >
+      <Paperclip className="mt-0! size-3.5!" aria-hidden />
+      <span className="truncate">{a.claimAttachmentName ?? 'Proof of work'}</span>
+    </a>
   )
 }
 

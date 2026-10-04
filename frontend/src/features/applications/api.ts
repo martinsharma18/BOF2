@@ -107,8 +107,13 @@ export function useClaimPayment() {
   const sync = useSyncApplication()
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, amount, note }: { id: string; amount: number; note?: string }) =>
-      (await api.post<Application>(`/applications/${id}/claim`, { amount, note })).data,
+    mutationFn: async ({ id, amount, note, proof }: { id: string; amount: number; note?: string; proof?: File | null }) => {
+      const form = new FormData()
+      form.append('amount', String(amount))
+      if (note) form.append('note', note)
+      if (proof) form.append('proof', proof)
+      return (await api.post<Application>(`/applications/${id}/claim`, form)).data
+    },
     onSuccess: (application) => {
       sync(application)
       return queryClient.invalidateQueries({ queryKey: postKeys.all })

@@ -42,6 +42,9 @@ public record UpdateProfileRequest(
     string? LocalLevel,
     string? Bio);
 
+/// <summary>The only profile change an individual can make: their phone numbers.</summary>
+public record UpdatePhoneRequest(string PhoneNumber, string? AdditionalPhoneNumber);
+
 public record ChangePasswordRequest(string CurrentPassword, string NewPassword, string ConfirmPassword);
 
 public class UpdateProfileValidator : AbstractValidator<UpdateProfileRequest>
@@ -63,6 +66,16 @@ public class UpdateProfileValidator : AbstractValidator<UpdateProfileRequest>
     }
 }
 
+public class UpdatePhoneValidator : AbstractValidator<UpdatePhoneRequest>
+{
+    public UpdatePhoneValidator()
+    {
+        RuleFor(x => x.PhoneNumber).NotEmpty().PhoneNumber();
+        RuleFor(x => x.AdditionalPhoneNumber).PhoneNumber()
+            .When(x => !string.IsNullOrWhiteSpace(x.AdditionalPhoneNumber));
+    }
+}
+
 public class ChangePasswordValidator : AbstractValidator<ChangePasswordRequest>
 {
     public ChangePasswordValidator()
@@ -78,6 +91,10 @@ public interface IUserService
 {
     Task<PublicProfileDto> GetPublicAsync(Guid userId, CancellationToken ct = default);
     Task<MyProfileDto> GetMineAsync(CancellationToken ct = default);
+    /// <summary>Companies and the admin edit their whole profile. Individuals can't: their details are locked.</summary>
     Task<MyProfileDto> UpdateMineAsync(UpdateProfileRequest request, CancellationToken ct = default);
+
+    /// <summary>Changes the signed-in user's phone numbers (the one edit an individual can make).</summary>
+    Task<MyProfileDto> UpdatePhoneAsync(UpdatePhoneRequest request, CancellationToken ct = default);
     Task<MyProfileDto> SetAvatarAsync(FileUpload? image, CancellationToken ct = default);
 }

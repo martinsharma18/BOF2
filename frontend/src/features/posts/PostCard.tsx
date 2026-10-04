@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CheckCircle2, ClipboardList, Download, Hand, ImageIcon, Link2, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Send, Trash2, Users, VenusAndMars, Wallet } from 'lucide-react'
+import { CheckCircle2, ClipboardList, Download, Hand, ImageIcon, Link2, ListChecks, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Send, Trash2, Users, VenusAndMars, Wallet } from 'lucide-react'
 import { Avatar, Badge, Button, ButtonLink, Card, ConfirmDialog, Dialog, Menu, MenuItem, MenuSeparator, Skeleton, Spinner, Textarea, toast } from '@/components/ui'
 import { useApply } from '@/features/applications/api'
 import { ClaimPaymentDialog } from '@/features/applications/ClaimPaymentDialog'
@@ -163,7 +163,7 @@ export function PostCard({
         )}
       </div>
 
-      {/* Photo on the left, the four decision criteria on the right. */}
+      {/* Photo on the left, the requirement (the decision criteria) on the right. */}
       <div className="mx-4 mt-4 grid gap-3 sm:mx-5 sm:grid-cols-[minmax(0,1.2fr)_minmax(220px,0.8fr)]">
         {post.mediaUrl ? (
           <div className="group relative overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200">
@@ -186,7 +186,12 @@ export function PostCard({
             No photo
           </div>
         )}
-        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-slate-200/70 ring-1 ring-slate-200/70 sm:grid-cols-1">
+        <div className="flex flex-col">
+          <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-bold text-brand-700">
+            <ListChecks className="size-4" aria-hidden />
+            Requirement
+          </h3>
+          <dl className="grid flex-1 grid-cols-2 gap-px overflow-hidden rounded-xl bg-slate-200/70 ring-1 ring-slate-200/70 sm:grid-cols-1">
           <Detail icon={<Users className="size-4" />} label="Minimum people" value={`${post.minimumNumber}+`} />
           <Detail icon={<Wallet className="size-4" />} label="Maximum payment" value={formatMoney(post.maximumPayment)} highlight />
           <Detail icon={<VenusAndMars className="size-4" />} label="Gender" value={genderLabel(post)} />
@@ -194,7 +199,8 @@ export function PostCard({
           {post.contactNumber && (
             <Detail icon={<Phone className="size-4" />} label="Contact" value={post.contactNumber} href={`tel:${post.contactNumber.replace(/[\s-]/g, '')}`} />
           )}
-        </dl>
+          </dl>
+        </div>
       </div>
 
       {isIndividual && !isOwner && <ApplicantActions post={post} onApply={() => setApplyOpen(true)} />}

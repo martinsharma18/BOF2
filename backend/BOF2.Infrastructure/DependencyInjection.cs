@@ -19,6 +19,7 @@ using BOF2.Infrastructure.Auth;
 using BOF2.Infrastructure.Persistence;
 using BOF2.Infrastructure.Push;
 using BOF2.Infrastructure.Services;
+using BOF2.Infrastructure.Email;
 using BOF2.Infrastructure.Storage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -84,6 +85,13 @@ public static class DependencyInjection
         services.AddHttpClient("webpush", c => c.Timeout = TimeSpan.FromSeconds(15));
         services.AddHostedService<PushSender>();
         services.AddMemoryCache();
+
+        // Email (password reset codes): Gmail SMTP when an account is configured, the log otherwise.
+        services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+        if (!string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.SectionName}:SmtpUser"]))
+            services.AddScoped<IEmailSender, SmtpEmailSender>();
+        else
+            services.AddScoped<IEmailSender, LogEmailSender>();
         // Cloudinary when configured (hosted: Render's disk is wiped on deploy), local ./uploads otherwise.
         var cloudinaryUrl = configuration["Cloudinary:Url"];
         if (!string.IsNullOrWhiteSpace(cloudinaryUrl))

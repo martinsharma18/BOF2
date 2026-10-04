@@ -44,3 +44,23 @@ public class LoginValidator : AbstractValidator<LoginRequest>
         RuleFor(x => x.Password).NotEmpty();
     }
 }
+
+public class ForgotPasswordValidator : AbstractValidator<ForgotPasswordRequest>
+{
+    public ForgotPasswordValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().WithMessage("Enter your email.").EmailAddress();
+    }
+}
+
+public class ResetPasswordValidator : AbstractValidator<ResetPasswordRequest>
+{
+    public ResetPasswordValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.Code).NotEmpty().WithMessage("Enter the 6-digit code.")
+            .Matches(@"^\s*[0-9]{6}\s*$").WithMessage("The code has 6 digits.");
+        RuleFor(x => x.NewPassword).NotEmpty().MinimumLength(8);
+        RuleFor(x => x.ConfirmPassword).Equal(x => x.NewPassword).WithMessage("Passwords do not match.");
+    }
+}

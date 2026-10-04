@@ -33,6 +33,15 @@ public record LoginRequest(string Email, string Password);
 
 public record RefreshRequest(string RefreshToken);
 
+/// <summary>Forgot password, step 1: email a one-time code to the account's address.</summary>
+public record ForgotPasswordRequest(string Email);
+
+/// <summary>Where the code went (masked) and when another can be requested. <see cref="DevCode"/> is only filled in development without an email provider.</summary>
+public record ForgotPasswordResponse(string SentTo, int ExpiresInMinutes, int ResendAfterSeconds, string? DevCode);
+
+/// <summary>Forgot password, step 2: the code from the email and the new password. Signs the user in.</summary>
+public record ResetPasswordRequest(string Email, string Code, string NewPassword, string ConfirmPassword);
+
 public record UserDto(
     Guid Id,
     string Email,

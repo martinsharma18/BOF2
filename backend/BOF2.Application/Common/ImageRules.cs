@@ -20,4 +20,20 @@ public static class ImageRules
         if (error is not null)
             throw new FieldErrorsException(new Dictionary<string, string[]> { [field] = [error] });
     }
+
+    /// <summary>Like <see cref="EnsureValid"/>, but a PDF is accepted too (proof of work, receipts).</summary>
+    public static void EnsureValidImageOrPdf(FileUpload file, string field)
+    {
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var isPdf = extension == ".pdf" && file.ContentType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase);
+        var isImage = AllowedExtensions.Contains(extension) &&
+                      file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
+
+        string? error = null;
+        if (file.Length == 0) error = "The file is empty.";
+        else if (file.Length > MaxBytes) error = "The file must be 5 MB or smaller.";
+        else if (!isPdf && !isImage) error = "Only a photo (JPG, PNG, WEBP, GIF) or a PDF is allowed.";
+        if (error is not null)
+            throw new FieldErrorsException(new Dictionary<string, string[]> { [field] = [error] });
+    }
 }

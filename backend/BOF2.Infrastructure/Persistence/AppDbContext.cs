@@ -25,6 +25,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<InboxItem> InboxItems => Set<InboxItem>();
     public DbSet<LocalLevel> LocalLevels => Set<LocalLevel>();
     public DbSet<PushDevice> PushDevices => Set<PushDevice>();
+    public DbSet<PasswordResetCode> PasswordResetCodes => Set<PasswordResetCode>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -126,7 +127,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.HasIndex(a => new { a.ApplicantId, a.CreatedAt });
         });
 
-        builder.Entity<PostApplication>(e => e.Property(a => a.ClaimDeclineReason).HasMaxLength(300));
+        builder.Entity<PostApplication>(e =>
+        {
+            e.Property(a => a.ClaimDeclineReason).HasMaxLength(300);
+            e.Property(a => a.ClaimAttachmentUrl).HasMaxLength(500);
+            e.Property(a => a.ClaimAttachmentName).HasMaxLength(200);
+        });
+
+        builder.Entity<PasswordResetCode>(e =>
+        {
+            e.HasOne(c => c.User).WithMany().HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(c => c.CodeHash).HasMaxLength(64).IsRequired();
+            e.HasIndex(c => new { c.UserId, c.CreatedAt });
+        });
 
         builder.Entity<ApplicationMessage>(e =>
         {

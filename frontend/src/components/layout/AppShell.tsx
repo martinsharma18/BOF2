@@ -143,7 +143,7 @@ function LogoutConfirm({ open, onClose }: { open: boolean; onClose: () => void }
       onConfirm={async () => {
         setBusy(true)
         await signOut()
-        navigate('/', { replace: true })
+        navigate('/login', { replace: true })
       }}
       title="Log out?"
       description="You will stop getting notifications on this device until you log in again."

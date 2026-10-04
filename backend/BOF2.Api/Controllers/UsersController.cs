@@ -20,6 +20,11 @@ public class UsersController(IUserService users) : ControllerBase
     public Task<MyProfileDto> UpdateMine(UpdateProfileRequest request, CancellationToken ct) =>
         users.UpdateMineAsync(request, ct);
 
+    /// <summary>Phone numbers only. Individuals use this; the rest of their profile is locked.</summary>
+    [HttpPut("me/phone")]
+    public Task<MyProfileDto> UpdatePhone(UpdatePhoneRequest request, CancellationToken ct) =>
+        users.UpdatePhoneAsync(request, ct);
+
     [HttpPut("me/avatar")]
     [RequestSizeLimit(6 * 1024 * 1024)]
     public Task<MyProfileDto> SetAvatar(IFormFile avatar, CancellationToken ct) =>

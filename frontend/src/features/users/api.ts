@@ -64,6 +64,16 @@ export function useUpdateProfile() {
   })
 }
 
+/** Phone numbers only: the one profile change an individual can make. */
+export function useUpdatePhone() {
+  const sync = useSyncMe()
+  return useMutation({
+    mutationFn: async (payload: { phoneNumber: string; additionalPhoneNumber: string | null }) =>
+      (await api.put<MyProfile>('/users/me/phone', payload)).data,
+    onSuccess: sync,
+  })
+}
+
 export function useAvatar() {
   const sync = useSyncMe()
   return useMutation({

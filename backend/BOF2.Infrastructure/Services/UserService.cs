@@ -12,8 +12,11 @@ public class UserService(
     AppDbContext db,
     ICurrentUser currentUser,
     IFileStorage fileStorage,
-    IValidator<UpdateProfileRequest> validator) : IUserService
+    IValidator<UpdateProfileRequest> validator,
+    IValidator<UpdatePhoneRequest> phoneValidator) : IUserService
 {
+    private const string LockedMessage = "Your profile details are locked. You can only change your phone number.";
+
     public async Task<PublicProfileDto> GetPublicAsync(Guid userId, CancellationToken ct = default)
     {
         var user = await LoadAsync(userId, tracking: false, ct);
@@ -29,6 +32,8 @@ public class UserService(
     public async Task<MyProfileDto> UpdateMineAsync(UpdateProfileRequest request, CancellationToken ct = default)
     {
         var user = await LoadAsync(currentUser.RequireUserId(), tracking: true, ct);
+        if (user.AccountType == AccountType.Individual)
+            throw new ForbiddenException(LockedMessage);
         await validator.ValidateAndThrowAsync(request, ct);
 
         var errors = new Dictionary<string, string[]>();
@@ -69,9 +74,24 @@ public class UserService(
         return await ToMineAsync(user, ct);
     }
 
+    public async Task<MyProfileDto> UpdatePhoneAsync(UpdatePhoneRequest request, CancellationToken ct = default)
+    {
+        var user = await LoadAsync(currentUser.RequireUserId(), tracking: true, ct);
+        await phoneValidator.ValidateAndThrowAsync(request, ct);
+
+        user.PhoneNumber = request.PhoneNumber.Trim();
+        if (user.IndividualProfile is { } individual)
+            individual.AdditionalPhoneNumber = NullIfBlank(request.AdditionalPhoneNumber);
+
+        await db.SaveChangesAsync(ct);
+        return await ToMineAsync(user, ct);
+    }
+
     public async Task<MyProfileDto> SetAvatarAsync(FileUpload? image, CancellationToken ct = default)
     {
         var user = await LoadAsync(currentUser.RequireUserId(), tracking: true, ct);
+        if (user.AccountType == AccountType.Individual)
+            throw new ForbiddenException(LockedMessage);
         if (image is not null) ImageRules.EnsureValid(image, "Avatar");
 
         var oldAvatar = user.AvatarUrl;

@@ -21,6 +21,7 @@ public class ApplicationService(
     IValidator<PayApplicantRequest> payValidator,
     IValidator<ClaimPaymentRequest> claimValidator,
     IValidator<DeclineClaimRequest> declineClaimValidator,
+    IFileStorage fileStorage,
     PushQueue pushQueue) : IApplicationService
 {
     private const string DefaultClaimMessage = "I would like to claim this opportunity.";
@@ -61,6 +62,8 @@ public class ApplicationService(
         a.ClaimedAmount,
         a.ClaimNote,
         a.ClaimedAt,
+        a.ClaimAttachmentUrl,
+        a.ClaimAttachmentName,
         a.ClaimDeclineReason);
 
     public async Task<ApplicationDto> ApplyAsync(Guid postId, ApplyRequest request, CancellationToken ct = default)
@@ -327,10 +330,11 @@ public class ApplicationService(
             ? db.Applications.Where(a => a.Id == id).ExecuteUpdateAsync(s => s.SetProperty(a => a.ApplicantReadAt, at), ct)
             : db.Applications.Where(a => a.Id == id).ExecuteUpdateAsync(s => s.SetProperty(a => a.CompanyReadAt, at), ct);
 
-    public async Task<ApplicationDto> ClaimAsync(Guid id, ClaimPaymentRequest request, CancellationToken ct = default)
+    public async Task<ApplicationDto> ClaimAsync(Guid id, ClaimPaymentRequest request, FileUpload? proof, CancellationToken ct = default)
     {
         var userId = currentUser.RequireUserId();
         await claimValidator.ValidateAndThrowAsync(request, ct);
+        if (proof is not null) ImageRules.EnsureValidImageOrPdf(proof, "Proof");
 
         var application = await db.Applications.Include(a => a.Post).FirstOrDefaultAsync(a => a.Id == id, ct)
                           ?? throw new NotFoundException("Application not found.");
@@ -353,6 +357,8 @@ public class ApplicationService(
         var amount = decimal.Round(request.Amount, 2);
         var note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
         var now = DateTime.UtcNow;
+        var proofUrl = proof is null ? null : await fileStorage.SaveAsync(proof, "claims", ct);
+        var proofName = proof is null ? null : Path.GetFileName(proof.FileName) is { Length: > 0 } n ? n[..Math.Min(n.Length, 200)] : "proof";
 
         // Conditional update so a double tap can't claim twice.
         var updated = await db.Applications
@@ -361,10 +367,15 @@ public class ApplicationService(
                 .SetProperty(a => a.ClaimedAmount, amount)
                 .SetProperty(a => a.ClaimNote, note)
                 .SetProperty(a => a.ClaimedAt, now)
+                .SetProperty(a => a.ClaimAttachmentUrl, proofUrl)
+                .SetProperty(a => a.ClaimAttachmentName, proofName)
                 .SetProperty(a => a.ClaimDeclineReason, (string?)null)
                 .SetProperty(a => a.UpdatedAt, now), ct);
         if (updated == 0)
+        {
+            await fileStorage.DeleteAsync(proofUrl, ct);
             throw AmountError("You have already claimed payment for this job.");
+        }
 
         var name = await db.Users.Where(u => u.Id == userId).Select(u => u.FullName).FirstAsync(ct);
         db.Notify(application.Post.AuthorId, NotificationType.PaymentClaimed,
@@ -385,9 +396,12 @@ public class ApplicationService(
             throw new FieldErrorsException(new Dictionary<string, string[]> { ["Reason"] = ["There is no claim waiting on this job."] });
 
         var claimed = application.ClaimedAmount.Value;
+        var oldProof = application.ClaimAttachmentUrl;
         application.ClaimedAmount = null;
         application.ClaimNote = null;
         application.ClaimedAt = null;
+        application.ClaimAttachmentUrl = null;
+        application.ClaimAttachmentName = null;
         application.ClaimDeclineReason = request.Reason.Trim();
         application.UpdatedAt = DateTime.UtcNow;
 
@@ -399,6 +413,7 @@ public class ApplicationService(
             actorId: application.Post.AuthorId);
 
         await db.SaveChangesAsync(ct);
+        await fileStorage.DeleteAsync(oldProof, ct);
         return await GetAsync(id, ct);
     }
 

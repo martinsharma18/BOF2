@@ -5,9 +5,12 @@ using BOF2.Domain;
 using BOF2.Domain.Entities;
 using BOF2.Domain.Enums;
 using BOF2.Infrastructure.Persistence;
+using System.Security.Cryptography;
+using System.Text;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 
 namespace BOF2.Infrastructure.Auth;
 
@@ -18,8 +21,17 @@ public class AuthService(
     IValidator<RegisterCompanyRequest> companyValidator,
     IValidator<RegisterIndividualRequest> individualValidator,
     IValidator<LoginRequest> loginValidator,
-    IValidator<ChangePasswordRequest> changePasswordValidator) : IAuthService
+    IValidator<ChangePasswordRequest> changePasswordValidator,
+    IValidator<ForgotPasswordRequest> forgotPasswordValidator,
+    IValidator<ResetPasswordRequest> resetPasswordValidator,
+    IEmailSender email,
+    IHostEnvironment environment) : IAuthService
 {
+    private const int ResetCodeMinutes = 10;
+    private const int ResetCodeResendSeconds = 60;
+    private const int ResetCodeMaxAttempts = 5;
+    private const int ResetCodesPerHour = 5;
+
     private const string InvalidCredentials = "Invalid email or password.";
     private const string DisabledMessage = "This account has been disabled. Please contact support.";
 
@@ -150,6 +162,110 @@ public class AuthService(
 
         return await IssueTokensAsync(user, ct);
     }
+
+    public async Task<ForgotPasswordResponse> SendResetCodeAsync(ForgotPasswordRequest request, CancellationToken ct = default)
+    {
+        await forgotPasswordValidator.ValidateAndThrowAsync(request, ct);
+        var user = await FindForResetAsync(request.Email, ct);
+
+        var now = DateTime.UtcNow;
+        var recent = await db.PasswordResetCodes.AsNoTracking()
+            .Where(c => c.UserId == user.Id && c.CreatedAt > now.AddHours(-1))
+            .Select(c => c.CreatedAt)
+            .ToListAsync(ct);
+        if (recent.Count >= ResetCodesPerHour)
+            throw EmailError("Too many codes requested. Try again in an hour.");
+        var wait = recent.Count == 0 ? 0 : ResetCodeResendSeconds - (int)(now - recent.Max()).TotalSeconds;
+        if (wait > 0)
+            throw EmailError($"A code was just sent. Wait {wait} seconds to get a new one.");
+
+        var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
+        db.PasswordResetCodes.Add(new PasswordResetCode
+        {
+            UserId = user.Id,
+            CodeHash = HashResetCode(user.Id, code),
+            ExpiresAt = now.AddMinutes(ResetCodeMinutes),
+        });
+        await db.SaveChangesAsync(ct);
+
+        await email.SendAsync(user.Email!, user.FullName, $"Your BOF2 password reset code: {code}",
+            $"Hello {user.FullName},\n\n" +
+            $"Your BOF2 password reset code is: {code}\n\n" +
+            $"It works for {ResetCodeMinutes} minutes. Do not share it with anyone.\n" +
+            "If you did not ask to reset your password, you can ignore this email.", ct);
+
+        // Without an email provider the code only reaches the server log; show it on screen while developing.
+        var devCode = !email.IsLive && environment.IsDevelopment() ? code : null;
+        return new ForgotPasswordResponse(MaskEmail(user.Email!), ResetCodeMinutes, ResetCodeResendSeconds, devCode);
+    }
+
+    public async Task<AuthResponse> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default)
+    {
+        await resetPasswordValidator.ValidateAndThrowAsync(request, ct);
+        var user = await FindForResetAsync(request.Email, ct);
+
+        var now = DateTime.UtcNow;
+        var stored = await db.PasswordResetCodes
+            .Where(c => c.UserId == user.Id && c.UsedAt == null)
+            .OrderByDescending(c => c.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+        if (stored is null || stored.ExpiresAt <= now || stored.Attempts >= ResetCodeMaxAttempts)
+            throw CodeError("This code has expired. Request a new one.");
+
+        if (!CryptographicOperations.FixedTimeEquals(
+                Encoding.UTF8.GetBytes(stored.CodeHash),
+                Encoding.UTF8.GetBytes(HashResetCode(user.Id, request.Code.Trim()))))
+        {
+            stored.Attempts++;
+            await db.SaveChangesAsync(ct);
+            var left = ResetCodeMaxAttempts - stored.Attempts;
+            throw CodeError(left > 0 ? $"Wrong code. {left} {(left == 1 ? "try" : "tries")} left." : "Wrong code. Request a new one.");
+        }
+
+        var token = await userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await userManager.ResetPasswordAsync(user, token, request.NewPassword);
+        if (!result.Succeeded)
+            throw new FieldErrorsException(new Dictionary<string, string[]>
+            {
+                ["NewPassword"] = result.Errors.Select(e => e.Description).ToArray(),
+            });
+
+        stored.UsedAt = now;
+        await userManager.SetLockoutEndDateAsync(user, null);
+        await userManager.ResetAccessFailedCountAsync(user);
+
+        // Sign out every device: whoever knew the old password is out now.
+        await db.RefreshTokens.Where(t => t.UserId == user.Id && t.RevokedAt == null)
+            .ExecuteUpdateAsync(u => u.SetProperty(t => t.RevokedAt, now), ct);
+
+        return await IssueTokensAsync(user, ct);
+    }
+
+    private async Task<AppUser> FindForResetAsync(string address, CancellationToken ct)
+    {
+        var user = await userManager.FindByEmailAsync(address.Trim())
+                   ?? throw EmailError("No account uses this email. Check it, or contact support.");
+        if (user.IsDisabled)
+            throw EmailError(DisabledMessage);
+        return user;
+    }
+
+    private static string HashResetCode(Guid userId, string code) => TokenService.Hash($"{userId:N}:{code}");
+
+    /// <summary>"martin@gmail.com" → "ma••••@gmail.com", so the page can say where the code went.</summary>
+    private static string MaskEmail(string address)
+    {
+        var at = address.IndexOf('@');
+        if (at <= 0) return address;
+        var shown = Math.Min(2, at);
+        return address[..shown] + new string('•', Math.Max(at - shown, 2)) + address[at..];
+    }
+
+    private static FieldErrorsException EmailError(string message) =>
+        new(new Dictionary<string, string[]> { ["Email"] = [message] });
+
+    private static FieldErrorsException CodeError(string message) =>
+        new(new Dictionary<string, string[]> { ["Code"] = [message] });
 
     private async Task<AuthResponse> CreateUserAsync(AppUser user, string password, string role, CancellationToken ct)
     {

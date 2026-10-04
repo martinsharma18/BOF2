@@ -34,3 +34,8 @@ services:
         sync: false
       - key: WebPush__Subject
         sync: false
+      # Forgot-password emails: a Gmail address + its App password (Google Account → Security → App passwords).
+      - key: Email__SmtpUser
+        sync: false
+      - key: Email__SmtpPassword
+        sync: false

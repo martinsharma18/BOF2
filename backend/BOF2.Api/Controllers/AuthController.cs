@@ -37,6 +37,16 @@ public class AuthController(IAuthService auth, ICurrentUser currentUser) : Contr
         return NoContent();
     }
 
+    /// <summary>Forgot password: emails a 6-digit code to the account's address.</summary>
+    [HttpPost("forgot-password")]
+    public Task<ForgotPasswordResponse> ForgotPassword(ForgotPasswordRequest request, CancellationToken ct) =>
+        auth.SendResetCodeAsync(request, ct);
+
+    /// <summary>Forgot password: the emailed code + a new password. Signs the user in.</summary>
+    [HttpPost("reset-password")]
+    public Task<AuthResponse> ResetPassword(ResetPasswordRequest request, CancellationToken ct) =>
+        auth.ResetPasswordAsync(request, ct);
+
     [Authorize]
     [HttpPost("change-password")]
     public Task<AuthResponse> ChangePassword(ChangePasswordRequest request, CancellationToken ct) =>

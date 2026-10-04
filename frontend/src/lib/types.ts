@@ -110,6 +110,9 @@ export interface Application {
   claimedAmount: number | null
   claimNote: string | null
   claimedAt: string | null
+  /** Optional proof sent with the claim: a photo or PDF of the finished work. */
+  claimAttachmentUrl: string | null
+  claimAttachmentName: string | null
   /** Why the company turned down the last claim. Cleared when the applicant claims again. */
   claimDeclineReason: string | null
 }

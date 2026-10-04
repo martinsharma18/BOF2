@@ -4,7 +4,6 @@ import { PageSpinner } from '@/components/ui'
 import { AppShell } from '@/components/layout/AppShell'
 import { useAuth } from '@/features/auth/AuthContext'
 import { GuestOnly, RequireAuth } from '@/features/auth/RouteGuards'
-import { LandingPage } from '@/pages/LandingPage'
 
 /**
  * Lazy-load a named page export so each page ships as its own chunk. If a chunk is gone (a new version was
@@ -53,9 +52,10 @@ const AdminWithdrawalsPage = page(() => import('@/pages/admin/AdminWithdrawalsPa
 const AdminVacanciesPage = page(() => import('@/pages/admin/AdminVacanciesPage'), 'AdminVacanciesPage')
 const NotFoundPage = page(() => import('@/pages/NotFoundPage'), 'NotFoundPage')
 
+/** No landing page: signed-in people go to the feed, everyone else straight to log in. */
 function Home() {
   const { user } = useAuth()
-  return user ? <Navigate to="/feed" replace /> : <LandingPage />
+  return <Navigate to={user ? '/feed' : '/login'} replace />
 }
 
 export function AppRoutes() {

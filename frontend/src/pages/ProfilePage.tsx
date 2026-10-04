@@ -39,7 +39,7 @@ export function ProfilePage() {
             {isMe && (
               <div className="flex gap-2">
                 <ButtonLink to="/settings" variant="secondary" size="sm" icon={<Settings className="size-4" />}>
-                  Edit profile
+                  {p?.accountType === 'Individual' ? 'Change phone number' : 'Edit profile'}
                 </ButtonLink>
               </div>
             )}
