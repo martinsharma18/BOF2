@@ -121,9 +121,11 @@ public class PostService(
     {
         post.Type = request.Type;
         post.Title = request.Title.Trim();
-        post.GenderPreference = (request.AcceptsMale ? GenderPreference.Male : GenderPreference.None)
-                                | (request.AcceptsFemale ? GenderPreference.Female : GenderPreference.None);
-        post.MinimumNumber = request.MinimumNumber;
+        // Type 2 posts don't ask for gender or number of people: store "both" and 1.
+        var isType2 = request.Type == PostType.Type2;
+        post.GenderPreference = (isType2 || request.AcceptsMale ? GenderPreference.Male : GenderPreference.None)
+                                | (isType2 || request.AcceptsFemale ? GenderPreference.Female : GenderPreference.None);
+        post.MinimumNumber = isType2 ? 1 : request.MinimumNumber;
         post.MaximumPayment = request.MaximumPayment;
         post.ContactNumber = request.ContactNumber.Trim();
         post.WitnessContactNumber = request.WitnessContactNumber.Trim();

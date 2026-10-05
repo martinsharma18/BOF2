@@ -41,6 +41,8 @@ export function PostCard({
   const isOwner = post.author.id === user?.id
   const isIndividual = user?.accountType === 'Individual'
   const isLong = post.requirement.length > LONG_TEXT
+  // Type 2 posts show a short requirement: area, amount and contacts only, photo always on the left.
+  const isCompact = post.type === 'Type2'
   const postUrl = `/posts/${post.id}`
 
   const copyLink = async () => {
@@ -164,7 +166,7 @@ export function PostCard({
       </div>
 
       {/* Photo on the left, the requirement (the decision criteria) on the right. */}
-      <div className="mx-4 mt-4 grid gap-3 sm:mx-5 sm:grid-cols-[minmax(0,1.2fr)_minmax(220px,0.8fr)]">
+      <div className={cn('mx-4 mt-4 grid gap-3 sm:mx-5', isCompact ? 'grid-cols-2' : 'sm:grid-cols-[minmax(0,1.2fr)_minmax(220px,0.8fr)]')}>
         {post.mediaUrl ? (
           <div className="group relative overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200">
             <img src={post.mediaUrl} alt="" loading="lazy" className="h-full max-h-72 min-h-40 w-full object-cover" />
@@ -191,11 +193,12 @@ export function PostCard({
             <ListChecks className="size-4" aria-hidden />
             Requirement
           </h3>
-          <dl className="grid flex-1 grid-cols-2 gap-px overflow-hidden rounded-xl bg-slate-200/70 ring-1 ring-slate-200/70 sm:grid-cols-1">
-          <Detail icon={<Users className="size-4" />} label="Minimum people" value={`${post.minimumNumber}+`} />
+          <dl className={cn('grid flex-1 gap-px overflow-hidden rounded-xl bg-slate-200/70 ring-1 ring-slate-200/70', isCompact ? 'grid-cols-1' : 'grid-cols-2 sm:grid-cols-1')}>
+          {!isCompact && <Detail icon={<Users className="size-4" />} label="Minimum people" value={`${post.minimumNumber}+`} />}
+          {isCompact && <Detail icon={<MapPin className="size-4" />} label="Area" value={locationLabel(post)} />}
           <Detail icon={<Wallet className="size-4" />} label="Maximum payment" value={formatMoney(post.maximumPayment)} highlight />
-          <Detail icon={<VenusAndMars className="size-4" />} label="Gender" value={genderLabel(post)} />
-          <Detail icon={<MapPin className="size-4" />} label="Area" value={locationLabel(post)} />
+          {!isCompact && <Detail icon={<VenusAndMars className="size-4" />} label="Gender" value={genderLabel(post)} />}
+          {!isCompact && <Detail icon={<MapPin className="size-4" />} label="Area" value={locationLabel(post)} />}
           {post.contactNumber && (
             <Detail icon={<Phone className="size-4" />} label="Contact" value={post.contactNumber} href={`tel:${post.contactNumber.replace(/[\s-]/g, '')}`} />
           )}
@@ -269,10 +272,10 @@ export function PostCard({
       >
         <div className="space-y-4">
           {/* The job at a glance, so people know what they're applying for. */}
-          <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-xl bg-slate-200/70 text-center ring-1 ring-slate-200/70">
+          <dl className={cn('grid gap-px overflow-hidden rounded-xl bg-slate-200/70 text-center ring-1 ring-slate-200/70', isCompact ? 'grid-cols-2' : 'grid-cols-3')}>
             {[
               { label: 'Pays up to', value: post.maximumPayment > 0 ? formatMoney(post.maximumPayment) : 'Not set' },
-              { label: 'People needed', value: `${post.minimumNumber}+` },
+              ...(isCompact ? [] : [{ label: 'People needed', value: `${post.minimumNumber}+` }]),
               { label: 'Area', value: locationLabel(post) },
             ].map((d) => (
               <div key={d.label} className="bg-slate-50 px-2 py-2">

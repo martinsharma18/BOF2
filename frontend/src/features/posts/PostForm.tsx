@@ -27,7 +27,7 @@ const schema = z
     type: z.enum(['Type1', 'Type2'], 'Choose a post type'),
     title: z.string().trim().min(1, 'Give your post a short title').max(120),
     requirement: z.string().trim().min(1, 'Describe what you need').max(4000),
-    gender: z.enum(['Male', 'Female', 'Both'], 'Choose Male, Female or Both'),
+    gender: z.enum(['Male', 'Female', 'Both'], 'Choose Male, Female or Both').optional(),
     contactNumber: z
       .string()
       .trim()
@@ -38,7 +38,7 @@ const schema = z
       .trim()
       .min(1, 'Enter a witness contact number')
       .regex(/^\+?[0-9][0-9\s-]{5,18}$/, 'Enter a valid phone number'),
-    minimumNumber: z.number('Enter a number').int('Whole numbers only').min(1, 'At least 1').max(10000, 'Too large'),
+    minimumNumber: z.number('Enter a number').int('Whole numbers only').min(1, 'At least 1').max(10000, 'Too large').optional(),
     maximumPayment: z.number('Enter an amount').min(0, 'Cannot be negative').max(999_999_999, 'Too large'),
     isFromAnywhere: z.boolean(),
     province: z.string(),
@@ -46,6 +46,9 @@ const schema = z
     localLevel: z.string(),
   })
   .refine((v) => v.isFromAnywhere || v.province, { path: ['province'], message: 'Select a province' })
+  // Type 2 posts have no gender or number of people.
+  .refine((v) => v.type === 'Type2' || v.gender, { path: ['gender'], message: 'Choose Male, Female or Both' })
+  .refine((v) => v.type === 'Type2' || v.minimumNumber !== undefined, { path: ['minimumNumber'], message: 'Enter a number' })
 
 type Values = z.infer<typeof schema>
 const fieldNames: (keyof Values)[] = [
@@ -99,9 +102,11 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
     setValue,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: toDefaults(post) })
+    // Hidden fields (gender and number of people on Type 2) drop out of the values.
+  } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: toDefaults(post), shouldUnregister: true })
 
   const selectedType = watch('type')
+  const isType2 = selectedType === 'Type2'
   const selectedGender = watch('gender')
   const isFromAnywhere = watch('isFromAnywhere')
   const clearDistrict = useCallback(() => setValue('district', ''), [setValue])
@@ -132,11 +137,13 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
     form.append('type', values.type)
     form.append('title', values.title)
     form.append('requirement', values.requirement)
-    form.append('acceptsMale', String(values.gender !== 'Female'))
-    form.append('acceptsFemale', String(values.gender !== 'Male'))
+    if (values.type !== 'Type2') {
+      form.append('acceptsMale', String(values.gender !== 'Female'))
+      form.append('acceptsFemale', String(values.gender !== 'Male'))
+      form.append('minimumNumber', String(values.minimumNumber))
+    }
     form.append('contactNumber', values.contactNumber)
     form.append('witnessContactNumber', values.witnessContactNumber)
-    form.append('minimumNumber', String(values.minimumNumber))
     form.append('maximumPayment', String(values.maximumPayment))
     form.append('isFromAnywhere', String(values.isFromAnywhere))
     if (!values.isFromAnywhere) {
@@ -245,7 +252,8 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
           <FieldError message={fileError ?? undefined} />
         </FormSection>
 
-        <FormSection title="Who you need">
+        <FormSection title={isType2 ? 'Payment and contact' : 'Who you need'}>
+          {!isType2 && (
           <div>
             <p className="mb-2 text-sm font-medium text-slate-700">Gender</p>
             <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Gender">
@@ -264,10 +272,13 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
             </div>
             <FieldError message={errors.gender?.message} />
           </div>
+          )}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Minimum number of people" htmlFor="minimumNumber" error={errors.minimumNumber?.message}>
-              <Input id="minimumNumber" type="number" inputMode="numeric" min={1} {...register('minimumNumber', { valueAsNumber: true })} aria-invalid={!!errors.minimumNumber} />
-            </Field>
+            {!isType2 && (
+              <Field label="Minimum number of people" htmlFor="minimumNumber" error={errors.minimumNumber?.message}>
+                <Input id="minimumNumber" type="number" inputMode="numeric" min={1} {...register('minimumNumber', { valueAsNumber: true })} aria-invalid={!!errors.minimumNumber} />
+              </Field>
+            )}
             <Field label="Maximum payment (Rs.)" htmlFor="maximumPayment" error={errors.maximumPayment?.message}>
               <Input id="maximumPayment" type="number" inputMode="decimal" min={0} step="1" {...register('maximumPayment', { valueAsNumber: true })} aria-invalid={!!errors.maximumPayment} />
             </Field>
