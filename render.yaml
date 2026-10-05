@@ -34,8 +34,8 @@ services:
         sync: false
       - key: WebPush__Subject
         sync: false
-      # Forgot-password emails: a Gmail address + its App password (Google Account → Security → App passwords).
-      - key: Email__SmtpUser
+      # Forgot-password emails through Brevo: API key (Brevo → SMTP & API → API keys) + a verified sender address.
+      - key: Email__BrevoApiKey
         sync: false
-      - key: Email__SmtpPassword
+      - key: Email__FromEmail
         sync: false

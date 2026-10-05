@@ -180,19 +180,30 @@ public class AuthService(
             throw EmailError($"A code was just sent. Wait {wait} seconds to get a new one.");
 
         var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
-        db.PasswordResetCodes.Add(new PasswordResetCode
+        var resetCode = new PasswordResetCode
         {
             UserId = user.Id,
             CodeHash = HashResetCode(user.Id, code),
             ExpiresAt = now.AddMinutes(ResetCodeMinutes),
-        });
+        };
+        db.PasswordResetCodes.Add(resetCode);
         await db.SaveChangesAsync(ct);
 
-        await email.SendAsync(user.Email!, user.FullName, $"Your BOF2 password reset code: {code}",
-            $"Hello {user.FullName},\n\n" +
-            $"Your BOF2 password reset code is: {code}\n\n" +
-            $"It works for {ResetCodeMinutes} minutes. Do not share it with anyone.\n" +
-            "If you did not ask to reset your password, you can ignore this email.", ct);
+        try
+        {
+            await email.SendAsync(user.Email!, user.FullName, $"Your BOF2 password reset code: {code}",
+                $"Hello {user.FullName},\n\n" +
+                $"Your BOF2 password reset code is: {code}\n\n" +
+                $"It works for {ResetCodeMinutes} minutes. Do not share it with anyone.\n" +
+                "If you did not ask to reset your password, you can ignore this email.", ct);
+        }
+        catch
+        {
+            // The email never went out: drop the code so it doesn't count against the resend wait or hourly limit.
+            db.PasswordResetCodes.Remove(resetCode);
+            await db.SaveChangesAsync(CancellationToken.None);
+            throw;
+        }
 
         // Without an email provider the code only reaches the server log; show it on screen while developing.
         var devCode = !email.IsLive && environment.IsDevelopment() ? code : null;

@@ -86,9 +86,11 @@ public static class DependencyInjection
         services.AddHostedService<PushSender>();
         services.AddMemoryCache();
 
-        // Email (password reset codes): Gmail SMTP when an account is configured, the log otherwise.
+        // Email (password reset codes): Brevo when an API key is set, else SMTP when an account is configured, else the log.
         services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
-        if (!string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.SectionName}:SmtpUser"]))
+        if (!string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.SectionName}:BrevoApiKey"]))
+            services.AddHttpClient<IEmailSender, BrevoEmailSender>(c => c.Timeout = TimeSpan.FromSeconds(15));
+        else if (!string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.SectionName}:SmtpUser"]))
             services.AddScoped<IEmailSender, SmtpEmailSender>();
         else
             services.AddScoped<IEmailSender, LogEmailSender>();
