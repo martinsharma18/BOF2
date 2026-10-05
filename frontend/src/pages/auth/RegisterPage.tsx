@@ -115,7 +115,7 @@ export function RegisterPage() {
   })
 
   return (
-    <AuthLayout title="Create your account" subtitle="It's free. Choose how you'll use it.">
+    <AuthLayout title="Create your account" subtitle="It's free. Choose how you'll use it." wide>
       <form onSubmit={onSubmit} className="space-y-7" noValidate>
         {formError && <Alert>{formError}</Alert>}
 

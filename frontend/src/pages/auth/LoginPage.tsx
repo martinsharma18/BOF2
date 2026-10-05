@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Alert, Button, Field, Input } from '@/components/ui'
+import { ArrowRight, Lock, Mail } from 'lucide-react'
+import { Alert, Button, ButtonLink, Field, Input } from '@/components/ui'
 import { AuthLayout } from '@/components/layout/AuthLayout'
 import { useAuth } from '@/features/auth/AuthContext'
 import { PasswordInput } from '@/features/auth/PasswordInput'
@@ -11,6 +12,9 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { api, getErrorMessage } from '@/lib/api'
 import type { AuthResponse } from '@/lib/types'
 import { APP_NAME } from '@/lib/brand'
+
+/** Taller, softer inputs for the auth form. */
+const inputClass = 'h-12 rounded-xl! bg-slate-50! focus:bg-white!'
 
 export function LoginPage() {
   useDocumentTitle('Log in')
@@ -42,7 +46,17 @@ export function LoginPage() {
       <form onSubmit={onSubmit} className="space-y-5" noValidate>
         {formError && <Alert>{formError}</Alert>}
         <Field label="Email" htmlFor="email" error={errors.email?.message}>
-          <Input id="email" type="email" autoComplete="email" autoFocus {...register('email')} aria-invalid={!!errors.email} />
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            placeholder="you@example.com"
+            leading={<Mail className="size-[18px]" />}
+            className={inputClass}
+            {...register('email')}
+            aria-invalid={!!errors.email}
+          />
         </Field>
         <Field
           label={
@@ -56,18 +70,35 @@ export function LoginPage() {
           htmlFor="password"
           error={errors.password?.message}
         >
-          <PasswordInput id="password" autoComplete="current-password" {...register('password')} aria-invalid={!!errors.password} />
+          <PasswordInput
+            id="password"
+            autoComplete="current-password"
+            placeholder="Enter your password"
+            leading={<Lock className="size-[18px]" />}
+            className={inputClass}
+            {...register('password')}
+            aria-invalid={!!errors.password}
+          />
         </Field>
-        <Button type="submit" size="lg" loading={isSubmitting} className="w-full">
+        <Button
+          type="submit"
+          size="lg"
+          loading={isSubmitting}
+          className="group mt-2 w-full shadow-lg shadow-brand-600/25 transition-all hover:shadow-brand-600/40 active:scale-[0.99]"
+        >
           Log in
+          {!isSubmitting && <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />}
         </Button>
       </form>
-      <p className="mt-8 text-center text-sm text-slate-500">
-        New to {APP_NAME}?{' '}
-        <Link to="/register" className="font-semibold text-brand-600 hover:text-brand-700">
-          Create an account
-        </Link>
-      </p>
+
+      <div className="my-8 flex items-center gap-3 text-xs font-medium tracking-wide text-slate-400 uppercase">
+        <span className="h-px flex-1 bg-slate-200" />
+        New to {APP_NAME}?
+        <span className="h-px flex-1 bg-slate-200" />
+      </div>
+      <ButtonLink to="/register" variant="secondary" size="lg" className="w-full">
+        Create an account
+      </ButtonLink>
     </AuthLayout>
   )
 }
