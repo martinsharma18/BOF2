@@ -1,3 +1,4 @@
+using BOF2.Api.Infrastructure;
 using BOF2.Application.Auth;
 using BOF2.Application.Common;
 using BOF2.Application.Users;
@@ -13,9 +14,11 @@ namespace BOF2.Api.Controllers;
 public class AuthController(IAuthService auth, ICurrentUser currentUser) : ControllerBase
 {
     /// <summary>User A — company registration.</summary>
+    /// <remarks>multipart/form-data: the form fields plus <c>registrationDocument</c> (JPG/PNG photo).</remarks>
     [HttpPost("register/company")]
-    public Task<AuthResponse> RegisterCompany(RegisterCompanyRequest request, CancellationToken ct) =>
-        auth.RegisterCompanyAsync(request, ct);
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    public Task<AuthResponse> RegisterCompany([FromForm] RegisterCompanyRequest request, IFormFile? registrationDocument, CancellationToken ct) =>
+        registrationDocument.WithUploadAsync(upload => auth.RegisterCompanyAsync(request, upload, ct));
 
     /// <summary>User B — individual registration.</summary>
     [HttpPost("register/individual")]

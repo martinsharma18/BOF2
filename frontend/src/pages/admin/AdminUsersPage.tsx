@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Users } from 'lucide-react'
+import { FileImage, Search, Users } from 'lucide-react'
 import { Alert, Avatar, Badge, Button, Card, ConfirmDialog, EmptyState, Input, Select, Spinner, toast } from '@/components/ui'
 import { useAdminUsers, useSetUserDisabled } from '@/features/admin/api'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
@@ -113,6 +113,19 @@ export function AdminUsersPage() {
                       <Badge tone={u.accountType === 'Company' ? 'brand' : u.accountType === 'Admin' ? 'amber' : 'green'}>
                         {u.accountType}
                       </Badge>
+                      {u.accountType === 'Company' &&
+                        (u.registrationDocumentUrl ? (
+                          <a
+                            href={u.registrationDocumentUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-1.5 flex items-center gap-1 text-xs font-semibold whitespace-nowrap text-brand-600 hover:text-brand-700 hover:underline"
+                          >
+                            <FileImage className="size-3.5" /> View document
+                          </a>
+                        ) : (
+                          <p className="mt-1.5 text-xs whitespace-nowrap text-slate-400">No document</p>
+                        ))}
                     </td>
                     <td className="hidden px-4 py-3 text-slate-600 md:table-cell">{u.phoneNumber ?? '—'}</td>
                     <td className="hidden px-4 py-3 text-slate-600 tabular-nums sm:table-cell">{u.postCount}</td>

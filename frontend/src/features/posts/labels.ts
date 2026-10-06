@@ -1,4 +1,4 @@
-import type { Post, PostType, ReactionType } from '@/lib/types'
+import type { Post, PostOption, PostType, ReactionType } from '@/lib/types'
 
 /** Display names for post types. Rename here once their business meaning is final. */
 export const postTypes: { value: PostType; label: string; description: string }[] = [
@@ -7,6 +7,14 @@ export const postTypes: { value: PostType; label: string; description: string }[
 ]
 
 export const postTypeLabel = (type: PostType) => postTypes.find((t) => t.value === type)?.label ?? type
+
+/** The A / B choice on Type 1 posts. Rename here once their business meaning is final. */
+export const postOptions: { value: PostOption; label: string; description: string }[] = [
+  { value: 'A', label: 'Option A', description: 'First Type 1 option' },
+  { value: 'B', label: 'Option B', description: 'Second Type 1 option' },
+]
+
+export const postOptionLabel = (option: PostOption) => postOptions.find((o) => o.value === option)?.label ?? option
 
 export const reactions: { type: ReactionType; emoji: string; label: string }[] = [
   { type: 'Like', emoji: '👍', label: 'Like' },

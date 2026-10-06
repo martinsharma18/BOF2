@@ -1,10 +1,12 @@
+using BOF2.Application.Common;
 using BOF2.Application.Users;
 
 namespace BOF2.Application.Auth;
 
 public interface IAuthService
 {
-    Task<AuthResponse> RegisterCompanyAsync(RegisterCompanyRequest request, CancellationToken ct = default);
+    /// <param name="registrationDocument">Photo of the company registration certificate or PAN document (required).</param>
+    Task<AuthResponse> RegisterCompanyAsync(RegisterCompanyRequest request, FileUpload? registrationDocument, CancellationToken ct = default);
     Task<AuthResponse> RegisterIndividualAsync(RegisterIndividualRequest request, CancellationToken ct = default);
     Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken ct = default);
     Task<AuthResponse> RefreshAsync(RefreshRequest request, CancellationToken ct = default);

@@ -11,7 +11,7 @@ import { cn } from '@/lib/cn'
 import { applyServerErrors } from '@/lib/formErrors'
 import type { Post } from '@/lib/types'
 import { useSavePost } from './api'
-import { postTypes } from './labels'
+import { postOptions, postTypes } from './labels'
 
 const genderOptions = [
   { value: 'Male', label: 'Male' },
@@ -25,6 +25,8 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const schema = z
   .object({
     type: z.enum(['Type1', 'Type2'], 'Choose a post type'),
+    // Type 1 only; required there (see refine below).
+    option: z.enum(['A', 'B'], 'Choose option A or B').optional(),
     title: z.string().trim().min(1, 'Give your post a short title').max(120),
     requirement: z.string().trim().min(1, 'Describe what you need').max(4000),
     gender: z.enum(['Male', 'Female', 'Both'], 'Choose Male, Female or Both').optional(),
@@ -33,11 +35,12 @@ const schema = z
       .trim()
       .min(1, 'Enter a contact number')
       .regex(/^\+?[0-9][0-9\s-]{5,18}$/, 'Enter a valid phone number'),
+    // Any number, not necessarily a phone number: digits only.
     witnessContactNumber: z
       .string()
       .trim()
       .min(1, 'Enter a witness contact number')
-      .regex(/^\+?[0-9][0-9\s-]{5,18}$/, 'Enter a valid phone number'),
+      .regex(/^[0-9]{1,20}$/, 'Enter numbers only (up to 20 digits)'),
     minimumNumber: z.number('Enter a number').int('Whole numbers only').min(1, 'At least 1').max(10000, 'Too large').optional(),
     maximumPayment: z.number('Enter an amount').min(0, 'Cannot be negative').max(999_999_999, 'Too large'),
     isFromAnywhere: z.boolean(),
@@ -45,6 +48,7 @@ const schema = z
     district: z.string(),
     localLevel: z.string(),
   })
+  .refine((v) => v.type !== 'Type1' || v.option, { path: ['option'], message: 'Choose option A or B' })
   .refine((v) => v.isFromAnywhere || v.province, { path: ['province'], message: 'Select a province' })
   // Type 2 posts have no gender or number of people.
   .refine((v) => v.type === 'Type2' || v.gender, { path: ['gender'], message: 'Choose Male, Female or Both' })
@@ -53,6 +57,7 @@ const schema = z
 type Values = z.infer<typeof schema>
 const fieldNames: (keyof Values)[] = [
   'type',
+  'option',
   'title',
   'requirement',
   'gender',
@@ -72,6 +77,7 @@ function toDefaults(post?: Post): Partial<Values> {
   }
   return {
     type: post.type,
+    option: post.option ?? undefined,
     title: post.title,
     requirement: post.requirement,
     gender: post.acceptsMale && post.acceptsFemale ? 'Both' : post.acceptsMale ? 'Male' : 'Female',
@@ -107,6 +113,7 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
 
   const selectedType = watch('type')
   const isType2 = selectedType === 'Type2'
+  const selectedOption = watch('option')
   const selectedGender = watch('gender')
   const isFromAnywhere = watch('isFromAnywhere')
   const clearDistrict = useCallback(() => setValue('district', ''), [setValue])
@@ -135,6 +142,7 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
     setFormError(null)
     const form = new FormData()
     form.append('type', values.type)
+    if (values.type === 'Type1' && values.option) form.append('option', values.option)
     form.append('title', values.title)
     form.append('requirement', values.requirement)
     if (values.type !== 'Type2') {
@@ -191,6 +199,30 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
             ))}
           </div>
           <FieldError message={errors.type?.message} />
+
+          {selectedType === 'Type1' && (
+            <div className="animate-slide-up rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">
+              <p className="mb-2.5 text-sm font-semibold text-slate-800">Choose an option</p>
+              <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Type 1 option">
+                {postOptions.map((o) => (
+                  <label
+                    key={o.value}
+                    className={cn(
+                      'flex cursor-pointer items-center gap-3 rounded-xl bg-white p-3.5 ring-1 transition',
+                      selectedOption === o.value ? 'ring-2 ring-brand-500' : 'ring-slate-200 hover:ring-slate-300',
+                    )}
+                  >
+                    <input type="radio" value={o.value} {...register('option')} className="size-4 shrink-0 accent-brand-600" />
+                    <span className="min-w-0">
+                      <span className="block font-semibold text-slate-900">{o.label}</span>
+                      <span className="block text-xs text-slate-500">{o.description}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <FieldError message={errors.option?.message} />
+            </div>
+          )}
         </FormSection>
 
         <FormSection title="Details">
@@ -286,8 +318,21 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
           <Field label="Contact number" htmlFor="contactNumber" error={errors.contactNumber?.message} hint="Phone number people can call about this post.">
             <Input id="contactNumber" type="tel" inputMode="tel" autoComplete="tel" maxLength={20} placeholder="e.g. 98XXXXXXXX" {...register('contactNumber')} aria-invalid={!!errors.contactNumber} />
           </Field>
-          <Field label="Witness contact number" htmlFor="witnessContactNumber" error={errors.witnessContactNumber?.message} hint="A person who can confirm this post is genuine.">
-            <Input id="witnessContactNumber" type="tel" inputMode="tel" maxLength={20} placeholder="e.g. 98XXXXXXXX" {...register('witnessContactNumber')} aria-invalid={!!errors.witnessContactNumber} />
+          <Field label="Witness contact number" htmlFor="witnessContactNumber" error={errors.witnessContactNumber?.message} hint="Numbers only. A person who can confirm this post is genuine.">
+            <Input
+              id="witnessContactNumber"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={20}
+              placeholder="e.g. 9812345678"
+              // Drop anything that isn't a digit as the user types or pastes (runs before the form reads the value).
+              onInput={(e) => {
+                e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '')
+              }}
+              {...register('witnessContactNumber')}
+              aria-invalid={!!errors.witnessContactNumber}
+            />
           </Field>
         </FormSection>
 

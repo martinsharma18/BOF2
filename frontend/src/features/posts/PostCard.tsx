@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CheckCircle2, ClipboardList, Download, Hand, ImageIcon, Link2, ListChecks, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Send, Trash2, UserCheck, Users, VenusAndMars, Wallet } from 'lucide-react'
+import { CheckCircle2, ClipboardList, Download, Hand, ImageIcon, Link2, ListChecks, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Send, Tag, Trash2, UserCheck, Users, VenusAndMars, Wallet } from 'lucide-react'
 import { Avatar, Badge, Button, ButtonLink, Card, ConfirmDialog, Dialog, Menu, MenuItem, MenuSeparator, Skeleton, Spinner, Textarea, toast } from '@/components/ui'
 import { useApply } from '@/features/applications/api'
 import { ClaimPaymentDialog } from '@/features/applications/ClaimPaymentDialog'
@@ -13,7 +13,7 @@ import { formatMoney, pluralize, timeAgo } from '@/lib/format'
 import type { Post } from '@/lib/types'
 import { useDeletePost } from './api'
 import { FeedbackSection } from './FeedbackSection'
-import { genderLabel, locationLabel, postTypeLabel } from './labels'
+import { genderLabel, locationLabel, postOptionLabel, postTypeLabel } from './labels'
 import { ReactionButton, ReactionSummary } from './ReactionBar'
 
 const LONG_TEXT = 320
@@ -113,7 +113,10 @@ export function PostCard({
             {post.updatedAt && ' · edited'}
           </p>
         </div>
-        <Badge tone="brand">{postTypeLabel(post.type)}</Badge>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Badge tone="brand">{postTypeLabel(post.type)}</Badge>
+          {post.option && <Badge tone="amber">{postOptionLabel(post.option)}</Badge>}
+        </div>
         <Menu
           label="Post options"
           trigger={
@@ -194,6 +197,7 @@ export function PostCard({
             Requirement
           </h3>
           <dl className={cn('grid flex-1 gap-px overflow-hidden rounded-xl bg-slate-200/70 ring-1 ring-slate-200/70', isCompact ? 'grid-cols-1' : 'grid-cols-2 sm:grid-cols-1')}>
+          {post.option && !isCompact && <Detail icon={<Tag className="size-4" />} label="Option" value={postOptionLabel(post.option)} />}
           {!isCompact && <Detail icon={<Users className="size-4" />} label="Minimum people" value={`${post.minimumNumber}+`} />}
           {isCompact && <Detail icon={<MapPin className="size-4" />} label="Area" value={locationLabel(post)} />}
           <Detail icon={<Wallet className="size-4" />} label="Maximum payment" value={formatMoney(post.maximumPayment)} highlight />
@@ -203,7 +207,7 @@ export function PostCard({
             <Detail icon={<Phone className="size-4" />} label="Contact" value={post.contactNumber} href={`tel:${post.contactNumber.replace(/[\s-]/g, '')}`} />
           )}
           {post.witnessContactNumber && (
-            <Detail icon={<UserCheck className="size-4" />} label="Witness contact" value={post.witnessContactNumber} href={`tel:${post.witnessContactNumber.replace(/[\s-]/g, '')}`} />
+            <Detail icon={<UserCheck className="size-4" />} label="Witness contact" value={post.witnessContactNumber} />
           )}
           </dl>
         </div>

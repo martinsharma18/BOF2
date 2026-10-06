@@ -21,6 +21,21 @@ public static class ImageRules
             throw new FieldErrorsException(new Dictionary<string, string[]> { [field] = [error] });
     }
 
+    /// <summary>A photo of an official document (company registration certificate, PAN): JPG or PNG only.</summary>
+    public static void EnsureValidDocumentPhoto(FileUpload file, string field)
+    {
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var contentType = file.ContentType.ToLowerInvariant();
+        string? error = null;
+        if (file.Length == 0) error = "The file is empty.";
+        else if (file.Length > MaxBytes) error = "The photo must be 5 MB or smaller.";
+        else if (extension is not (".jpg" or ".jpeg" or ".png") || contentType is not ("image/jpeg" or "image/png"))
+            error = "Only a JPG or PNG photo is allowed.";
+
+        if (error is not null)
+            throw new FieldErrorsException(new Dictionary<string, string[]> { [field] = [error] });
+    }
+
     /// <summary>Like <see cref="EnsureValid"/>, but a PDF is accepted too (proof of work, receipts).</summary>
     public static void EnsureValidImageOrPdf(FileUpload file, string field)
     {

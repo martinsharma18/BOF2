@@ -120,6 +120,7 @@ public class PostService(
     private static void Apply(Post post, PostFormRequest request)
     {
         post.Type = request.Type;
+        post.Option = request.Type == PostType.Type1 ? request.Option : null;
         post.Title = request.Title.Trim();
         // Type 2 posts don't ask for gender or number of people: store "both" and 1.
         var isType2 = request.Type == PostType.Type2;
@@ -219,7 +220,7 @@ public class PostService(
             : [];
 
         return posts.Select(p => new PostDto(
-            p.Id, p.Type, p.Title, p.MediaUrl,
+            p.Id, p.Type, p.Option, p.Title, p.MediaUrl,
             p.GenderPreference.HasFlag(GenderPreference.Male),
             p.GenderPreference.HasFlag(GenderPreference.Female),
             p.MinimumNumber, p.MaximumPayment, p.ContactNumber, p.WitnessContactNumber, p.IsFromAnywhere, p.Province, p.District, p.LocalLevel,

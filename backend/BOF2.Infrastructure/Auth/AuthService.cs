@@ -25,8 +25,11 @@ public class AuthService(
     IValidator<ForgotPasswordRequest> forgotPasswordValidator,
     IValidator<ResetPasswordRequest> resetPasswordValidator,
     IEmailSender email,
+    IFileStorage fileStorage,
     IHostEnvironment environment) : IAuthService
 {
+    private const string DocumentField = "RegistrationDocument";
+
     private const int ResetCodeMinutes = 10;
     private const int ResetCodeResendSeconds = 60;
     private const int ResetCodeMaxAttempts = 5;
@@ -35,9 +38,19 @@ public class AuthService(
     private const string InvalidCredentials = "Invalid email or password.";
     private const string DisabledMessage = "This account has been disabled. Please contact support.";
 
-    public async Task<AuthResponse> RegisterCompanyAsync(RegisterCompanyRequest request, CancellationToken ct = default)
+    public async Task<AuthResponse> RegisterCompanyAsync(RegisterCompanyRequest request, FileUpload? registrationDocument, CancellationToken ct = default)
     {
         await companyValidator.ValidateAndThrowAsync(request, ct);
+        if (registrationDocument is null)
+            throw new FieldErrorsException(new Dictionary<string, string[]>
+            {
+                [DocumentField] = ["Upload a photo of your company registration certificate or PAN document."],
+            });
+        ImageRules.EnsureValidDocumentPhoto(registrationDocument, DocumentField);
+        if (await userManager.FindByEmailAsync(request.Email.Trim()) is not null)
+            throw EmailError("An account with this email already exists.");
+
+        var documentUrl = await fileStorage.SaveAsync(registrationDocument, "company-documents", ct);
 
         var user = new AppUser
         {
@@ -52,10 +65,20 @@ public class AuthService(
                 Province = request.Province,
                 District = NullIfBlank(request.District),
                 LocalLevel = string.IsNullOrWhiteSpace(request.District) ? null : NullIfBlank(request.LocalLevel),
+                RegistrationDocumentUrl = documentUrl,
             },
         };
 
-        return await CreateUserAsync(user, request.Password, Roles.Company, ct);
+        try
+        {
+            return await CreateUserAsync(user, request.Password, Roles.Company, ct);
+        }
+        catch
+        {
+            // The account was not created: don't keep the uploaded document.
+            await fileStorage.DeleteAsync(documentUrl, CancellationToken.None);
+            throw;
+        }
     }
 
     public async Task<AuthResponse> RegisterIndividualAsync(RegisterIndividualRequest request, CancellationToken ct = default)

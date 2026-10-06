@@ -1,6 +1,8 @@
 export type AccountType = 'Company' | 'Individual' | 'Admin'
 export type Gender = 'Male' | 'Female'
 export type PostType = 'Type1' | 'Type2'
+/** Sub-choice on Type 1 posts. */
+export type PostOption = 'A' | 'B'
 export type ReactionType = 'Like' | 'Love' | 'Haha' | 'Wow' | 'Sad'
 export type AdPlacement = 'Banner' | 'Sidebar'
 
@@ -39,6 +41,8 @@ export interface Author {
 export interface Post {
   id: string
   type: PostType
+  /** Type 1 only; null on Type 2 and older Type 1 posts. */
+  option: PostOption | null
   title: string
   mediaUrl: string | null
   acceptsMale: boolean
@@ -296,6 +300,8 @@ export interface AdminUser {
   isDisabled: boolean
   createdAt: string
   postCount: number
+  /** Companies: photo of the registration certificate / PAN document. */
+  registrationDocumentUrl: string | null
 }
 
 export interface PagedResult<T> {

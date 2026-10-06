@@ -11,4 +11,7 @@ public class CompanyProfile
     /// <summary>Optional: null means the whole province.</summary>
     public string? District { get; set; }
     public string? LocalLevel { get; set; }
+
+    /// <summary>Photo of the company registration certificate or PAN document, for admins to verify. Null for older accounts.</summary>
+    public string? RegistrationDocumentUrl { get; set; }
 }

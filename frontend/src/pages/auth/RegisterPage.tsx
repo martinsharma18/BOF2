@@ -6,6 +6,7 @@ import { Building2, CheckCircle2, UserRound } from 'lucide-react'
 import { Alert, Button, Field, FieldError, FormSection, Input } from '@/components/ui'
 import { AuthLayout } from '@/components/layout/AuthLayout'
 import { useAuth } from '@/features/auth/AuthContext'
+import { CompanyDocumentInput } from '@/features/auth/CompanyDocumentInput'
 import { PasswordInput } from '@/features/auth/PasswordInput'
 import { registerSchema, type RegisterValues } from '@/features/auth/schemas'
 import { LocationFields } from '@/features/locations/LocationFields'
@@ -36,6 +37,7 @@ const accountOptions: { value: AccountChoice; title: string; description: string
 const fields = [
   'fullName',
   'companyName',
+  'registrationDocument',
   'gender',
   'dateOfBirth',
   'email',
@@ -63,13 +65,14 @@ export function RegisterPage() {
     setValue,
     setError,
     clearErrors,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isSubmitted },
   } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       accountType: params.get('type') === 'company' ? 'Company' : 'Individual',
       fullName: '',
       companyName: '',
+      registrationDocument: null,
       email: '',
       phoneNumber: '',
       socialMediaLink: '',
@@ -94,7 +97,7 @@ export function RegisterPage() {
     const common = { fullName: v.fullName, email: v.email, phoneNumber: v.phoneNumber, province: v.province, district: v.district || null, localLevel: v.localLevel || null, password: v.password, confirmPassword: v.confirmPassword }
     try {
       const { data } = isCompany
-        ? await api.post<AuthResponse>('/auth/register/company', { ...common, companyName: v.companyName })
+        ? await api.post<AuthResponse>('/auth/register/company', toCompanyForm({ ...common, companyName: v.companyName }, v.registrationDocument!))
         : await api.post<AuthResponse>('/auth/register/individual', {
             ...common,
             gender: v.gender,
@@ -109,7 +112,7 @@ export function RegisterPage() {
     }
   }, (invalid) => {
     // Never fail silently: if the only errors are on fields hidden for this account type, say so.
-    const visible = isCompany ? fields.filter((f) => !['gender', 'dateOfBirth', 'socialMediaLink', 'additionalPhoneNumber'].includes(f)) : fields.filter((f) => f !== 'companyName')
+    const visible = isCompany ? fields.filter((f) => !['gender', 'dateOfBirth', 'socialMediaLink', 'additionalPhoneNumber'].includes(f)) : fields.filter((f) => f !== 'companyName' && f !== 'registrationDocument')
     const hidden = Object.keys(invalid).filter((k) => !visible.includes(k))
     setFormError(hidden.length && hidden.length === Object.keys(invalid).length ? 'Please check the form and try again.' : null)
   })
@@ -170,6 +173,11 @@ export function RegisterPage() {
                 localLevelOptional
                 errors={{ province: errors.province?.message, district: errors.district?.message, localLevel: errors.localLevel?.message }}
               />
+              <CompanyDocumentInput
+                value={watch('registrationDocument') ?? null}
+                onChange={(file) => setValue('registrationDocument', file, { shouldValidate: isSubmitted })}
+                error={errors.registrationDocument?.message}
+              />
             </FormSection>
           </div>
         )}
@@ -215,7 +223,7 @@ export function RegisterPage() {
                 <Field label="Additional number" htmlFor="additionalPhoneNumber" optional error={errors.additionalPhoneNumber?.message}>
                   <Input id="additionalPhoneNumber" type="tel" {...register('additionalPhoneNumber')} aria-invalid={!!errors.additionalPhoneNumber} />
                 </Field>
-                <Field label="Social media link" htmlFor="socialMediaLink" optional error={errors.socialMediaLink?.message}>
+                <Field label="Social media link" htmlFor="socialMediaLink" error={errors.socialMediaLink?.message} hint="Facebook, Instagram, TikTok or similar. Start with https://">
                   <Input id="socialMediaLink" type="url" placeholder="https://facebook.com/you" {...register('socialMediaLink')} aria-invalid={!!errors.socialMediaLink} />
                 </Field>
               </>
@@ -267,4 +275,12 @@ export function RegisterPage() {
       </p>
     </AuthLayout>
   )
+}
+
+/** Company registration goes as multipart/form-data so the document photo can travel with the fields. */
+function toCompanyForm(fields: Record<string, string | null>, document: File) {
+  const form = new FormData()
+  for (const [key, value] of Object.entries(fields)) if (value) form.append(key, value)
+  form.append('registrationDocument', document)
+  return form
 }

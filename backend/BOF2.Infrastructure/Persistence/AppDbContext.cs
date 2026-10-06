@@ -48,6 +48,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(p => p.Province).HasMaxLength(50).IsRequired();
             e.Property(p => p.District).HasMaxLength(50);
             e.Property(p => p.LocalLevel).HasMaxLength(100);
+            e.Property(p => p.RegistrationDocumentUrl).HasMaxLength(500);
         });
 
         builder.Entity<IndividualProfile>(e =>
@@ -68,6 +69,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.HasOne(p => p.Author).WithMany(u => u.Posts)
                 .HasForeignKey(p => p.AuthorId).OnDelete(DeleteBehavior.Cascade);
             e.Property(p => p.Type).HasConversion<string>().HasMaxLength(20);
+            e.Property(p => p.Option).HasConversion<string>().HasMaxLength(10);
             e.Property(p => p.Title).HasMaxLength(120).IsRequired();
             e.Property(p => p.GenderPreference).HasConversion<int>();
             e.Property(p => p.MediaUrl).HasMaxLength(500);

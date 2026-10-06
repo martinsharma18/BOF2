@@ -10,6 +10,9 @@ public class Post
     public AppUser Author { get; set; } = null!;
 
     public PostType Type { get; set; }
+
+    /// <summary>A or B, chosen on Type 1 posts only. Null on Type 2 and on Type 1 posts made before the choice existed.</summary>
+    public PostOption? Option { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? MediaUrl { get; set; }
     public GenderPreference GenderPreference { get; set; }

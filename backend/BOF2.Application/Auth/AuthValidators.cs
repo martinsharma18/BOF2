@@ -28,8 +28,8 @@ public class RegisterIndividualValidator : AbstractValidator<RegisterIndividualR
         RuleFor(x => x.PhoneNumber).NotEmpty().PhoneNumber();
         RuleFor(x => x.AdditionalPhoneNumber).PhoneNumber()
             .When(x => !string.IsNullOrWhiteSpace(x.AdditionalPhoneNumber));
-        RuleFor(x => x.SocialMediaLink).MaximumLength(300).HttpUrl()
-            .When(x => !string.IsNullOrWhiteSpace(x.SocialMediaLink));
+        RuleFor(x => x.SocialMediaLink).Cascade(CascadeMode.Stop).NotEmpty().WithMessage("Enter your social media link.")
+            .MaximumLength(300).HttpUrl();
         this.ValidArea(x => x.Province, x => x.District, x => x.LocalLevel);
         RuleFor(x => x.Password).NotEmpty().MinimumLength(8);
         RuleFor(x => x.ConfirmPassword).Equal(x => x.Password).WithMessage("Passwords do not match.");

@@ -27,7 +27,9 @@ public record AdminUserDto(
     string? CompanyName,
     bool IsDisabled,
     DateTime CreatedAt,
-    int PostCount);
+    int PostCount,
+    /// <summary>Companies: photo of the registration certificate / PAN document (null for older accounts).</summary>
+    string? RegistrationDocumentUrl);
 
 public class AdminUserQuery : PageQuery
 {

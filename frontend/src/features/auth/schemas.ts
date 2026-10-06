@@ -51,6 +51,7 @@ export const registerSchema = z
     phoneNumber: phone,
     // Company only
     companyName: z.string().trim().max(150),
+    registrationDocument: z.custom<File | null>().optional(),
     // Individual only. An unticked radio group reports null, so allow it here; superRefine requires it for individuals.
     gender: z.enum(['Male', 'Female']).nullish(),
     dateOfBirth,
@@ -63,6 +64,10 @@ export const registerSchema = z
   .superRefine((v, ctx) => {
     if (v.accountType === 'Company' && !v.companyName)
       ctx.addIssue({ code: 'custom', path: ['companyName'], message: 'Company name is required' })
+    if (v.accountType === 'Company' && !v.registrationDocument)
+      ctx.addIssue({ code: 'custom', path: ['registrationDocument'], message: 'Upload a photo of your registration certificate or PAN document' })
+    if (v.accountType === 'Individual' && !v.socialMediaLink)
+      ctx.addIssue({ code: 'custom', path: ['socialMediaLink'], message: 'Enter your social media link' })
     if (v.accountType === 'Individual' && !v.gender)
       ctx.addIssue({ code: 'custom', path: ['gender'], message: 'Select M or F' })
     if (v.accountType === 'Individual' && !v.dateOfBirth)

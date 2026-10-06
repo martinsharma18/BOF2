@@ -69,7 +69,8 @@ public class AdminService(AppDbContext db, ICurrentUser currentUser) : IAdminSer
                 u.CompanyProfile != null ? u.CompanyProfile.CompanyName : null,
                 u.IsDisabled,
                 u.CreatedAt,
-                u.Posts.Count))
+                u.Posts.Count,
+                u.CompanyProfile != null ? u.CompanyProfile.RegistrationDocumentUrl : null))
             .ToListAsync(ct);
 
         return new PagedResult<AdminUserDto>(items, query.Page, query.PageSize, total);

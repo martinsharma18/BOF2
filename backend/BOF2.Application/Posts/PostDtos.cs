@@ -18,6 +18,8 @@ public class PostQuery : PageQuery
 public class PostFormRequest
 {
     public PostType Type { get; set; }
+    /// <summary>Required for Type 1, ignored for Type 2.</summary>
+    public PostOption? Option { get; set; }
     public string Title { get; set; } = string.Empty;
     public bool AcceptsMale { get; set; }
     public bool AcceptsFemale { get; set; }
@@ -38,6 +40,7 @@ public class PostFormRequest
 public record PostDto(
     Guid Id,
     PostType Type,
+    PostOption? Option,
     string Title,
     string? MediaUrl,
     bool AcceptsMale,
