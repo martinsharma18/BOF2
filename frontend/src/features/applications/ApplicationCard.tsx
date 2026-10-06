@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Banknote, BriefcaseBusiness, Check, CircleAlert, Clock, Hand, MessageSquare, Paperclip, Phone, UserPlus, X, XCircle } from 'lucide-react'
 import { Avatar, Badge, Button, ButtonLink, buttonClasses, Card, ConfirmDialog, Dialog, Field, Input, Textarea, toast } from '@/components/ui'
 import { useAuth } from '@/features/auth/AuthContext'
+import { postTypeHasPayments } from '@/features/posts/labels'
 import { getErrorMessage, getProblem } from '@/lib/api'
 import { cn } from '@/lib/cn'
 import { ageFrom, formatMoney, timeAgo } from '@/lib/format'
@@ -29,7 +30,7 @@ export function ApplicationCard({ application, highlighted }: { application: App
       <div className="space-y-3 p-4">
         {isCompany ? <ApplicantHeader application={a} /> : <JobHeader application={a} />}
 
-        {stage !== 'Declined' && <JobProgress status={a.status} claimed={stage === 'Claimed'} />}
+        {stage !== 'Declined' && <JobProgress status={a.status} claimed={stage === 'Claimed'} payments={postTypeHasPayments(a.postType)} />}
 
         <NextStep application={a} isCompany={isCompany} />
 
@@ -139,6 +140,10 @@ function NextStep({ application: a, isCompany }: { application: Application; isC
     step = isCompany
       ? { tone: 'red', icon: <CircleAlert />, text: <>You declined the claim: “{a.claimDeclineReason}”</> }
       : { tone: 'red', icon: <CircleAlert />, text: <>Claim declined: “{a.claimDeclineReason}”. Fix it and claim again.</> }
+  else if (stage === 'Hired' && !postTypeHasPayments(a.postType))
+    step = isCompany
+      ? { tone: 'green', icon: <BriefcaseBusiness />, text: 'Hired. Use the chat to agree on the details.' }
+      : { tone: 'green', icon: <BriefcaseBusiness />, text: 'You’re hired! Use the chat to agree on the details.' }
   else if (stage === 'Hired')
     step = isCompany
       ? { tone: 'green', icon: <BriefcaseBusiness />, text: 'Working. They claim payment when the work is done.' }
@@ -191,6 +196,7 @@ export function JobActions({ application: a }: { application: Application }) {
   const isCompany = user?.id === a.company.id
   const stage = stageOf(a)
   const name = a.applicant.fullName
+  const payments = postTypeHasPayments(a.postType)
 
   // Hiring and declining notify the other person, so ask first.
   const changeStatus = (to: 'Accepted' | 'Rejected') =>
@@ -207,7 +213,9 @@ export function JobActions({ application: a }: { application: Application }) {
   const confirm = {
     hire: {
       title: `Hire ${name}?`,
-      description: `${name} will be notified and can start the work. When it's done they claim payment, and you pay from here.`,
+      description: payments
+        ? `${name} will be notified and can start the work. When it's done they claim payment, and you pay from here.`
+        : `${name} will be notified. Use the chat to agree on the details.`,
       label: 'Yes, hire',
       to: 'Accepted' as const,
     },
@@ -259,7 +267,7 @@ export function JobActions({ application: a }: { application: Application }) {
         </>
       )}
 
-      {!isCompany && stage === 'Hired' && (
+      {!isCompany && stage === 'Hired' && payments && (
         <Button variant="accent" size="sm" icon={<Hand className="size-4" />} onClick={() => setDialog('claim')}>
           {a.claimDeclineReason ? 'Claim again' : 'Claim payment'}
         </Button>
@@ -287,14 +295,16 @@ export function JobActions({ application: a }: { application: Application }) {
       />
       {dialog === 'pay' && <PayDialog application={a} onClose={() => setDialog(null)} />}
       {dialog === 'decline-claim' && <DeclineClaimDialog application={a} onClose={() => setDialog(null)} />}
-      <ClaimPaymentDialog
-        applicationId={a.id}
-        companyName={a.company.displayName}
-        maxAmount={a.postMaximumPayment}
-        declineReason={a.claimDeclineReason}
-        open={dialog === 'claim'}
-        onClose={() => setDialog(null)}
-      />
+      {payments && (
+        <ClaimPaymentDialog
+          applicationId={a.id}
+          companyName={a.company.displayName}
+          maxAmount={a.postMaximumPayment}
+          declineReason={a.claimDeclineReason}
+          open={dialog === 'claim'}
+          onClose={() => setDialog(null)}
+        />
+      )}
     </>
   )
 }

@@ -3,7 +3,7 @@ import { chatKeys } from '@/features/chat/api'
 import { postKeys } from '@/features/posts/api'
 import { walletKeys } from '@/features/wallet/api'
 import { api } from '@/lib/api'
-import type { Application, ApplicationKind, ApplicationMessage, ApplicationPost, ApplicationStatus, PagedResult } from '@/lib/types'
+import type { Application, ApplicationKind, ApplicationMessage, ApplicationPost, ApplicationStatus, PagedResult, PostType } from '@/lib/types'
 import type { ApplicationStage } from './labels'
 
 export const applicationKeys = {
@@ -19,6 +19,7 @@ export interface ApplicationParams {
   postId?: string
   status?: ApplicationStatus
   stage?: ApplicationStage
+  postType?: PostType
   page: number
 }
 

@@ -1,12 +1,20 @@
 import type { Post, PostOption, PostType, ReactionType } from '@/lib/types'
 
-/** Display names for post types. Rename here once their business meaning is final. */
-export const postTypes: { value: PostType; label: string; description: string }[] = [
-  { value: 'Type1', label: 'Type 1', description: 'First post category' },
-  { value: 'Type2', label: 'Type 2', description: 'Second post category' },
+/**
+ * Post types: the name and description people see, and what each type allows.
+ * Rename here once the client decides the names. `payments` must match PostTypeRules.UsesPayments on the server.
+ */
+export const postTypes: { value: PostType; label: string; description: string; payments: boolean }[] = [
+  // Apply → hire → chat → claim payment → paid.
+  { value: 'Type1', label: 'Type 1', description: 'First post category', payments: true },
+  // Apply → hire → chat. No claim or payment in the app.
+  { value: 'Type2', label: 'Type 2', description: 'Second post category', payments: false },
 ]
 
 export const postTypeLabel = (type: PostType) => postTypes.find((t) => t.value === type)?.label ?? type
+
+/** Whether hired people claim payment and the company pays in the app for this type of post. */
+export const postTypeHasPayments = (type: PostType) => postTypes.find((t) => t.value === type)?.payments ?? true
 
 /** The A / B choice on Type 1 posts. Rename here once their business meaning is final. */
 export const postOptions: { value: PostOption; label: string; description: string }[] = [

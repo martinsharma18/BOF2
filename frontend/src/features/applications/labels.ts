@@ -51,8 +51,9 @@ export const withdrawalStatusMeta: Record<WithdrawalStatus, { label: string; ton
   Rejected: { label: 'Rejected', tone: 'red' },
 }
 
-/** The four steps of one job, in order. */
+/** The four steps of one job, in order. Post types without payments stop at Hired. */
 export const jobSteps = ['Applied', 'Hired', 'Claimed', 'Paid'] as const
+export const jobStepsWithoutPayments = ['Applied', 'Hired'] as const
 
 /** How many steps are done: 1 = applied … 4 = paid. */
 export function stepsDone(status: ApplicationStatus, claimed: boolean) {

@@ -13,7 +13,7 @@ import { formatMoney, pluralize, timeAgo } from '@/lib/format'
 import type { Post } from '@/lib/types'
 import { useDeletePost } from './api'
 import { FeedbackSection } from './FeedbackSection'
-import { genderLabel, locationLabel, postOptionLabel, postTypeLabel } from './labels'
+import { genderLabel, locationLabel, postOptionLabel, postTypeHasPayments, postTypeLabel } from './labels'
 import { ReactionButton, ReactionSummary } from './ReactionBar'
 
 const LONG_TEXT = 320
@@ -324,12 +324,17 @@ export function PostCard({
 function ApplicantActions({ post, onApply }: { post: Post; onApply: () => void }) {
   const [claimOpen, setClaimOpen] = useState(false)
   const mine = post.myApplication
+  const payments = postTypeHasPayments(post.type)
   const claimed = mine?.claimedAmount != null
-  const canClaim = mine?.status === 'Accepted' && !claimed
+  const canClaim = payments && mine?.status === 'Accepted' && !claimed
 
   // One plain sentence telling the person exactly where they are and what happens next.
   let hint: { text: string; tone: 'slate' | 'brand' | 'amber' | 'green' | 'red' }
-  if (!mine) hint = { text: 'Step 1: apply. Claim unlocks after the company hires you.', tone: 'slate' }
+  if (!payments && !mine) hint = { text: 'Apply, and chat with the company once they hire you.', tone: 'slate' }
+  else if (!payments && mine?.status === 'Pending') hint = { text: 'Applied. Waiting for the company to hire you.', tone: 'amber' }
+  else if (!payments && mine?.status === 'Rejected') hint = { text: 'The company chose someone else for this job.', tone: 'red' }
+  else if (!payments) hint = { text: 'You’re hired! Use the chat to agree on the details.', tone: 'brand' }
+  else if (!mine) hint = { text: 'Step 1: apply. Claim unlocks after the company hires you.', tone: 'slate' }
   else if (mine.status === 'Pending') hint = { text: 'Applied. Waiting for the company to hire you.', tone: 'amber' }
   else if (mine.status === 'Rejected') hint = { text: 'The company chose someone else for this job.', tone: 'red' }
   else if (mine.status === 'Completed') hint = { text: `Paid ${formatMoney(mine.paidAmount)}. The money is in your wallet.`, tone: 'green' }
@@ -357,20 +362,28 @@ function ApplicantActions({ post, onApply }: { post: Post; onApply: () => void }
         >
           {mine ? 'Applied' : 'Apply'}
         </Button>
-        <Button
-          variant={canClaim ? 'accent' : 'secondary'}
-          className="flex-1"
-          icon={mine?.status === 'Completed' || claimed ? <CheckCircle2 className="size-4 text-emerald-600" /> : <Hand className="size-4" />}
-          disabled={!canClaim}
-          onClick={() => setClaimOpen(true)}
-        >
-          {mine?.status === 'Completed' ? 'Paid' : claimed ? 'Claimed' : mine?.claimDeclineReason ? 'Claim again' : 'Claim payment'}
-        </Button>
+        {payments ? (
+          <Button
+            variant={canClaim ? 'accent' : 'secondary'}
+            className="flex-1"
+            icon={mine?.status === 'Completed' || claimed ? <CheckCircle2 className="size-4 text-emerald-600" /> : <Hand className="size-4" />}
+            disabled={!canClaim}
+            onClick={() => setClaimOpen(true)}
+          >
+            {mine?.status === 'Completed' ? 'Paid' : claimed ? 'Claimed' : mine?.claimDeclineReason ? 'Claim again' : 'Claim payment'}
+          </Button>
+        ) : (
+          mine?.status === 'Accepted' && (
+            <ButtonLink to={`/messages/${mine.id}`} variant="soft" className="flex-1" icon={<MessageCircle className="size-4" />}>
+              Chat
+            </ButtonLink>
+          )
+        )}
       </div>
 
       {mine && mine.status !== 'Rejected' && (
         <Link to={`/applications?id=${mine.id}`} className="mt-3 block rounded-xl px-1 py-1 hover:bg-slate-50" aria-label="Open this application">
-          <JobProgress status={mine.status} claimed={claimed} />
+          <JobProgress status={mine.status} claimed={claimed} payments={payments} />
         </Link>
       )}
       <p className={cn('mt-2 rounded-lg px-3 py-2 text-xs font-medium ring-1', hintColors[hint.tone])}>{hint.text}</p>

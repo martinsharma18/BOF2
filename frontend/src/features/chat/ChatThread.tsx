@@ -6,6 +6,7 @@ import { useApplication, useApplicationMessages, useSendMessage } from '@/featur
 import { JobActions } from '@/features/applications/ApplicationCard'
 import { stageMeta, stageOf, type ApplicationStage } from '@/features/applications/labels'
 import { useAuth } from '@/features/auth/AuthContext'
+import { postTypeHasPayments } from '@/features/posts/labels'
 import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/cn'
 import { formatMoney, timeAgo } from '@/lib/format'
@@ -124,8 +125,18 @@ export function ChatThread({ applicationId, onBack }: { applicationId: string; o
 const hints: Record<ApplicationStage, { company: (a: Application) => string; individual: (a: Application) => string }> = {
   New: { company: () => 'New applicant. Hire or decline when ready.', individual: () => 'Waiting for the company to reply.' },
   Hired: {
-    company: (a) => (a.claimDeclineReason ? 'You declined the last claim. Waiting for a new one.' : 'Working on the job. They claim payment when done.'),
-    individual: (a) => (a.claimDeclineReason ? `Claim declined: “${a.claimDeclineReason}”` : 'You’re hired. Claim payment when the work is done.'),
+    company: (a) =>
+      !postTypeHasPayments(a.postType)
+        ? 'Hired. Agree on the details here.'
+        : a.claimDeclineReason
+          ? 'You declined the last claim. Waiting for a new one.'
+          : 'Working on the job. They claim payment when done.',
+    individual: (a) =>
+      !postTypeHasPayments(a.postType)
+        ? 'You’re hired. Agree on the details here.'
+        : a.claimDeclineReason
+          ? `Claim declined: “${a.claimDeclineReason}”`
+          : 'You’re hired. Claim payment when the work is done.',
   },
   Claimed: {
     company: (a) => `Claimed ${formatMoney(a.claimedAmount!)}. Pay it or decline the claim.`,

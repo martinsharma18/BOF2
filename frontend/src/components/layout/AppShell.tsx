@@ -8,6 +8,7 @@ import { useChatUnreadCount } from '@/features/chat/api'
 import { NotificationBell, UnreadBadge } from '@/features/notifications/NotificationBell'
 import { useInboxUnreadCount } from '@/features/inbox/api'
 import { useUnreadCount } from '@/features/notifications/api'
+import { postTypes } from '@/features/posts/labels'
 import { InstallBanner, InstallMenuItem, OfflineBanner } from '@/features/pwa/PwaUi'
 import { WalletCard } from '@/features/wallet/WalletCard'
 import { cn } from '@/lib/cn'
@@ -339,23 +340,33 @@ function MoreSheet({ open, onClose, items }: { open: boolean; onClose: () => voi
   )
 }
 
-/** Company to-do: new applications to answer and hired people still to pay. */
+/**
+ * Company to-do: new applications to answer, people hired on paid post types still to pay,
+ * and how many applied to posts without in-app payment (Type 2).
+ */
 function PendingApplicantsCard() {
+  const paidType = postTypes.find((t) => t.payments)
+  const unpaidType = postTypes.find((t) => !t.payments)
   const pending = useApplications({ status: 'Pending', page: 1 }).data?.totalCount
-  const hired = useApplications({ status: 'Accepted', page: 1 }).data?.totalCount
-  if (pending === undefined || hired === undefined) return null
+  const hired = useApplications({ status: 'Accepted', postType: paidType?.value, page: 1 }).data?.totalCount
+  const unpaidApplied = useApplications({ postType: unpaidType?.value, page: 1 }).data?.totalCount
+  if (pending === undefined || hired === undefined || unpaidApplied === undefined) return null
+
+  const tiles = [
+    { count: pending, label: 'to review' },
+    { count: hired, label: `${paidType?.label ?? ''} hired, to pay` },
+    { count: unpaidApplied, label: `${unpaidType?.label ?? ''} applied` },
+  ]
   return (
     <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 text-white shadow-card">
       <p className="px-4 pt-4 text-xs font-medium text-brand-100">Your to-do</p>
-      <div className="grid grid-cols-2 divide-x divide-white/15 px-1 py-2">
-        <Link to="/applications" className="rounded-lg px-3 py-1 hover:bg-white/10">
-          <p className="font-display text-2xl font-extrabold tabular-nums">{pending}</p>
-          <p className="text-xs text-brand-100">to review</p>
-        </Link>
-        <Link to="/applications" className="rounded-lg px-3 py-1 hover:bg-white/10">
-          <p className="font-display text-2xl font-extrabold tabular-nums">{hired}</p>
-          <p className="text-xs text-brand-100">hired, to pay</p>
-        </Link>
+      <div className="grid grid-cols-3 divide-x divide-white/15 px-1 py-2">
+        {tiles.map((t) => (
+          <Link key={t.label} to="/applications" className="min-w-0 rounded-lg px-2.5 py-1 hover:bg-white/10">
+            <p className="font-display text-2xl font-extrabold tabular-nums">{t.count}</p>
+            <p className="text-[11px] leading-tight text-brand-100">{t.label}</p>
+          </Link>
+        ))}
       </div>
     </div>
   )

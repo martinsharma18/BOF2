@@ -25,11 +25,13 @@ public class ApplicationService(
     PushQueue pushQueue) : IApplicationService
 {
     private const string DefaultClaimMessage = "I would like to claim this opportunity.";
+    private const string NoPaymentsMessage = "This type of post has no in-app payment. Agree on payment with the company in the chat.";
 
     private static readonly Expression<Func<PostApplication, ApplicationDto>> ToDto = a => new ApplicationDto(
         a.Id,
         a.PostId,
         a.Post.Title,
+        a.Post.Type,
         a.Post.MaximumPayment,
         a.Kind,
         a.Status,
@@ -119,6 +121,8 @@ public class ApplicationService(
             applications = applications.Where(a => a.PostId == postId);
         if (query.Status is { } status)
             applications = applications.Where(a => a.Status == status);
+        if (query.PostType is { } postType)
+            applications = applications.Where(a => a.Post.Type == postType);
         if (query.Stage is { } stage)
             applications = stage switch
             {
@@ -190,7 +194,11 @@ public class ApplicationService(
             var company = await CompanyNameAsync(application.Post.AuthorId, ct);
             if (request.Status == ApplicationStatus.Accepted)
                 db.Notify(application.ApplicantId, NotificationType.ApplicationAccepted,
-                    $"{company} hired you", $"{application.Post.Title}. When the work is done, claim your payment.", Link(id), actorId: application.Post.AuthorId);
+                    $"{company} hired you",
+                    application.Post.Type.UsesPayments()
+                        ? $"{application.Post.Title}. When the work is done, claim your payment."
+                        : $"{application.Post.Title}. Chat with them to agree on the details.",
+                    Link(id), actorId: application.Post.AuthorId);
             else if (request.Status == ApplicationStatus.Rejected)
                 db.Notify(application.ApplicantId, NotificationType.ApplicationRejected,
                     $"{company} chose someone else for \"{application.Post.Title}\"", "Keep applying to other jobs on the feed.", Link(id), actorId: application.Post.AuthorId);
@@ -343,7 +351,9 @@ public class ApplicationService(
 
         // One open claim per job: only while hired, and only if nothing is claimed or paid yet.
         string? error = null;
-        if (application.Status == ApplicationStatus.Completed)
+        if (!application.Post.Type.UsesPayments())
+            error = NoPaymentsMessage;
+        else if (application.Status == ApplicationStatus.Completed)
             error = "This job is already paid.";
         else if (application.Status != ApplicationStatus.Accepted)
             error = "You can claim payment once the company hires you.";
@@ -423,7 +433,9 @@ public class ApplicationService(
         var application = await LoadAsCompanyAsync(id, ct);
 
         string? error = null;
-        if (application.Status == ApplicationStatus.Completed)
+        if (!application.Post.Type.UsesPayments())
+            error = NoPaymentsMessage;
+        else if (application.Status == ApplicationStatus.Completed)
             error = "This job is already paid.";
         else if (application.Status != ApplicationStatus.Accepted)
             error = "Hire the applicant before paying them.";

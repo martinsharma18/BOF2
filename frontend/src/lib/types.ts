@@ -102,6 +102,7 @@ export interface Application {
   id: string
   postId: string
   postTitle: string
+  postType: PostType
   postMaximumPayment: number
   kind: ApplicationKind
   status: ApplicationStatus

@@ -44,6 +44,7 @@ public record ApplicationDto(
     Guid Id,
     Guid PostId,
     string PostTitle,
+    PostType PostType,
     decimal PostMaximumPayment,
     ApplicationKind Kind,
     ApplicationStatus Status,
@@ -99,6 +100,8 @@ public class ApplicationQuery : PageQuery
     public Guid? PostId { get; set; }
     public ApplicationStatus? Status { get; set; }
     public ApplicationStage? Stage { get; set; }
+    /// <summary>Only applications on posts of this type.</summary>
+    public PostType? PostType { get; set; }
 }
 
 /// <summary>How many applications are in each stage, for the tabs and the "needs your action" banner.</summary>
