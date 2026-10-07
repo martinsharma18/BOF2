@@ -14,6 +14,16 @@ public static class PostTypeRules
     /// Off for Type 2: people apply, get hired and chat, but money is handled outside the app.
     /// </summary>
     public static bool UsesPayments(this PostType type) => type == PostType.Type1;
+
+    /// <summary>Type 1 posts close after this many applications per person needed (5 people needed → 25 applications).</summary>
+    public const int ApplicationsPerPersonNeeded = 5;
+
+    /// <summary>
+    /// How many applications a post takes before it closes: hidden from the feed and no new applications.
+    /// Null means no limit (Type 2).
+    /// </summary>
+    public static int? ApplicationLimit(PostType type, int minimumNumber) =>
+        type == PostType.Type1 ? minimumNumber * ApplicationsPerPersonNeeded : null;
 }
 
 /// <summary>Sub-choice for Type 1 posts (A or B). Rename the labels in the frontend once their meaning is final.</summary>

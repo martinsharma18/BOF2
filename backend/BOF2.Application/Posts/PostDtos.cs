@@ -61,6 +61,10 @@ public record PostDto(
     ReactionType? MyReaction,
     int FeedbackCount,
     int ApplicationCount,
+    /// <summary>Most applications this post takes (Type 1: people needed × 5); null = no limit.</summary>
+    int? ApplicationLimit,
+    /// <summary>The limit is reached: hidden from the feed for everyone but its company and admins, and no new applications.</summary>
+    bool IsClosed,
     MyApplicationDto? MyApplication);
 
 /// <summary>The signed-in individual's own application on a post, so the card can show Apply / Claim state.</summary>

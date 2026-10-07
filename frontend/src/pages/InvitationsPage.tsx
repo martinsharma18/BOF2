@@ -14,7 +14,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/cn'
 import { applyServerErrors } from '@/lib/formErrors'
-import { pluralize, timeAgo } from '@/lib/format'
+import { timeAgo } from '@/lib/format'
 import type { Invitation } from '@/lib/types'
 import { FeedRail } from './FeedRail'
 
@@ -111,8 +111,8 @@ function InvitationForm() {
     send.mutate(
       { ...toAudience(confirming), title: confirming.title, message: confirming.message, postId: confirming.postId || undefined },
       {
-        onSuccess: (sent) => {
-          toast.success(`Invitation sent to ${pluralize(sent.recipientCount, 'person', 'people')}`)
+        onSuccess: () => {
+          toast.success('Invitation sent')
           setConfirming(null)
           reset()
         },
@@ -172,15 +172,13 @@ function InvitationForm() {
           <div className={cn('flex items-center gap-2 rounded-xl px-4 py-3 text-sm', reach === 0 ? 'bg-amber-50 text-amber-800' : 'bg-brand-50 text-brand-800')} aria-live="polite">
             <Users className="size-4 shrink-0" />
             {!ageValid ? (
-              'Fix the age range to see how many people it reaches.'
+              'Fix the age range to check who it reaches.'
             ) : reach === undefined ? (
-              'Counting people…'
+              'Checking your filters…'
             ) : reach === 0 ? (
               'Nobody matches these filters yet. Try a wider location, gender or age.'
             ) : (
-              <span>
-                This invitation will reach <b>{pluralize(reach, 'person', 'people')}</b>.
-              </span>
+              'This invitation will go to everyone who matches these filters.'
             )}
           </div>
           {(minAge || maxAge) && <p className="-mt-3 text-xs text-slate-500">The age filter only includes people who have entered their date of birth.</p>}
@@ -207,7 +205,7 @@ function InvitationForm() {
 
         <div className="flex justify-end">
           <Button type="submit" icon={<Send className="size-4" />} disabled={reach === 0} className="min-w-40">
-            {reach ? `Send to ${pluralize(reach, 'person', 'people')}` : 'Send invitation'}
+            Send invitation
           </Button>
         </div>
       </Card>
@@ -218,7 +216,7 @@ function InvitationForm() {
         onConfirm={confirmSend}
         loading={send.isPending}
         title="Send this invitation?"
-        description={`Everyone who matches your filters (${reach ?? 0}) will get it in their Inbox. This can't be undone.`}
+        description="Everyone who matches your filters will get it in their Inbox. This can't be undone."
         confirmLabel="Send invitation"
       />
     </form>
@@ -266,7 +264,7 @@ function SentInvitations() {
                   </p>
                 </div>
                 <div className="shrink-0 text-right text-xs text-slate-500">
-                  <p className="font-semibold text-slate-900">{pluralize(i.recipientCount, 'person', 'people')}</p>
+                  <p className="font-semibold text-emerald-700">Sent</p>
                   <p>{timeAgo(i.createdAt)}</p>
                 </div>
               </li>

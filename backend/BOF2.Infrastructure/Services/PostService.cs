@@ -20,6 +20,16 @@ public class PostService(
     {
         var posts = ApplyFilters(db.Posts.AsNoTracking(), query);
 
+        // Full Type 1 posts leave the feed; their company and admins still see them (marked closed).
+        if (!currentUser.IsAdmin)
+        {
+            var viewerId = currentUser.UserId;
+            const int perPerson = PostTypeRules.ApplicationsPerPersonNeeded;
+            posts = posts.Where(p => p.Type != PostType.Type1
+                                     || p.AuthorId == viewerId
+                                     || p.Applications.Count() < p.MinimumNumber * perPerson);
+        }
+
         var total = await posts.CountAsync(ct);
         var page = await posts
             .OrderByDescending(p => p.CreatedAt)
@@ -230,6 +240,8 @@ public class PostService(
             mine.TryGetValue(p.Id, out var my) ? my : null,
             feedbackCounts.GetValueOrDefault(p.Id),
             applicationCounts.GetValueOrDefault(p.Id),
+            PostTypeRules.ApplicationLimit(p.Type, p.MinimumNumber),
+            PostTypeRules.ApplicationLimit(p.Type, p.MinimumNumber) is { } limit && applicationCounts.GetValueOrDefault(p.Id) >= limit,
             myApplications.GetValueOrDefault(p.Id))).ToList();
     }
 }

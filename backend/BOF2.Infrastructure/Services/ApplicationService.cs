@@ -75,7 +75,7 @@ public class ApplicationService(
 
         var post = await db.Posts.AsNoTracking()
                        .Where(p => p.Id == postId)
-                       .Select(p => new { p.AuthorId, p.Title })
+                       .Select(p => new { p.AuthorId, p.Title, p.Type, p.MinimumNumber, Applied = p.Applications.Count() })
                        .FirstOrDefaultAsync(ct)
                    ?? throw new NotFoundException("Post not found.");
         if (post.AuthorId == userId)
@@ -83,6 +83,12 @@ public class ApplicationService(
 
         if (await db.Applications.AnyAsync(a => a.PostId == postId && a.ApplicantId == userId, ct))
             throw AlreadyApplied();
+
+        if (PostTypeRules.ApplicationLimit(post.Type, post.MinimumNumber) is { } limit && post.Applied >= limit)
+            throw new FieldErrorsException(new Dictionary<string, string[]>
+            {
+                ["Message"] = ["This post is full: it already has enough applications."],
+            });
 
         var applicantName = await db.Users.Where(u => u.Id == userId).Select(u => u.FullName).FirstAsync(ct);
         var application = new PostApplication

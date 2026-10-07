@@ -116,6 +116,7 @@ export function PostCard({
         <div className="flex shrink-0 items-center gap-1.5">
           <Badge tone="brand">{postTypeLabel(post.type)}</Badge>
           {post.option && <Badge tone="amber">{postOptionLabel(post.option)}</Badge>}
+          {post.isClosed && <Badge tone="red">Closed</Badge>}
         </div>
         <Menu
           label="Post options"
@@ -220,6 +221,13 @@ export function PostCard({
           <ButtonLink to={`/applications?post=${post.id}`} variant="soft" className="w-full" icon={<ClipboardList className="size-4" />}>
             {post.applicationCount > 0 ? `View ${pluralize(post.applicationCount, 'application')}` : 'No applications yet'}
           </ButtonLink>
+          {post.applicationLimit !== null && (
+            <p className={cn('mt-1.5 text-center text-xs', post.isClosed ? 'font-semibold text-red-600' : 'text-slate-500')}>
+              {post.isClosed
+                ? `Closed: ${post.applicationCount} of ${post.applicationLimit} applications received. Hidden from the feed.`
+                : `${post.applicationCount} of ${post.applicationLimit} applications. The post closes when it's full.`}
+            </p>
+          )}
         </div>
       )}
 
@@ -330,7 +338,8 @@ function ApplicantActions({ post, onApply }: { post: Post; onApply: () => void }
 
   // One plain sentence telling the person exactly where they are and what happens next.
   let hint: { text: string; tone: 'slate' | 'brand' | 'amber' | 'green' | 'red' }
-  if (!payments && !mine) hint = { text: 'Apply, and chat with the company once they hire you.', tone: 'slate' }
+  if (post.isClosed && !mine) hint = { text: 'This post is full. It already has enough applications.', tone: 'slate' }
+  else if (!payments && !mine) hint = { text: 'Apply, and chat with the company once they hire you.', tone: 'slate' }
   else if (!payments && mine?.status === 'Pending') hint = { text: 'Applied. Waiting for the company to hire you.', tone: 'amber' }
   else if (!payments && mine?.status === 'Rejected') hint = { text: 'The company chose someone else for this job.', tone: 'red' }
   else if (!payments) hint = { text: 'You’re hired! Use the chat to agree on the details.', tone: 'brand' }
@@ -357,10 +366,10 @@ function ApplicantActions({ post, onApply }: { post: Post; onApply: () => void }
           className="flex-1"
           variant={mine ? 'secondary' : 'primary'}
           icon={mine ? <CheckCircle2 className="size-4 text-emerald-600" /> : <Send className="size-4" />}
-          disabled={!!mine}
+          disabled={!!mine || post.isClosed}
           onClick={onApply}
         >
-          {mine ? 'Applied' : 'Apply'}
+          {mine ? 'Applied' : post.isClosed ? 'Full' : 'Apply'}
         </Button>
         {payments ? (
           <Button

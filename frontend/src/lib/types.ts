@@ -63,6 +63,10 @@ export interface Post {
   myReaction: ReactionType | null
   feedbackCount: number
   applicationCount: number
+  /** Most applications this post takes (Type 1: people needed × 5); null = no limit. */
+  applicationLimit: number | null
+  /** Limit reached: hidden from the feed (except for its company and admins) and no new applications. */
+  isClosed: boolean
   myApplication: MyApplication | null
 }
 
