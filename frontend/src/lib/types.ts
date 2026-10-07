@@ -160,6 +160,8 @@ export interface ApplicationPost {
 }
 
 export type NotificationType =
+  | 'VacancyApplicationAccepted'
+  | 'VacancyApplicationRejected'
   | 'ApplicationReceived'
   | 'ApplicationAccepted'
   | 'ApplicationRejected'
@@ -350,6 +352,37 @@ export interface Vacancy {
   deadline: string | null
   isActive: boolean
   createdAt: string
+  /** Admin list only (0 elsewhere). */
+  applicationCount: number
+  pendingApplicationCount: number
+}
+
+export type VacancyApplicationStatus = 'Pending' | 'Accepted' | 'Rejected'
+
+/** The signed-in individual's own application to a vacancy. */
+export interface MyVacancyApplication {
+  id: string
+  status: VacancyApplicationStatus
+  createdAt: string
+}
+
+/** Admin view of one vacancy application. */
+export interface VacancyApplication {
+  id: string
+  vacancyId: string
+  vacancyTitle: string
+  applicantId: string
+  applicantName: string
+  applicantEmail: string
+  applicantPhone: string | null
+  applicantAvatarUrl: string | null
+  /** The CV: a photo or a PDF. */
+  cvUrl: string
+  cvFileName: string
+  note: string | null
+  status: VacancyApplicationStatus
+  createdAt: string
+  reviewedAt: string | null
 }
 
 export type InboxItemKind = 'Invitation' | 'Vacancy'

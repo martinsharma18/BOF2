@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Briefcase, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Briefcase, FileText, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Alert, Badge, Button, Card, Checkbox, ConfirmDialog, Dialog, EmptyState, Field, Input, PageSpinner, Textarea, toast } from '@/components/ui'
 import { useAdminVacancies, useDeleteVacancy, useSaveVacancy } from '@/features/vacancies/api'
+import { VacancyApplicationsDialog } from '@/features/vacancies/VacancyApplicationsDialog'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { getErrorMessage } from '@/lib/api'
 import { formatDay } from '@/lib/format'
@@ -27,6 +28,7 @@ export function AdminVacanciesPage() {
   const [editing, setEditing] = useState<Vacancy | undefined>()
   const [formOpen, setFormOpen] = useState(false)
   const [deleting, setDeleting] = useState<Vacancy | null>(null)
+  const [viewing, setViewing] = useState<Vacancy | null>(null)
 
   const openForm = (v?: Vacancy) => {
     setEditing(v)
@@ -72,7 +74,13 @@ export function AdminVacanciesPage() {
                       {v.deadline && ` · Apply by ${formatDay(v.deadline)}`}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 max-sm:*:flex-1">
+                    <Button size="sm" variant="soft" icon={<FileText className="size-3.5" />} onClick={() => setViewing(v)} className="max-sm:basis-full">
+                      Applications {v.applicationCount > 0 && <span className="tabular-nums">({v.applicationCount})</span>}
+                      {v.pendingApplicationCount > 0 && (
+                        <span className="rounded-full bg-accent-500 px-1.5 text-[11px] font-bold text-white tabular-nums">{v.pendingApplicationCount} new</span>
+                      )}
+                    </Button>
                     <Button size="sm" variant="secondary" icon={<Pencil className="size-3.5" />} onClick={() => openForm(v)}>
                       Edit
                     </Button>
@@ -87,6 +95,7 @@ export function AdminVacanciesPage() {
         </Card>
       )}
 
+      {viewing && <VacancyApplicationsDialog vacancy={viewing} onClose={() => setViewing(null)} />}
       {formOpen && <VacancyFormDialog key={editing?.id ?? 'new'} vacancy={editing} onClose={() => setFormOpen(false)} />}
       <ConfirmDialog
         open={!!deleting}

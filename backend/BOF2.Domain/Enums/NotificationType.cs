@@ -12,5 +12,7 @@ public enum NotificationType
     WithdrawalRejected = 8,
     PaymentClaimed = 9,
     Invitation = 10,
-    ClaimDeclined = 11
+    ClaimDeclined = 11,
+    VacancyApplicationAccepted = 12,
+    VacancyApplicationRejected = 13
 }

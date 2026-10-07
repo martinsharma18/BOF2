@@ -22,6 +22,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<WithdrawalRequest> Withdrawals => Set<WithdrawalRequest>();
     public DbSet<Invitation> Invitations => Set<Invitation>();
     public DbSet<Vacancy> Vacancies => Set<Vacancy>();
+    public DbSet<VacancyApplication> VacancyApplications => Set<VacancyApplication>();
     public DbSet<InboxItem> InboxItems => Set<InboxItem>();
     public DbSet<LocalLevel> LocalLevels => Set<LocalLevel>();
     public DbSet<PushDevice> PushDevices => Set<PushDevice>();
@@ -228,6 +229,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(v => v.Description).HasMaxLength(2000).IsRequired();
             e.Property(v => v.HowToApply).HasMaxLength(300);
             e.HasIndex(v => new { v.IsActive, v.CreatedAt });
+        });
+
+        builder.Entity<VacancyApplication>(e =>
+        {
+            e.HasOne(a => a.Vacancy).WithMany()
+                .HasForeignKey(a => a.VacancyId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(a => a.Applicant).WithMany()
+                .HasForeignKey(a => a.ApplicantId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(a => a.CvUrl).HasMaxLength(500).IsRequired();
+            e.Property(a => a.CvFileName).HasMaxLength(200).IsRequired();
+            e.Property(a => a.Note).HasMaxLength(500);
+            e.Property(a => a.Status).HasConversion<string>().HasMaxLength(20);
+            // One application per person per vacancy.
+            e.HasIndex(a => new { a.VacancyId, a.ApplicantId }).IsUnique();
+            e.HasIndex(a => new { a.Status, a.CreatedAt });
         });
 
         builder.Entity<InboxItem>(e =>

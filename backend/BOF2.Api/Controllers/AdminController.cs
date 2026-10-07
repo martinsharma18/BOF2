@@ -63,6 +63,14 @@ public class AdminController(IAdminService admin, IAdService ads, IWalletService
     public Task<VacancyDto> UpdateVacancy(Guid id, VacancyRequest request, CancellationToken ct) =>
         vacancies.UpdateAsync(id, request, ct);
 
+    [HttpGet("vacancy-applications")]
+    public Task<PagedResult<VacancyApplicationDto>> GetVacancyApplications([FromQuery] VacancyApplicationQuery query, CancellationToken ct) =>
+        vacancies.ListApplicationsAsync(query, ct);
+
+    [HttpPut("vacancy-applications/{id:guid}/status")]
+    public Task<VacancyApplicationDto> SetVacancyApplicationStatus(Guid id, SetVacancyApplicationStatusRequest request, CancellationToken ct) =>
+        vacancies.SetApplicationStatusAsync(id, request.Status, ct);
+
     [HttpDelete("vacancies/{id:guid}")]
     public async Task<IActionResult> DeleteVacancy(Guid id, CancellationToken ct)
     {

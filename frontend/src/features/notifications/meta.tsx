@@ -18,6 +18,8 @@ export const notificationMeta: Record<NotificationType, { category: string; icon
   WithdrawalPaid: { category: 'Withdrawal done', icon: <Banknote />, className: 'bg-emerald-100 text-emerald-700', action: 'Open wallet' },
   WithdrawalRejected: { category: 'Withdrawal rejected', icon: <BanknoteX />, className: 'bg-red-100 text-red-700', action: 'Open wallet' },
   Invitation: { category: 'Invitation', icon: <Mail />, className: 'bg-brand-100 text-brand-700', action: 'Open' },
+  VacancyApplicationAccepted: { category: 'Vacancy accepted', icon: <CircleCheckBig />, className: 'bg-emerald-100 text-emerald-700', action: 'Open' },
+  VacancyApplicationRejected: { category: 'Vacancy not selected', icon: <CircleX />, className: 'bg-slate-200 text-slate-600', action: 'Open' },
 }
 
 /** Today / Yesterday / Earlier, for grouping the list. */

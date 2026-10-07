@@ -7,6 +7,7 @@ import { cn } from '@/lib/cn'
 import { formatDay } from '@/lib/format'
 import type { Vacancy } from '@/lib/types'
 import { useOpenVacancies } from './api'
+import { VacancyApplyBox } from './VacancyApplyBox'
 
 /** Compact list of the super admin's vacancies. Tap one to read the details. Hidden when there are none. */
 export function VacancyList({ className }: { className?: string }) {
@@ -70,6 +71,7 @@ export function VacancyList({ className }: { className?: string }) {
                 <HowToApply text={open.howToApply} />
               </div>
             )}
+            <VacancyApplyBox vacancyId={open.id} />
           </div>
         )}
       </Dialog>

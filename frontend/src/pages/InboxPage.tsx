@@ -8,6 +8,7 @@ import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/cn'
 import { formatDate, formatDay, timeAgo } from '@/lib/format'
 import type { InboxItem, InboxItemKind } from '@/lib/types'
+import { VacancyApplyBox } from '@/features/vacancies/VacancyApplyBox'
 
 const tabs: { kind?: InboxItemKind; label: string }[] = [
   { label: 'All' },
@@ -262,6 +263,7 @@ function Message({ item, onBack, onDeleted }: { item: InboxItem; onBack: () => v
                 )}
               </div>
             )}
+            <VacancyApplyBox vacancyId={v.id} />
           </>
         )}
       </div>
