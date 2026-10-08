@@ -18,7 +18,6 @@ export function stageOf(a: Pick<Application, 'status' | 'claimedAmount'>): Appli
   }
 }
 
-/** Badge text per stage, worded for whoever is looking. */
 export const stageMeta: Record<ApplicationStage, { company: string; individual: string; tone: Tone }> = {
   New: { company: 'New applicant', individual: 'Applied', tone: 'brand' },
   Hired: { company: 'Hired · working', individual: 'Hired', tone: 'green' },
@@ -27,7 +26,6 @@ export const stageMeta: Record<ApplicationStage, { company: string; individual: 
   Declined: { company: 'Declined', individual: 'Not selected', tone: 'red' },
 }
 
-/** Tabs on the Applications page, in the order work happens. */
 export const stageTabs: { stage?: ApplicationStage; company: string; individual: string }[] = [
   { company: 'All', individual: 'All' },
   { stage: 'New', company: 'New', individual: 'Applied' },

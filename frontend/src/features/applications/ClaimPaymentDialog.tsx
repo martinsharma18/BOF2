@@ -26,7 +26,6 @@ export function ClaimPaymentDialog({
   companyName: string
   /** The post's maximum payment; 0 means no limit was set. */
   maxAmount: number
-  /** Why the company declined the previous claim, if it did. */
   declineReason?: string | null
   open: boolean
   onClose: () => void

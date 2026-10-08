@@ -9,7 +9,6 @@ export const adFormats: Record<AdPlacement, { ratio: number; aspectClass: string
   Sidebar: { ratio: 1, aspectClass: 'aspect-square', size: '800 × 800 px', label: 'Square · right column on computers, between posts on phones · 1:1' },
 }
 
-/** True when an image is within 10% of the placement's shape. */
 export function fitsFormat(placement: AdPlacement, width: number, height: number) {
   const ratio = width / height
   return Math.abs(ratio - adFormats[placement].ratio) / adFormats[placement].ratio <= 0.1

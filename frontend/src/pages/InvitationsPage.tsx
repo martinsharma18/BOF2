@@ -58,7 +58,6 @@ function toAudience(v: Pick<Values, 'province' | 'district' | 'localLevel' | 'ge
   }
 }
 
-/** Company: send an invitation to the inbox of every individual matching location, gender and age. */
 export function InvitationsPage() {
   useDocumentTitle('Invitations')
   return (

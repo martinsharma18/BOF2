@@ -33,14 +33,12 @@ export const tokenStore = {
     listeners.forEach((l) => l(session))
   },
 
-  /** Refreshes the cached user (e.g. after a profile or avatar change). */
   updateUser(user: User) {
     if (!session) return
     session = { ...session, user }
     try {
       localStorage.setItem(KEY, JSON.stringify(session))
     } catch {
-      // ignore
     }
     listeners.forEach((l) => l(session))
   },
@@ -50,7 +48,6 @@ export const tokenStore = {
     try {
       localStorage.removeItem(KEY)
     } catch {
-      // ignore
     }
     listeners.forEach((l) => l(null))
   },

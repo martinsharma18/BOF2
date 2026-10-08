@@ -22,7 +22,6 @@ export const notificationMeta: Record<NotificationType, { category: string; icon
   VacancyApplicationRejected: { category: 'Vacancy not selected', icon: <CircleX />, className: 'bg-slate-200 text-slate-600', action: 'Open' },
 }
 
-/** Today / Yesterday / Earlier, for grouping the list. */
 export function dayGroup(iso: string): 'Today' | 'Yesterday' | 'Earlier' {
   const date = new Date(iso)
   const today = new Date()

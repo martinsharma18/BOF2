@@ -8,7 +8,6 @@ import type { AppNotification } from '@/lib/types'
 import { notificationKeys, useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications, useUnreadCount } from './api'
 import { NotificationItem } from './NotificationItem'
 
-/** Header bell: unread badge, and a quick preview of the latest notifications on click. */
 export function NotificationBell() {
   const unread = useUnreadCount().data ?? 0
   const queryClient = useQueryClient()
@@ -31,7 +30,6 @@ export function NotificationBell() {
     previous.current = unread
   }, [unread, queryClient])
 
-  // Close on outside click / Escape.
   useEffect(() => {
     if (!open) return
     const onPointer = (e: PointerEvent) => !ref.current?.contains(e.target as Node) && setOpenOn(null)

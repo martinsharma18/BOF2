@@ -64,7 +64,6 @@ export function useUpdateProfile() {
   })
 }
 
-/** Phone numbers only: the one profile change an individual can make. */
 export function useUpdatePhone() {
   const sync = useSyncMe()
   return useMutation({

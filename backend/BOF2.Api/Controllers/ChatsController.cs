@@ -18,7 +18,6 @@ public class ChatsController(IApplicationService applications) : ControllerBase
     public Task<PagedResult<ChatSummaryDto>> List([FromQuery] ChatQuery query, CancellationToken ct) =>
         applications.ListChatsAsync(query, ct);
 
-    /// <summary>Conversations with unread messages, for the Messages badge (polled).</summary>
     [HttpGet("unread-count")]
     public async Task<object> UnreadCount(CancellationToken ct) => new { count = await applications.UnreadChatCountAsync(ct) };
 

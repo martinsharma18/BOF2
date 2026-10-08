@@ -1,6 +1,5 @@
 namespace BOF2.Domain.Entities;
 
-/// <summary>One of Nepal's 753 local levels (metropolitan city, sub-metropolitan city, municipality, rural municipality).</summary>
 public class LocalLevel
 {
     public int Id { get; set; }

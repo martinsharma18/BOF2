@@ -5,7 +5,6 @@ namespace BOF2.Infrastructure.Storage;
 
 public class FileStorageOptions
 {
-    /// <summary>Absolute folder that is served at <see cref="PublicBasePath"/>.</summary>
     public string RootPath { get; set; } = string.Empty;
 
     public string PublicBasePath { get; set; } = "/uploads";

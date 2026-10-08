@@ -32,7 +32,6 @@ export interface ApplicationSummary {
   declined: number
 }
 
-/** Counts per stage, for the tabs and the "needs your action" banner. */
 export function useApplicationSummary(postId?: string) {
   return useQuery({
     queryKey: applicationKeys.summary(postId),
@@ -50,7 +49,6 @@ export function useApplications(params: ApplicationParams) {
   })
 }
 
-/** Company: its posts that have applications, with counts (the "Your posts" strip). */
 export function useApplicationPosts(enabled: boolean) {
   return useQuery({
     queryKey: applicationKeys.posts,
@@ -122,7 +120,6 @@ export function useClaimPayment() {
   })
 }
 
-/** The company pays exactly the claimed amount; the job closes. */
 export function usePayApplicant() {
   const sync = useSyncApplication()
   const queryClient = useQueryClient()
@@ -136,7 +133,6 @@ export function usePayApplicant() {
   })
 }
 
-/** The company turns down a claim with a reason; the applicant can claim again. */
 export function useDeclineClaim() {
   const sync = useSyncApplication()
   const queryClient = useQueryClient()

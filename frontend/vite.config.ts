@@ -5,7 +5,6 @@ import { defineConfig } from 'vite'
 
 const apiTarget = process.env.VITE_API_PROXY ?? 'http://localhost:5000'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {

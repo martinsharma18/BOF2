@@ -8,7 +8,6 @@ import { shrinkImage } from '@/lib/image'
 const MAX_FILE_BYTES = 5 * 1024 * 1024
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png']
 
-/** Photo of the company registration certificate or PAN document (JPG or PNG), checked by admins. */
 export function CompanyDocumentInput({
   value,
   onChange,

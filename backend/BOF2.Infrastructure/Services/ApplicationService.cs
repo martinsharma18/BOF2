@@ -489,7 +489,6 @@ public class ApplicationService(
         return await GetAsync(id, ct);
     }
 
-    /// <summary>Applications the user may see: sent by them, received on their posts, or all for admins.</summary>
     private IQueryable<PostApplication> VisibleToMe(Guid userId)
     {
         var applications = db.Applications.AsNoTracking();

@@ -6,7 +6,6 @@ import { formatDate, formatMoney } from '@/lib/format'
 import { useWallet } from './api'
 import { WithdrawDialog } from './WithdrawDialog'
 
-/** Compact wallet for the left sidebar: balance, who paid you, and Cash withdraw. */
 export function WalletCard() {
   const wallet = useWallet()
   const [open, setOpen] = useState(false)

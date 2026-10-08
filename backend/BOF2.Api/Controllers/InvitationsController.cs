@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BOF2.Api.Controllers;
 
-/// <summary>Companies invite matching individuals; each one gets a notification.</summary>
 [ApiController]
 [Route("api/invitations")]
 [Authorize(Roles = Roles.Company)]
@@ -14,7 +13,6 @@ public class InvitationsController(IInvitationService invitations) : ControllerB
     [HttpGet]
     public Task<IReadOnlyList<InvitationDto>> GetMine(CancellationToken ct) => invitations.ListMineAsync(ct);
 
-    /// <summary>How many individuals the filters reach, shown before sending.</summary>
     [HttpGet("audience")]
     public Task<AudienceCountDto> CountAudience([FromQuery] InvitationAudience audience, CancellationToken ct) =>
         invitations.CountAudienceAsync(audience, ct);

@@ -10,7 +10,6 @@ namespace BOF2.Api.Controllers;
 [Route("api/vacancies")]
 public class VacanciesController(IVacancyService vacancies) : ControllerBase
 {
-    /// <summary>Open vacancies posted by the super admin.</summary>
     [HttpGet]
     public Task<IReadOnlyList<VacancyDto>> GetOpen(int count = 5, CancellationToken ct = default) =>
         vacancies.GetOpenAsync(count, ct);

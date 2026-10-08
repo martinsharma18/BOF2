@@ -21,7 +21,6 @@ public record PublicProfileDto(
     DateTime JoinedAt,
     int PostCount);
 
-/// <summary>The signed-in user's own profile, including private contact details.</summary>
 public record MyProfileDto(
     PublicProfileDto Profile,
     string Email,
@@ -94,7 +93,6 @@ public interface IUserService
     /// <summary>Companies and the admin edit their whole profile. Individuals can't: their details are locked.</summary>
     Task<MyProfileDto> UpdateMineAsync(UpdateProfileRequest request, CancellationToken ct = default);
 
-    /// <summary>Changes the signed-in user's phone numbers (the one edit an individual can make).</summary>
     Task<MyProfileDto> UpdatePhoneAsync(UpdatePhoneRequest request, CancellationToken ct = default);
     Task<MyProfileDto> SetAvatarAsync(FileUpload? image, CancellationToken ct = default);
 }

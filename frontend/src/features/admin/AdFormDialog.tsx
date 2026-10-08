@@ -26,7 +26,6 @@ const schema = z
 type Values = z.infer<typeof schema>
 const fields = ['title', 'description', 'linkUrl', 'placement', 'isActive', 'startsAt', 'endsAt']
 
-/** yyyy-mm-dd for <input type="date">. */
 const toDateInput = (iso: string | null) => (iso ? iso.slice(0, 10) : '')
 
 /** Mount only while open (with a key per ad) so the form starts from the ad's current values. */

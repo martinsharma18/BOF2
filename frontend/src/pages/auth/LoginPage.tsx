@@ -13,7 +13,6 @@ import { api, getErrorMessage } from '@/lib/api'
 import type { AuthResponse } from '@/lib/types'
 import { APP_NAME } from '@/lib/brand'
 
-/** Taller, softer inputs for the auth form. */
 const inputClass = 'h-12 rounded-xl! bg-slate-50! focus:bg-white!'
 
 export function LoginPage() {

@@ -16,7 +16,6 @@ const tabs: { kind?: InboxItemKind; label: string }[] = [
   { kind: 'Vacancy', label: 'Vacancies' },
 ]
 
-/** Mail-style inbox: invitations from companies and vacancies from the super admin. List on the left, message on the right. */
 export function InboxPage() {
   useDocumentTitle('Inbox')
   const [kind, setKind] = useState<InboxItemKind | undefined>()
@@ -97,7 +96,6 @@ export function InboxPage() {
             )}
           </div>
 
-          {/* Reading pane */}
           <div className={cn('min-h-80', !open && 'hidden lg:flex lg:items-center lg:justify-center')}>
             {open ? (
               <Message item={open} onBack={() => setOpenId(null)} onDeleted={() => setOpenId(null)} />

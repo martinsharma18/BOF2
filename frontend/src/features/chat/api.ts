@@ -19,7 +19,6 @@ export function useChats() {
   })
 }
 
-/** Badge on "Messages": conversations with something unread. */
 export function useChatUnreadCount(enabled = true) {
   return useQuery({
     queryKey: chatKeys.unread,

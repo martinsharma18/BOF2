@@ -3,7 +3,6 @@ using BOF2.Domain.Enums;
 
 namespace BOF2.Application.Posts;
 
-/// <summary>Feed filters. All are optional.</summary>
 public class PostQuery : PageQuery
 {
     public string? Search { get; set; }
@@ -67,5 +66,4 @@ public record PostDto(
     bool IsClosed,
     MyApplicationDto? MyApplication);
 
-/// <summary>The signed-in individual's own application on a post, so the card can show Apply / Claim state.</summary>
 public record MyApplicationDto(Guid Id, ApplicationStatus Status, decimal? ClaimedAmount, decimal PaidAmount, string? ClaimDeclineReason);

@@ -13,7 +13,6 @@ public record SendMessageRequest(string Content);
 /// <summary>The company pays exactly the claimed amount. The note is shown in the applicant's wallet.</summary>
 public record PayApplicantRequest(string? Note);
 
-/// <summary>The company turns down a claim (wrong amount, work not finished…). The applicant can claim again.</summary>
 public record DeclineClaimRequest(string Reason);
 
 /// <summary>An accepted applicant asks the company to pay them. Bound from multipart/form-data; the proof file is passed separately.</summary>
@@ -23,7 +22,6 @@ public class ClaimPaymentRequest
     public string? Note { get; set; }
 }
 
-/// <summary>The applicant's profile as the company sees it, contact details included.</summary>
 public record ApplicantDto(
     Guid Id,
     string FullName,
@@ -82,7 +80,6 @@ public record ChatSummaryDto(
 
 public class ChatQuery : PageQuery;
 
-/// <summary>A company post that has applications, with counts for the "Your posts" strip.</summary>
 public record ApplicationPostDto(Guid PostId, string Title, int Total, int New, int ToPay);
 
 /// <summary>Where a job really is. "Hired" splits into Hired (working) and Claimed (waiting to be paid).</summary>
@@ -100,11 +97,9 @@ public class ApplicationQuery : PageQuery
     public Guid? PostId { get; set; }
     public ApplicationStatus? Status { get; set; }
     public ApplicationStage? Stage { get; set; }
-    /// <summary>Only applications on posts of this type.</summary>
     public PostType? PostType { get; set; }
 }
 
-/// <summary>How many applications are in each stage, for the tabs and the "needs your action" banner.</summary>
 public record ApplicationSummaryDto(int All, int New, int Hired, int Claimed, int Paid, int Declined);
 
 public class ApplyValidator : AbstractValidator<ApplyRequest>
@@ -161,7 +156,6 @@ public class ClaimPaymentValidator : AbstractValidator<ClaimPaymentRequest>
 
 public interface IApplicationService
 {
-    /// <summary>Individual applies to (or claims) a post. Notifies the company.</summary>
     Task<ApplicationDto> ApplyAsync(Guid postId, ApplyRequest request, CancellationToken ct = default);
 
     /// <summary>Company: applications on their posts. Individual: their own applications.</summary>
@@ -169,24 +163,19 @@ public interface IApplicationService
 
     Task<ApplicationDto> GetAsync(Guid id, CancellationToken ct = default);
 
-    /// <summary>Counts per stage for the signed-in user's applications (optionally one post).</summary>
     Task<ApplicationSummaryDto> SummaryAsync(Guid? postId, CancellationToken ct = default);
     Task<ApplicationDto> UpdateStatusAsync(Guid id, UpdateApplicationStatusRequest request, CancellationToken ct = default);
     Task<IReadOnlyList<ApplicationMessageDto>> ListMessagesAsync(Guid id, CancellationToken ct = default);
 
-    /// <summary>The signed-in user's conversations, most recent activity first.</summary>
     Task<PagedResult<ChatSummaryDto>> ListChatsAsync(ChatQuery query, CancellationToken ct = default);
 
-    /// <summary>How many conversations have messages the user hasn't seen.</summary>
     Task<int> UnreadChatCountAsync(CancellationToken ct = default);
 
     Task MarkChatReadAsync(Guid id, CancellationToken ct = default);
 
-    /// <summary>Company: its posts that have applications, with counts.</summary>
     Task<IReadOnlyList<ApplicationPostDto>> ListPostsAsync(CancellationToken ct = default);
     Task<ApplicationMessageDto> SendMessageAsync(Guid id, SendMessageRequest request, CancellationToken ct = default);
 
-    /// <summary>Accepted applicant claims payment for their work. Notifies the company.</summary>
     Task<ApplicationDto> ClaimAsync(Guid id, ClaimPaymentRequest request, FileUpload? proof, CancellationToken ct = default);
 
     /// <summary>Company turns down the claim with a reason; the applicant can claim again.</summary>

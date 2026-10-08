@@ -48,7 +48,6 @@ export function LockedProfile({ me }: { me: MyProfile }) {
 const schema = z.object({ phoneNumber: phone, additionalPhoneNumber: optionalPhone })
 type Values = z.infer<typeof schema>
 
-/** The one profile edit an individual can make. */
 export function PhoneForm({ me }: { me: MyProfile }) {
   const update = useUpdatePhone()
   const [formError, setFormError] = useState<string | null>(null)

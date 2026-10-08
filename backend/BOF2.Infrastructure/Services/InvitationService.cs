@@ -82,7 +82,6 @@ public class InvitationService(
         return rows.Select(r => ToDto(r.Invitation, r.PostTitle)).ToList();
     }
 
-    /// <summary>Active individual accounts matching the filters.</summary>
     private IQueryable<AppUser> Recipients(InvitationAudience a)
     {
         var users = db.Users.Where(u => u.AccountType == AccountType.Individual && !u.IsDisabled && u.IndividualProfile != null);

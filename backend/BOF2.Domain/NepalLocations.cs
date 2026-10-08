@@ -1,6 +1,5 @@
 namespace BOF2.Domain;
 
-/// <summary>Nepal's 7 provinces and 77 districts, used for the Province / District dropdowns.</summary>
 public static class NepalLocations
 {
     public static readonly IReadOnlyDictionary<string, string[]> Provinces = new Dictionary<string, string[]>

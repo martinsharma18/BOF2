@@ -1,12 +1,10 @@
 namespace BOF2.Application.Common;
 
-/// <summary>Shared rules for uploaded images (post media, avatars, ads).</summary>
 public static class ImageRules
 {
     public const long MaxBytes = 5 * 1024 * 1024;
     public static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 
-    /// <summary>Throws a field error when <paramref name="file"/> is not an acceptable image.</summary>
     public static void EnsureValid(FileUpload file, string field)
     {
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();

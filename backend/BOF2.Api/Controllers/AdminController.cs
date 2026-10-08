@@ -48,7 +48,6 @@ public class AdminController(IAdminService admin, IAdService ads, IWalletService
     public Task<PagedResult<WithdrawalDto>> GetWithdrawals([FromQuery] WithdrawalQuery query, CancellationToken ct) =>
         wallet.ListWithdrawalsAsync(query, ct);
 
-    /// <summary>Flag a cash-out request as Pending, Paid (done, money sent) or Rejected.</summary>
     [HttpPut("withdrawals/{id:guid}")]
     public Task<WithdrawalDto> ProcessWithdrawal(Guid id, ProcessWithdrawalRequest request, CancellationToken ct) =>
         wallet.ProcessWithdrawalAsync(id, request, ct);

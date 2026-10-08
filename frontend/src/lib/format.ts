@@ -16,7 +16,6 @@ export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-/** Whole years since a YYYY-MM-DD date of birth. */
 export function ageFrom(dateOfBirth: string) {
   const [y, m, d] = dateOfBirth.split('-').map(Number)
   const today = new Date()

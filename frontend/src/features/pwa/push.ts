@@ -61,7 +61,6 @@ export async function enablePush(): Promise<PushState> {
   return 'on'
 }
 
-/** Stops pushes to this device for everyone. */
 export async function disablePush(): Promise<PushState> {
   const sub = await currentSubscription()
   if (sub) {

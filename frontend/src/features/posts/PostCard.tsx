@@ -24,7 +24,6 @@ export function PostCard({
   onDeleted,
 }: {
   post: Post
-  /** Detail view: full text and feedback open by default. */
   expanded?: boolean
   onDeleted?: () => void
 }) {
@@ -95,7 +94,6 @@ export function PostCard({
 
   return (
     <Card className="animate-fade-in">
-      {/* Author */}
       <header className="flex items-center gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
         <Link to={`/u/${post.author.id}`} className="shrink-0">
           <Avatar name={post.author.displayName} src={post.author.avatarUrl} />
@@ -150,7 +148,6 @@ export function PostCard({
         </Menu>
       </header>
 
-      {/* Content */}
       <div className="px-4 pt-3 sm:px-5">
         <h2 className="text-lg leading-snug font-bold">
           {expanded ? post.title : (
@@ -231,7 +228,6 @@ export function PostCard({
         </div>
       )}
 
-      {/* Stats + actions */}
       <div className="mt-3 flex items-center justify-between px-4 text-sm text-slate-500 sm:px-5">
         <ReactionSummary post={post} />
         {post.feedbackCount > 0 && (

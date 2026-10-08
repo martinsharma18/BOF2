@@ -10,7 +10,6 @@ public class AppUser : IdentityUser<Guid>
     public string? Bio { get; set; }
     public string? AvatarUrl { get; set; }
 
-    /// <summary>Set by an admin to block the account from logging in.</summary>
     public bool IsDisabled { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

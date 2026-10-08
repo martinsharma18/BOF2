@@ -72,11 +72,9 @@ public class SendInvitationValidator : AbstractValidator<SendInvitationRequest>
 
 public interface IInvitationService
 {
-    /// <summary>How many individuals match the filters right now.</summary>
     Task<AudienceCountDto> CountAudienceAsync(InvitationAudience audience, CancellationToken ct = default);
 
     Task<InvitationDto> SendAsync(SendInvitationRequest request, CancellationToken ct = default);
 
-    /// <summary>The signed-in company's sent invitations, newest first.</summary>
     Task<IReadOnlyList<InvitationDto>> ListMineAsync(CancellationToken ct = default);
 }

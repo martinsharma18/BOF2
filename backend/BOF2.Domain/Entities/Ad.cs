@@ -2,7 +2,6 @@ using BOF2.Domain.Enums;
 
 namespace BOF2.Domain.Entities;
 
-/// <summary>An advertisement managed by the admin and shown in the advertising spaces.</summary>
 public class Ad
 {
     public Guid Id { get; set; } = Guid.NewGuid();

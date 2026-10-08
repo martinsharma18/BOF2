@@ -18,10 +18,8 @@ public record VacancyDto(
     int ApplicationCount = 0,
     int PendingApplicationCount = 0);
 
-/// <summary>The signed-in individual's own application to a vacancy.</summary>
 public record MyVacancyApplicationDto(Guid Id, VacancyApplicationStatus Status, DateTime CreatedAt);
 
-/// <summary>Admin view of one application: who applied, their CV and where it stands.</summary>
 public record VacancyApplicationDto(
     Guid Id,
     Guid VacancyId,
@@ -54,7 +52,6 @@ public class VacancyApplyNoteValidator : AbstractValidator<VacancyApplyRequest>
     }
 }
 
-/// <summary>Apply to a vacancy: an optional note; the CV file travels with it.</summary>
 public record VacancyApplyRequest(string? Note);
 
 public record VacancyRequest(
@@ -81,7 +78,6 @@ public class VacancyValidator : AbstractValidator<VacancyRequest>
 /// <remarks>Creating (or first activating) a vacancy also sends it to every individual's inbox.</remarks>
 public interface IVacancyService
 {
-    /// <summary>Active vacancies whose deadline hasn't passed, newest first.</summary>
     Task<IReadOnlyList<VacancyDto>> GetOpenAsync(int count, CancellationToken ct = default);
 
     Task<IReadOnlyList<VacancyDto>> ListAllAsync(CancellationToken ct = default);
@@ -92,10 +88,8 @@ public interface IVacancyService
     /// <summary>Individual: apply to an open vacancy with a CV (photo or PDF). One application per vacancy.</summary>
     Task<MyVacancyApplicationDto> ApplyAsync(Guid vacancyId, VacancyApplyRequest request, FileUpload? cv, CancellationToken ct = default);
 
-    /// <summary>The signed-in user's application to this vacancy, or null.</summary>
     Task<MyVacancyApplicationDto?> GetMineAsync(Guid vacancyId, CancellationToken ct = default);
 
-    /// <summary>Admin: applications, newest first.</summary>
     Task<PagedResult<VacancyApplicationDto>> ListApplicationsAsync(VacancyApplicationQuery query, CancellationToken ct = default);
 
     /// <summary>Admin: accept or reject (or move back to pending). The applicant is notified.</summary>

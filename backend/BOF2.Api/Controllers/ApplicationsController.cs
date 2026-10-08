@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BOF2.Api.Controllers;
 
-/// <summary>Applications on company posts, their chat thread and payouts.</summary>
 [ApiController]
 [Route("api/applications")]
 [Authorize]
@@ -18,11 +17,9 @@ public class ApplicationsController(IApplicationService applications) : Controll
     public Task<PagedResult<ApplicationDto>> List([FromQuery] ApplicationQuery query, CancellationToken ct) =>
         applications.ListAsync(query, ct);
 
-    /// <summary>Counts per stage (New / Hired / Claimed / Paid / Declined).</summary>
     [HttpGet("summary")]
     public Task<ApplicationSummaryDto> Summary(Guid? postId, CancellationToken ct) => applications.SummaryAsync(postId, ct);
 
-    /// <summary>Company: its posts that have applications, with counts (the "Your posts" strip).</summary>
     [HttpGet("posts")]
     [Authorize(Roles = Roles.Company)]
     public Task<IReadOnlyList<ApplicationPostDto>> Posts(CancellationToken ct) => applications.ListPostsAsync(ct);
@@ -53,13 +50,11 @@ public class ApplicationsController(IApplicationService applications) : Controll
     public Task<ApplicationDto> Claim(Guid id, [FromForm] ClaimPaymentRequest request, IFormFile? proof, CancellationToken ct) =>
         proof.WithUploadAsync(upload => applications.ClaimAsync(id, request, upload, ct));
 
-    /// <summary>Company turns down the claim with a reason. The applicant can then claim again.</summary>
     [HttpPost("{id:guid}/claim/decline")]
     [Authorize(Roles = Roles.Company)]
     public Task<ApplicationDto> DeclineClaim(Guid id, DeclineClaimRequest request, CancellationToken ct) =>
         applications.DeclineClaimAsync(id, request, ct);
 
-    /// <summary>Company pays the claimed amount. One payment per job; the job closes.</summary>
     [HttpPost("{id:guid}/payments")]
     [Authorize(Roles = Roles.Company)]
     public Task<ApplicationDto> Pay(Guid id, PayApplicantRequest request, CancellationToken ct) =>

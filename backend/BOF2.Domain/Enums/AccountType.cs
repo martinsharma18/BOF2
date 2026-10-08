@@ -1,6 +1,5 @@
 namespace BOF2.Domain.Enums;
 
-/// <summary>The three kinds of users in the system.</summary>
 public enum AccountType
 {
     /// <summary>User A — a company that publishes requirement posts.</summary>

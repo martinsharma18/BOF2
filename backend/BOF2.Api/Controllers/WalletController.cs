@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BOF2.Api.Controllers;
 
-/// <summary>Individual earnings from companies and cash-out requests handled by the admin.</summary>
 [ApiController]
 [Route("api/wallet")]
 [Authorize(Roles = Roles.Individual)]

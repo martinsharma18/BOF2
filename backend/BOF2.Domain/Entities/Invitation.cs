@@ -16,7 +16,6 @@ public class Invitation
     public string Title { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
 
-    /// <summary>Optional post the invitation points to; tapping the notification opens it.</summary>
     public Guid? PostId { get; set; }
     public Post? Post { get; set; }
 

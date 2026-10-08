@@ -2,7 +2,6 @@ using BOF2.Domain.Enums;
 
 namespace BOF2.Domain.Entities;
 
-/// <summary>Extra details for User B (individual) accounts.</summary>
 public class IndividualProfile
 {
     public Guid UserId { get; set; }

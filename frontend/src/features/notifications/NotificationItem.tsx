@@ -5,7 +5,6 @@ import { timeAgo } from '@/lib/format'
 import type { AppNotification } from '@/lib/types'
 import { notificationMeta } from './meta'
 
-/** One notification: coloured type icon, category, title, short text, who it's from and when. */
 export function NotificationItem({ notification: n, onOpen, compact }: { notification: AppNotification; onOpen: () => void; compact?: boolean }) {
   const meta = notificationMeta[n.type]
   return (

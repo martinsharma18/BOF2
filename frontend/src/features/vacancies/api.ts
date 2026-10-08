@@ -26,7 +26,6 @@ export interface VacancyApplicationParams {
   page: number
 }
 
-/** Open vacancies for the side rail. */
 export function useOpenVacancies() {
   return useQuery({
     queryKey: keys.open,
@@ -61,7 +60,6 @@ export function useDeleteVacancy() {
   })
 }
 
-/** The signed-in user's application to this vacancy (null when they haven't applied). */
 export function useMyVacancyApplication(vacancyId: string, enabled = true) {
   return useQuery({
     queryKey: keys.mine(vacancyId),
@@ -73,7 +71,6 @@ export function useMyVacancyApplication(vacancyId: string, enabled = true) {
   })
 }
 
-/** Individual: apply with a CV (photo or PDF) and an optional note. */
 export function useApplyToVacancy(vacancyId: string) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -87,7 +84,6 @@ export function useApplyToVacancy(vacancyId: string) {
   })
 }
 
-/** Admin: applications to vacancies, newest first. */
 export function useVacancyApplications(params: VacancyApplicationParams) {
   return useQuery({
     queryKey: keys.applications(params),
@@ -96,7 +92,6 @@ export function useVacancyApplications(params: VacancyApplicationParams) {
   })
 }
 
-/** Admin: accept, reject, or move back to pending. The applicant is notified. */
 export function useSetVacancyApplicationStatus() {
   const queryClient = useQueryClient()
   return useMutation({

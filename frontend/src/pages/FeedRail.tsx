@@ -5,7 +5,6 @@ import { VacancyList } from '@/features/vacancies/VacancyList'
 import { currentYear } from '@/lib/format'
 import { APP_NAME } from '@/lib/brand'
 
-/** Right rail shown next to the feed and post pages on wide screens. */
 export function FeedRail() {
   const { user } = useAuth()
   if (!user) return null

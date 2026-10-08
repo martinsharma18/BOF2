@@ -7,7 +7,6 @@ const meta: Record<AccountType, { label: string; tone: 'brand' | 'green' | 'ambe
   Admin: { label: 'Super Admin', tone: 'amber' },
 }
 
-/** Small label saying whether someone is a Company, an Individual or the Super Admin. */
 export function AccountTypeBadge({ type, className }: { type: AccountType; className?: string }) {
   return (
     <Badge tone={meta[type].tone} className={className}>

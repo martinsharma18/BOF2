@@ -36,7 +36,6 @@ export function PwaBridge() {
   return null
 }
 
-/** Thin strip at the top while the phone has no connection. */
 export function OfflineBanner() {
   const online = useOnline()
   if (online) return null
@@ -157,7 +156,6 @@ function isIosBrowser() {
   return typeof navigator !== 'undefined' && /iphone|ipad|ipod/i.test(navigator.userAgent)
 }
 
-/** Settings card: turn phone notifications on or off for this device. */
 export function PushSettings() {
   const push = usePush()
   if (push.state === 'loading') return <p className="text-sm text-slate-400">Checking…</p>

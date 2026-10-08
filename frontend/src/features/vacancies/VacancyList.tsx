@@ -79,7 +79,6 @@ export function VacancyList({ className }: { className?: string }) {
   )
 }
 
-/** Renders the text, turning a web link into a clickable link. */
 function HowToApply({ text }: { text: string }) {
   const isLink = /^https?:\/\//i.test(text.trim())
   return isLink ? (

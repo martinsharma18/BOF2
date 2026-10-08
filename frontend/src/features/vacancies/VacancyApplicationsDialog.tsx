@@ -20,7 +20,6 @@ const statusBadge: Record<VacancyApplicationStatus, { label: string; tone: 'ambe
   Rejected: { label: 'Rejected', tone: 'red' },
 }
 
-/** Admin: everyone who applied to one vacancy, with their CV, to accept or reject. */
 export function VacancyApplicationsDialog({ vacancy, onClose }: { vacancy: Vacancy; onClose: () => void }) {
   const [status, setStatus] = useState<VacancyApplicationStatus>()
   const [page, setPage] = useState(1)

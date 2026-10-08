@@ -6,7 +6,6 @@ public class Notification
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
-    /// <summary>Who receives the notification.</summary>
     public Guid UserId { get; set; }
     public AppUser User { get; set; } = null!;
 

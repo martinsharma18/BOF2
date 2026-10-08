@@ -8,7 +8,6 @@ export function registerServiceWorker() {
   })
 }
 
-// ---- Install ("Add to Home Screen") -----------------------------------------------------------
 
 /** Chrome/Edge/Samsung fire this when the site can be installed; we keep it to show our own button. */
 interface BeforeInstallPromptEvent extends Event {
@@ -70,7 +69,6 @@ export function useInstall() {
   }
 }
 
-// ---- Online / offline -------------------------------------------------------------------------
 
 function subscribeOnline(l: () => void) {
   window.addEventListener('online', l)
@@ -83,7 +81,6 @@ function subscribeOnline(l: () => void) {
 
 export const useOnline = () => useSyncExternalStore(subscribeOnline, () => navigator.onLine)
 
-// ---- Small per-device flags ("don't show this again") ----------------------------------------
 
 export function readFlag(key: string) {
   try {

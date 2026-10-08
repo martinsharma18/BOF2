@@ -29,7 +29,6 @@ export function NotificationsPage() {
     if (n.link) navigate(n.link)
   }
 
-  // Group into Today / Yesterday / Earlier, keeping the newest-first order.
   const groups = items.reduce<{ label: string; items: AppNotification[] }[]>((acc, n) => {
     const label = dayGroup(n.createdAt)
     const last = acc[acc.length - 1]

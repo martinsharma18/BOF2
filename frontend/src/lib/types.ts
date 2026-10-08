@@ -1,7 +1,6 @@
 export type AccountType = 'Company' | 'Individual' | 'Admin'
 export type Gender = 'Male' | 'Female'
 export type PostType = 'Type1' | 'Type2'
-/** Sub-choice on Type 1 posts. */
 export type PostOption = 'A' | 'B'
 export type ReactionType = 'Like' | 'Love' | 'Haha' | 'Wow' | 'Sad'
 export type AdPlacement = 'Banner' | 'Sidebar'
@@ -70,7 +69,6 @@ export interface Post {
   myApplication: MyApplication | null
 }
 
-/** The signed-in individual's own application on a post. */
 export interface MyApplication {
   id: string
   status: ApplicationStatus
@@ -120,7 +118,6 @@ export interface Application {
   claimedAmount: number | null
   claimNote: string | null
   claimedAt: string | null
-  /** Optional proof sent with the claim: a photo or PDF of the finished work. */
   claimAttachmentUrl: string | null
   claimAttachmentName: string | null
   /** Why the company turned down the last claim. Cleared when the applicant claims again. */
@@ -150,7 +147,6 @@ export interface ChatSummary {
   unread: number
 }
 
-/** A company post that has applications, for the "Your posts" strip. */
 export interface ApplicationPost {
   postId: string
   title: string
@@ -307,7 +303,6 @@ export interface AdminUser {
   isDisabled: boolean
   createdAt: string
   postCount: number
-  /** Companies: photo of the registration certificate / PAN document. */
   registrationDocumentUrl: string | null
 }
 
@@ -359,14 +354,12 @@ export interface Vacancy {
 
 export type VacancyApplicationStatus = 'Pending' | 'Accepted' | 'Rejected'
 
-/** The signed-in individual's own application to a vacancy. */
 export interface MyVacancyApplication {
   id: string
   status: VacancyApplicationStatus
   createdAt: string
 }
 
-/** Admin view of one vacancy application. */
 export interface VacancyApplication {
   id: string
   vacancyId: string
@@ -376,7 +369,6 @@ export interface VacancyApplication {
   applicantEmail: string
   applicantPhone: string | null
   applicantAvatarUrl: string | null
-  /** The CV: a photo or a PDF. */
   cvUrl: string
   cvFileName: string
   note: string | null

@@ -31,7 +31,6 @@ export function useInbox(kind?: InboxItemKind) {
 
 type Pages = InfiniteData<PagedResult<InboxItem>>
 
-/** Applies a change to every cached inbox list (All / Invitations / Vacancies). */
 function useEditLists() {
   const queryClient = useQueryClient()
   return (edit: (items: InboxItem[]) => InboxItem[]) =>

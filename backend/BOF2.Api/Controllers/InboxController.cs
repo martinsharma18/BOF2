@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BOF2.Api.Controllers;
 
-/// <summary>Mail-style inbox: invitations from companies and vacancies from the super admin.</summary>
 [ApiController]
 [Route("api/inbox")]
 [Authorize]

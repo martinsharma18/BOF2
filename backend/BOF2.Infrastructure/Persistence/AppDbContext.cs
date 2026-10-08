@@ -241,7 +241,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(a => a.CvFileName).HasMaxLength(200).IsRequired();
             e.Property(a => a.Note).HasMaxLength(500);
             e.Property(a => a.Status).HasConversion<string>().HasMaxLength(20);
-            // One application per person per vacancy.
             e.HasIndex(a => new { a.VacancyId, a.ApplicantId }).IsUnique();
             e.HasIndex(a => new { a.Status, a.CreatedAt });
         });

@@ -20,7 +20,6 @@ function status(v: Vacancy): { label: string; tone: 'green' | 'slate' } {
   return { label: 'Open', tone: 'green' }
 }
 
-/** Super admin: post vacancies that everyone sees in the side rail. */
 export function AdminVacanciesPage() {
   useDocumentTitle('Vacancies · Admin')
   const vacancies = useAdminVacancies()

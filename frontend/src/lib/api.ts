@@ -47,7 +47,6 @@ api.interceptors.response.use(
   },
 )
 
-/** Extracts the RFC 7807 problem body from an API error, if any. */
 export function getProblem(error: unknown): ProblemDetails | null {
   if (error instanceof AxiosError && error.response?.data && typeof error.response.data === 'object') {
     return error.response.data as ProblemDetails

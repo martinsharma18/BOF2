@@ -17,7 +17,6 @@ const stats = [
   { value: '1 tap', label: 'To apply' },
 ]
 
-/** Faint grid lines over the brand gradient. */
 function GridPattern() {
   return (
     <div
@@ -41,13 +40,11 @@ export function AuthLayout({
 }: {
   title: string
   subtitle?: ReactNode
-  /** Wider form column for long forms such as registration. */
   wide?: boolean
   children: ReactNode
 }) {
   return (
     <div className="flex min-h-dvh bg-slate-50 lg:bg-white">
-      {/* Desktop brand panel */}
       <aside className="sticky top-0 hidden h-dvh w-[46%] max-w-2xl shrink-0 flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-700 via-brand-900 to-brand-950 p-12 text-white lg:flex xl:p-14">
         <GridPattern />
         <div aria-hidden className="absolute -top-40 -right-40 size-[28rem] rounded-full bg-brand-400/30 blur-3xl" />
@@ -98,7 +95,6 @@ export function AuthLayout({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Mobile hero header */}
         <header className="relative overflow-hidden bg-gradient-to-br from-brand-600 via-brand-800 to-brand-950 px-5 pt-6 pb-16 text-white lg:hidden">
           <GridPattern />
           <div aria-hidden className="absolute -top-24 -right-16 size-64 rounded-full bg-brand-400/30 blur-3xl" />

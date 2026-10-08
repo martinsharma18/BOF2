@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BOF2.Api.Infrastructure;
 
-/// <summary>Maps application exceptions to RFC 7807 problem responses.</summary>
 public class GlobalExceptionHandler(IProblemDetailsService problemDetails, ILogger<GlobalExceptionHandler> logger)
     : IExceptionHandler
 {

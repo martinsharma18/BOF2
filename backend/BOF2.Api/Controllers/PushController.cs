@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BOF2.Api.Controllers;
 
-/// <summary>Phone notifications (Web Push): link or unlink this device for the signed-in user.</summary>
 [ApiController]
 [Route("api/push")]
 [Authorize]

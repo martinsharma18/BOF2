@@ -65,7 +65,6 @@ public interface IWalletService
     Task<WalletDto> GetMineAsync(CancellationToken ct = default);
     Task<WithdrawalDto> RequestWithdrawalAsync(WithdrawRequest request, CancellationToken ct = default);
 
-    // Admin
     Task<PagedResult<WithdrawalDto>> ListWithdrawalsAsync(WithdrawalQuery query, CancellationToken ct = default);
     Task<WithdrawalDto> ProcessWithdrawalAsync(Guid id, ProcessWithdrawalRequest request, CancellationToken ct = default);
 }

@@ -178,7 +178,6 @@ public class AuthService(
                 : new Dictionary<string, string[]> { ["NewPassword"] = result.Errors.Select(e => e.Description).ToArray() });
         }
 
-        // Sign out every other device.
         var now = DateTime.UtcNow;
         await db.RefreshTokens.Where(t => t.UserId == userId && t.RevokedAt == null)
             .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedAt, now), ct);

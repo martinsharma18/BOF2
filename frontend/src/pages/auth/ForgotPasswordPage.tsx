@@ -35,7 +35,6 @@ const resetSchema = z
   .refine((v) => v.newPassword === v.confirmPassword, { path: ['confirmPassword'], message: 'Passwords do not match' })
 type ResetValues = z.infer<typeof resetSchema>
 
-/** Forgot password: (1) enter your email, (2) type the code we email you and choose a new password. */
 export function ForgotPasswordPage() {
   useDocumentTitle('Forgot password')
   const [sent, setSent] = useState<CodeSent | null>(null)
@@ -104,7 +103,6 @@ function ResetStep({ sent, onResent, onChangeEmail }: { sent: CodeSent; onResent
     formState: { errors, isSubmitting },
   } = useForm<ResetValues>({ resolver: zodResolver(resetSchema), defaultValues: { code: '', newPassword: '', confirmPassword: '' } })
 
-  // Countdown until another code can be requested.
   useEffect(() => {
     setWait(sent.resendAfterSeconds)
     const timer = setInterval(() => setWait((s) => (s > 0 ? s - 1 : 0)), 1000)

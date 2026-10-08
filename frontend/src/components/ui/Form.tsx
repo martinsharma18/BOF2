@@ -112,7 +112,6 @@ export function FieldError({ message }: { message?: string }) {
   )
 }
 
-/** A titled group of fields inside a form card. */
 export function FormSection({
   title,
   description,

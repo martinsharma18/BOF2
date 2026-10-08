@@ -126,7 +126,6 @@ const toneText: Record<Tone, string> = {
   slate: 'text-slate-600 [&_svg]:text-slate-400',
 }
 
-/** One plain sentence: where the job is and what happens next, worded for whoever is looking. */
 function NextStep({ application: a, isCompany }: { application: Application; isCompany: boolean }) {
   const stage = stageOf(a)
   const company = a.company.displayName
@@ -169,7 +168,6 @@ function NextStep({ application: a, isCompany }: { application: Application; isC
   )
 }
 
-/** The photo or PDF sent with the claim, opened in a new tab. */
 function ClaimProofLink({ application: a }: { application: Application }) {
   if (!a.claimAttachmentUrl) return null
   return (

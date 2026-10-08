@@ -29,7 +29,6 @@ export function useMyInvitations() {
   })
 }
 
-/** How many individuals the filters reach. */
 export function useAudienceCount(audience: InvitationAudience, enabled: boolean) {
   return useQuery({
     queryKey: keys.audience(audience),

@@ -16,7 +16,6 @@ public record AdDto(
     DateTime? EndsAt,
     DateTime CreatedAt);
 
-/// <summary>Admin ad form (multipart/form-data; image passed separately).</summary>
 public class AdFormRequest
 {
     public string Title { get; set; } = string.Empty;
@@ -44,7 +43,6 @@ public class AdFormValidator : AbstractValidator<AdFormRequest>
 
 public interface IAdService
 {
-    /// <summary>Currently running ads for a placement, in random order.</summary>
     Task<IReadOnlyList<AdDto>> GetActiveAsync(AdPlacement placement, int count, CancellationToken ct = default);
 
     Task<IReadOnlyList<AdDto>> ListAllAsync(CancellationToken ct = default);

@@ -18,7 +18,6 @@ import { APP_NAME } from '@/lib/brand'
 interface NavItem {
   to: string
   label: string
-  /** Shorter label for the mobile bottom bar. */
   short?: string
   icon: ReactNode
   end?: boolean
@@ -229,7 +228,6 @@ export function AppShell() {
         </main>
       </div>
 
-      {/* Mobile bottom navigation */}
       <nav
         aria-label="Main"
         className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
@@ -372,7 +370,6 @@ function PendingApplicantsCard() {
   )
 }
 
-/** Two-column page body with a right rail (ads, tips) on large screens. */
 export function WithRail({ children, rail }: { children: ReactNode; rail: ReactNode }) {
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">

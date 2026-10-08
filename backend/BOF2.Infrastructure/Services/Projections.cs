@@ -15,7 +15,6 @@ internal static class Projections
         u.CompanyProfile != null ? u.CompanyProfile.CompanyName : null,
         u.AvatarUrl);
 
-    /// <summary>Loads author cards for a set of user ids in one query.</summary>
     public static async Task<Dictionary<Guid, AuthorDto>> LoadAuthorsAsync(
         this AppDbContext db, IEnumerable<Guid> userIds, CancellationToken ct)
     {

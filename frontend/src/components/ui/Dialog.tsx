@@ -57,7 +57,6 @@ export function Dialog({
     >
       {open && (
         <div className={cn('flex max-h-[92dvh] flex-col sm:max-h-[85dvh]', tall && 'max-sm:h-[92dvh]')}>
-          {/* Grab handle: tells phone users this is a sheet. */}
           <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-slate-200 sm:hidden" aria-hidden />
           <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-4 py-3 sm:px-6 sm:py-4">
             <div className="min-w-0">

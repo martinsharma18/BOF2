@@ -36,9 +36,7 @@ export function LocationFields({
   localLevel?: UseFormRegisterReturn
   selectedProvince: string | undefined
   selectedDistrict?: string
-  /** Called when the province changes so the form can clear the district (and local level). */
   onProvinceChanged: () => void
-  /** Called when the district changes so the form can clear the local level. */
   onDistrictChanged?: () => void
   errors?: { province?: string; district?: string; localLevel?: string }
   disabled?: boolean

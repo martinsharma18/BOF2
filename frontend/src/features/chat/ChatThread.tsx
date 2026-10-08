@@ -53,7 +53,6 @@ export function ChatThread({ applicationId, onBack }: { applicationId: string; o
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-white">
-      {/* Who */}
       <header className="flex items-center gap-2 border-b border-slate-100 px-2 py-2 sm:px-4">
         {onBack && (
           <Button variant="ghost" size="icon" className="size-10 lg:hidden" onClick={onBack} aria-label="Back to messages">
@@ -93,7 +92,6 @@ export function ChatThread({ applicationId, onBack }: { applicationId: string; o
       {/* Where the job stands + the next step, so nobody has to leave the chat to hire, claim or pay. */}
       {a && <JobBar application={a} isCompany={isCompany} />}
 
-      {/* Messages */}
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-slate-50/60 px-3 py-4 sm:px-5">
         {a && (
           <Bubble mine={!isCompany} name={a.applicant.fullName} avatar={a.applicant.avatarUrl} time={a.createdAt} label="Application">

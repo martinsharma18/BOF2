@@ -33,7 +33,6 @@ public static class ValidationRules
             .WithMessage("District does not belong to the selected province.");
     }
 
-    /// <summary>Province / District as above, plus a Local level that must belong to the district.</summary>
     public static void ValidLocation<T>(
         this AbstractValidator<T> validator,
         System.Linq.Expressions.Expression<Func<T, string?>> province,

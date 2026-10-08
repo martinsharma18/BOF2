@@ -8,7 +8,6 @@ namespace BOF2.Api.Controllers;
 [Route("api/ads")]
 public class AdsController(IAdService ads) : ControllerBase
 {
-    /// <summary>Currently running ads for an advertising space.</summary>
     [HttpGet]
     [ResponseCache(Duration = 60)]
     public Task<IReadOnlyList<AdDto>> GetActive(AdPlacement placement, int count = 3, CancellationToken ct = default) =>

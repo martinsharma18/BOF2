@@ -6,7 +6,6 @@ import type { Post, ReactionType } from '@/lib/types'
 import { useReact } from './api'
 import { reactionMeta, reactions } from './labels'
 
-/** Summary of reactions: top emojis + total. */
 export function ReactionSummary({ post }: { post: Post }) {
   const entries = (Object.entries(post.reactionCounts) as [ReactionType, number][])
     .filter(([, n]) => n > 0)

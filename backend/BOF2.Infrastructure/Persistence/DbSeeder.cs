@@ -33,7 +33,6 @@ public static class DbSeeder
         logger.LogInformation("Loaded {Count} local levels", expected);
     }
 
-    /// <summary>Applies pending migrations, creates the roles and the first admin (User C) account.</summary>
     public static async Task SeedAsync(IServiceProvider services)
     {
         using var scope = services.CreateScope();

@@ -29,7 +29,6 @@ public class EmailOptions
     /// <summary>Gmail "App password" (16 letters), not the normal Gmail password.</summary>
     public string SmtpPassword { get; set; } = string.Empty;
 
-    /// <summary>Name shown as the sender.</summary>
     public string FromName { get; set; } = "BOF2";
 }
 
@@ -112,7 +111,6 @@ internal static class EmailHtml
         $"<div style=\"font-family:sans-serif;font-size:15px;line-height:1.5\">{WebUtility.HtmlEncode(text).Replace("\n", "<br>")}</div>";
 }
 
-/// <summary>Development stand-in: writes the email to the log instead of sending it.</summary>
 public class LogEmailSender(ILogger<LogEmailSender> logger) : IEmailSender
 {
     public bool IsLive => false;
