@@ -11,7 +11,7 @@ import type { Application } from '@/lib/types'
 import { useDeclineClaim, usePayApplicant, useSetApplicationStatus } from './api'
 import { ClaimPaymentDialog } from './ClaimPaymentDialog'
 import { JobProgress } from './JobProgress'
-import { stageMeta, stageOf, type Tone } from './labels'
+import { COMPANY_PAYS_CLAIMS, stageMeta, stageOf, type Tone } from './labels'
 
 /**
  * One application = one job = one payment: Applied → Hired → Claimed → Paid.
@@ -149,7 +149,17 @@ function NextStep({ application: a, isCompany }: { application: Application; isC
       : { tone: 'green', icon: <BriefcaseBusiness />, text: 'You’re hired! Claim payment when the work is done.' }
   else if (stage === 'Claimed')
     step = isCompany
-      ? { tone: 'amber', icon: <Hand />, text: <>Claimed {formatMoney(a.claimedAmount!)}{a.claimNote && <> · “{a.claimNote}”</>}. Pay or decline.<ClaimProofLink application={a} /></> }
+      ? {
+          tone: 'amber',
+          icon: <Hand />,
+          text: (
+            <>
+              Claimed {formatMoney(a.claimedAmount!)}
+              {a.claimNote && <> · “{a.claimNote}”</>}. {COMPANY_PAYS_CLAIMS ? 'Pay or decline.' : 'The admin will check it and pay.'}
+              <ClaimProofLink application={a} />
+            </>
+          ),
+        }
       : { tone: 'amber', icon: <Hand />, text: <>You claimed {formatMoney(a.claimedAmount!)}. Waiting for payment.<ClaimProofLink application={a} /></> }
   else if (stage === 'Paid')
     step = isCompany
@@ -168,7 +178,7 @@ function NextStep({ application: a, isCompany }: { application: Application; isC
   )
 }
 
-function ClaimProofLink({ application: a }: { application: Application }) {
+export function ClaimProofLink({ application: a }: { application: Application }) {
   if (!a.claimAttachmentUrl) return null
   return (
     <a
@@ -254,6 +264,7 @@ export function JobActions({ application: a }: { application: Application }) {
           Cancel hire
         </Button>
       )}
+      {/* Company pays its applicants: off while the admin pays claims (COMPANY_PAYS_CLAIMS). Uncomment to bring it back.
       {isCompany && stage === 'Claimed' && (
         <>
           <Button variant="ghost" size="sm" icon={<X className="size-4" />} onClick={() => setDialog('decline-claim')}>
@@ -264,6 +275,7 @@ export function JobActions({ application: a }: { application: Application }) {
           </Button>
         </>
       )}
+      */}
 
       {!isCompany && stage === 'Hired' && payments && (
         <Button variant="accent" size="sm" icon={<Hand className="size-4" />} onClick={() => setDialog('claim')}>
@@ -308,7 +320,7 @@ export function JobActions({ application: a }: { application: Application }) {
 }
 
 /** Pays exactly the claimed amount. To pay something else, decline the claim and say why. */
-function PayDialog({ application, onClose }: { application: Application; onClose: () => void }) {
+export function PayDialog({ application, onClose }: { application: Application; onClose: () => void }) {
   const pay = usePayApplicant()
   const [note, setNote] = useState('')
   const [error, setError] = useState<string>()
@@ -357,7 +369,7 @@ function PayDialog({ application, onClose }: { application: Application; onClose
   )
 }
 
-function DeclineClaimDialog({ application, onClose }: { application: Application; onClose: () => void }) {
+export function DeclineClaimDialog({ application, onClose }: { application: Application; onClose: () => void }) {
   const decline = useDeclineClaim()
   const [reason, setReason] = useState('')
   const [error, setError] = useState<string>()

@@ -5,7 +5,7 @@ import { Alert, Button, ButtonLink, Card, EmptyState, PageHeader, Select, Skelet
 import { WithRail } from '@/components/layout/AppShell'
 import { useApplication, useApplicationPosts, useApplications, useApplicationSummary, type ApplicationSummary } from '@/features/applications/api'
 import { ApplicationCard } from '@/features/applications/ApplicationCard'
-import { stageTabs, type ApplicationStage } from '@/features/applications/labels'
+import { COMPANY_PAYS_CLAIMS, stageTabs, type ApplicationStage } from '@/features/applications/labels'
 import { useAuth } from '@/features/auth/AuthContext'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { getErrorMessage } from '@/lib/api'
@@ -22,7 +22,8 @@ const countKey: Record<ApplicationStage, keyof ApplicationSummary> = {
 
 /** Tabs where the person looking has something to do; their counts are shown in orange. */
 const actionStages: Record<'company' | 'individual', ApplicationStage[]> = {
-  company: ['New', 'Claimed'],
+  // company: ['New', 'Claimed'],
+  company: COMPANY_PAYS_CLAIMS ? ['New', 'Claimed'] : ['New'],
   individual: ['Hired'],
 }
 
@@ -56,7 +57,13 @@ export function ApplicationsPage() {
     <WithRail rail={<FeedRail />}>
       <PageHeader
         title={title}
-        description={canPost ? 'Hire people who applied, then pay them when they claim.' : 'Your jobs and what to do next.'}
+        description={
+          canPost
+            ? COMPANY_PAYS_CLAIMS
+              ? 'Hire people who applied, then pay them when they claim.'
+              : 'Hire people who applied. When they claim payment, the admin pays them.'
+            : 'Your jobs and what to do next.'
+        }
       />
 
       {focusId && focused.data && (

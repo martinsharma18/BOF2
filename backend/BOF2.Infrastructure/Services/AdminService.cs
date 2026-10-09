@@ -35,7 +35,10 @@ public class AdminService(AppDbContext db, ICurrentUser currentUser) : IAdminSer
             PendingWithdrawalAmount: await db.Withdrawals.Where(w => w.Status == WithdrawalStatus.Pending)
                 .SumAsync(w => (decimal?)w.Amount, ct) ?? 0,
             TotalPaidOut: await db.Withdrawals.Where(w => w.Status == WithdrawalStatus.Paid)
-                .SumAsync(w => (decimal?)w.Amount, ct) ?? 0);
+                .SumAsync(w => (decimal?)w.Amount, ct) ?? 0,
+            PendingClaims: await db.Applications.CountAsync(a => a.Status == ApplicationStatus.Accepted && a.ClaimedAmount != null, ct),
+            PendingClaimAmount: await db.Applications.Where(a => a.Status == ApplicationStatus.Accepted && a.ClaimedAmount != null)
+                .SumAsync(a => a.ClaimedAmount, ct) ?? 0);
     }
 
     public async Task<PagedResult<AdminUserDto>> GetUsersAsync(AdminUserQuery query, CancellationToken ct = default)

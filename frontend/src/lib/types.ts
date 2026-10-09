@@ -291,6 +291,9 @@ export interface AdminStats {
   pendingWithdrawals: number
   pendingWithdrawalAmount: number
   totalPaidOut: number
+  /** Payment claims waiting for the admin to pay or decline. */
+  pendingClaims: number
+  pendingClaimAmount: number
 }
 
 export interface AdminUser {

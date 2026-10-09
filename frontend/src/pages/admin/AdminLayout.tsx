@@ -1,20 +1,23 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Banknote, BarChart3, Briefcase, Megaphone, Users } from 'lucide-react'
+import { Banknote, BarChart3, Briefcase, HandCoins, Megaphone, Users } from 'lucide-react'
 import { PageHeader } from '@/components/ui'
+import { useAdminStats } from '@/features/admin/api'
 import { cn } from '@/lib/cn'
 
 const tabs = [
   { to: '/admin', label: 'Overview', icon: <BarChart3 className="size-4" />, end: true },
   { to: '/admin/users', label: 'Users', icon: <Users className="size-4" /> },
+  { to: '/admin/claims', label: 'Payment claims', icon: <HandCoins className="size-4" />, badge: 'claims' as const },
   { to: '/admin/withdrawals', label: 'Withdrawals', icon: <Banknote className="size-4" /> },
   { to: '/admin/vacancies', label: 'Vacancies', icon: <Briefcase className="size-4" /> },
   { to: '/admin/ads', label: 'Ads', icon: <Megaphone className="size-4" /> },
 ]
 
 export function AdminLayout() {
+  const pendingClaims = useAdminStats().data?.pendingClaims ?? 0
   return (
     <div>
-      <PageHeader title="Super Admin" description="Verify cash withdrawals, post vacancies, monitor activity, manage users and run the advertising spaces." />
+      <PageHeader title="Super Admin" description="Pay job claims, verify cash withdrawals, post vacancies, monitor activity, manage users and run the advertising spaces." />
       <nav aria-label="Admin sections" className="scrollbar-none mb-6 flex gap-1 overflow-x-auto rounded-xl bg-slate-200/60 p-1">
         {tabs.map((t) => (
           <NavLink
@@ -30,6 +33,9 @@ export function AdminLayout() {
           >
             {t.icon}
             {t.label}
+            {'badge' in t && pendingClaims > 0 && (
+              <span className="rounded-full bg-accent-500 px-1.5 text-xs font-bold text-white tabular-nums">{pendingClaims}</span>
+            )}
           </NavLink>
         ))}
       </nav>

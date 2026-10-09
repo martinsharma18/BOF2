@@ -49,6 +49,7 @@ const AdminOverviewPage = page(() => import('@/pages/admin/AdminOverviewPage'), 
 const AdminUsersPage = page(() => import('@/pages/admin/AdminUsersPage'), 'AdminUsersPage')
 const AdminAdsPage = page(() => import('@/pages/admin/AdminAdsPage'), 'AdminAdsPage')
 const AdminWithdrawalsPage = page(() => import('@/pages/admin/AdminWithdrawalsPage'), 'AdminWithdrawalsPage')
+const AdminClaimsPage = page(() => import('@/pages/admin/AdminClaimsPage'), 'AdminClaimsPage')
 const AdminVacanciesPage = page(() => import('@/pages/admin/AdminVacanciesPage'), 'AdminVacanciesPage')
 const NotFoundPage = page(() => import('@/pages/NotFoundPage'), 'NotFoundPage')
 
@@ -104,6 +105,7 @@ export function AppRoutes() {
               <Route path="admin" element={<AdminLayout />}>
                 <Route index element={<AdminOverviewPage />} />
                 <Route path="users" element={<AdminUsersPage />} />
+                <Route path="claims" element={<AdminClaimsPage />} />
                 <Route path="withdrawals" element={<AdminWithdrawalsPage />} />
                 <Route path="vacancies" element={<AdminVacanciesPage />} />
                 <Route path="ads" element={<AdminAdsPage />} />

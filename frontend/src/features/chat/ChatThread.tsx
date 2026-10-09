@@ -4,7 +4,7 @@ import { ArrowLeft, BriefcaseBusiness, ClipboardList, Send } from 'lucide-react'
 import { Avatar, Badge, Button, Skeleton, Spinner, Textarea, toast } from '@/components/ui'
 import { useApplication, useApplicationMessages, useSendMessage } from '@/features/applications/api'
 import { JobActions } from '@/features/applications/ApplicationCard'
-import { stageMeta, stageOf, type ApplicationStage } from '@/features/applications/labels'
+import { COMPANY_PAYS_CLAIMS, stageMeta, stageOf, type ApplicationStage } from '@/features/applications/labels'
 import { useAuth } from '@/features/auth/AuthContext'
 import { postTypeHasPayments } from '@/features/posts/labels'
 import { getErrorMessage } from '@/lib/api'
@@ -137,7 +137,7 @@ const hints: Record<ApplicationStage, { company: (a: Application) => string; ind
           : 'You’re hired. Claim payment when the work is done.',
   },
   Claimed: {
-    company: (a) => `Claimed ${formatMoney(a.claimedAmount!)}. Pay it or decline the claim.`,
+    company: (a) => `Claimed ${formatMoney(a.claimedAmount!)}. ${COMPANY_PAYS_CLAIMS ? 'Pay it or decline the claim.' : 'The admin will check it and pay.'}`,
     individual: (a) => `You claimed ${formatMoney(a.claimedAmount!)}. Waiting for payment.`,
   },
   Paid: { company: (a) => `Paid ${formatMoney(a.paidAmount)}. Job closed.`, individual: (a) => `${formatMoney(a.paidAmount)} is in your wallet.` },

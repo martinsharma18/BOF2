@@ -51,12 +51,12 @@ public class ApplicationsController(IApplicationService applications) : Controll
         proof.WithUploadAsync(upload => applications.ClaimAsync(id, request, upload, ct));
 
     [HttpPost("{id:guid}/claim/decline")]
-    [Authorize(Roles = Roles.Company)]
+    [Authorize(Roles = Roles.Company + "," + Roles.Admin)]
     public Task<ApplicationDto> DeclineClaim(Guid id, DeclineClaimRequest request, CancellationToken ct) =>
         applications.DeclineClaimAsync(id, request, ct);
 
     [HttpPost("{id:guid}/payments")]
-    [Authorize(Roles = Roles.Company)]
+    [Authorize(Roles = Roles.Company + "," + Roles.Admin)]
     public Task<ApplicationDto> Pay(Guid id, PayApplicantRequest request, CancellationToken ct) =>
         applications.PayAsync(id, request, ct);
 }

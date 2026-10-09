@@ -8,6 +8,7 @@ import { useChatUnreadCount } from '@/features/chat/api'
 import { NotificationBell, UnreadBadge } from '@/features/notifications/NotificationBell'
 import { useInboxUnreadCount } from '@/features/inbox/api'
 import { useUnreadCount } from '@/features/notifications/api'
+import { COMPANY_PAYS_CLAIMS } from '@/features/applications/labels'
 import { postTypes } from '@/features/posts/labels'
 import { InstallBanner, InstallMenuItem, OfflineBanner } from '@/features/pwa/PwaUi'
 import { WalletCard } from '@/features/wallet/WalletCard'
@@ -192,7 +193,11 @@ export function AppShell() {
       </header>
 
       <div className="mx-auto flex max-w-7xl gap-8 px-4 py-6 sm:px-6">
-        <nav aria-label="Main" className="sticky top-22 hidden h-fit w-56 shrink-0 space-y-1 lg:block">
+        {/* Scrolls on its own when the menu and cards are taller than the screen; padding keeps focus rings and shadows unclipped. */}
+        <nav
+          aria-label="Main"
+          className="sticky top-22 -mx-1.5 hidden max-h-[calc(100dvh-6.5rem)] w-59 shrink-0 space-y-1 overflow-y-auto overscroll-contain px-1.5 pb-4 [scrollbar-width:thin] lg:block"
+        >
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -352,7 +357,8 @@ function PendingApplicantsCard() {
 
   const tiles = [
     { count: pending, label: 'to review' },
-    { count: hired, label: `${paidType?.label ?? ''} hired, to pay` },
+    // { count: hired, label: `${paidType?.label ?? ''} hired, to pay` },
+    { count: hired, label: `${paidType?.label ?? ''} hired${COMPANY_PAYS_CLAIMS ? ', to pay' : ''}` },
     { count: unpaidApplied, label: `${unpaidType?.label ?? ''} applied` },
   ]
   return (

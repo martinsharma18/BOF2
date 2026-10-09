@@ -2,6 +2,7 @@ using System.Data;
 using System.Linq.Expressions;
 using BOF2.Application.Applications;
 using BOF2.Application.Common;
+using BOF2.Domain;
 using BOF2.Domain.Entities;
 using BOF2.Domain.Enums;
 using BOF2.Infrastructure.Persistence;
@@ -394,11 +395,29 @@ public class ApplicationService(
         }
 
         var name = await db.Users.Where(u => u.Id == userId).Select(u => u.FullName).FirstAsync(ct);
-        db.Notify(application.Post.AuthorId, NotificationType.PaymentClaimed,
-            $"{name} claimed Rs. {amount:N0} for \"{application.Post.Title}\"",
-            note ?? "Check the work, then pay or decline the claim from Applicants.",
-            Link(id),
-            actorId: userId);
+        if (PaymentRules.CompanyPaysClaims)
+        {
+            db.Notify(application.Post.AuthorId, NotificationType.PaymentClaimed,
+                $"{name} claimed Rs. {amount:N0} for \"{application.Post.Title}\"",
+                note ?? "Check the work, then pay or decline the claim from Applicants.",
+                Link(id),
+                actorId: userId);
+        }
+        else
+        {
+            db.Notify(application.Post.AuthorId, NotificationType.PaymentClaimed,
+                $"{name} claimed Rs. {amount:N0} for \"{application.Post.Title}\"",
+                "The admin will check it and pay them.",
+                Link(id),
+                actorId: userId);
+            var adminIds = await db.Users.Where(u => u.AccountType == AccountType.Admin && !u.IsDisabled).Select(u => u.Id).ToListAsync(ct);
+            foreach (var adminId in adminIds)
+                db.Notify(adminId, NotificationType.PaymentClaimed,
+                    $"{name} claimed Rs. {amount:N0} for \"{application.Post.Title}\"",
+                    note ?? "Check the proof, then pay or decline the claim.",
+                    "/admin/claims",
+                    actorId: userId);
+        }
 
         await db.SaveChangesAsync(ct);
         return await GetAsync(id, ct);
@@ -407,7 +426,7 @@ public class ApplicationService(
     public async Task<ApplicationDto> DeclineClaimAsync(Guid id, DeclineClaimRequest request, CancellationToken ct = default)
     {
         await declineClaimValidator.ValidateAndThrowAsync(request, ct);
-        var application = await LoadAsCompanyAsync(id, ct);
+        var application = await LoadAsPayerAsync(id, ct);
         if (application.Status != ApplicationStatus.Accepted || application.ClaimedAmount is null)
             throw new FieldErrorsException(new Dictionary<string, string[]> { ["Reason"] = ["There is no claim waiting on this job."] });
 
@@ -421,12 +440,12 @@ public class ApplicationService(
         application.ClaimDeclineReason = request.Reason.Trim();
         application.UpdatedAt = DateTime.UtcNow;
 
-        var company = await CompanyNameAsync(application.Post.AuthorId, ct);
+        var decidedBy = currentUser.IsAdmin ? "The admin" : await CompanyNameAsync(application.Post.AuthorId, ct);
         db.Notify(application.ApplicantId, NotificationType.ClaimDeclined,
-            $"{company} declined your claim of Rs. {claimed:N0}",
+            $"{decidedBy} declined your claim of Rs. {claimed:N0}",
             $"{application.ClaimDeclineReason} You can fix it and claim again.",
             Link(id),
-            actorId: application.Post.AuthorId);
+            actorId: currentUser.RequireUserId());
 
         await db.SaveChangesAsync(ct);
         await fileStorage.DeleteAsync(oldProof, ct);
@@ -436,7 +455,7 @@ public class ApplicationService(
     public async Task<ApplicationDto> PayAsync(Guid id, PayApplicantRequest request, CancellationToken ct = default)
     {
         await payValidator.ValidateAndThrowAsync(request, ct);
-        var application = await LoadAsCompanyAsync(id, ct);
+        var application = await LoadAsPayerAsync(id, ct);
 
         string? error = null;
         if (!application.Post.Type.UsesPayments())
@@ -477,10 +496,11 @@ public class ApplicationService(
                 Note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim(),
             });
 
+            // The payment stays on the company's job; the admin only settles it.
             var company = await CompanyNameAsync(companyId, ct);
             db.Notify(application.ApplicantId, NotificationType.PaymentReceived,
-                $"{company} paid you Rs. {amount:N0}", $"For \"{application.Post.Title}\". It's now in your wallet.", "/wallet",
-                actorId: companyId);
+                $"You were paid Rs. {amount:N0}", $"From {company} for \"{application.Post.Title}\". It's now in your wallet.", "/wallet",
+                actorId: currentUser.RequireUserId());
 
             await db.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
@@ -495,6 +515,17 @@ public class ApplicationService(
         return currentUser.IsAdmin
             ? applications
             : applications.Where(a => a.ApplicantId == userId || a.Post.AuthorId == userId);
+    }
+
+    /// <summary>Who may pay or decline a claim: admins, and the posting company only when <see cref="PaymentRules.CompanyPaysClaims"/>.</summary>
+    private async Task<PostApplication> LoadAsPayerAsync(Guid id, CancellationToken ct)
+    {
+        if (currentUser.IsAdmin)
+            return await db.Applications.Include(a => a.Post).FirstOrDefaultAsync(a => a.Id == id, ct)
+                   ?? throw new NotFoundException("Application not found.");
+        if (!PaymentRules.CompanyPaysClaims)
+            throw new ForbiddenException("Payment claims are paid by the admin.");
+        return await LoadAsCompanyAsync(id, ct);
     }
 
     private async Task<PostApplication> LoadAsCompanyAsync(Guid id, CancellationToken ct)

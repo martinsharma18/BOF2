@@ -2,6 +2,12 @@ import type { Application, ApplicationStatus, WithdrawalStatus } from '@/lib/typ
 
 export type Tone = 'brand' | 'slate' | 'green' | 'amber' | 'red'
 
+/**
+ * Who settles payment claims. False (now): the admin pays or declines from the admin dashboard.
+ * True: the company pays its own applicants again. Must match PaymentRules.CompanyPaysClaims on the server.
+ */
+export const COMPANY_PAYS_CLAIMS = false
+
 /** Where a job really is. "Hired" splits into Hired (working) and Claimed (waiting to be paid). */
 export type ApplicationStage = 'New' | 'Hired' | 'Claimed' | 'Paid' | 'Declined'
 
@@ -30,7 +36,8 @@ export const stageTabs: { stage?: ApplicationStage; company: string; individual:
   { company: 'All', individual: 'All' },
   { stage: 'New', company: 'New', individual: 'Applied' },
   { stage: 'Hired', company: 'Working', individual: 'Hired' },
-  { stage: 'Claimed', company: 'To pay', individual: 'Claimed' },
+  // { stage: 'Claimed', company: 'To pay', individual: 'Claimed' },
+  { stage: 'Claimed', company: COMPANY_PAYS_CLAIMS ? 'To pay' : 'Claimed', individual: 'Claimed' },
   { stage: 'Paid', company: 'Paid', individual: 'Paid' },
   { stage: 'Declined', company: 'Declined', individual: 'Not selected' },
 ]

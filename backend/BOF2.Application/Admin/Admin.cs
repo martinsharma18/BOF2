@@ -16,7 +16,9 @@ public record AdminStatsDto(
     int TotalApplications,
     int PendingWithdrawals,
     decimal PendingWithdrawalAmount,
-    decimal TotalPaidOut);
+    decimal TotalPaidOut,
+    int PendingClaims,
+    decimal PendingClaimAmount);
 
 public record AdminUserDto(
     Guid Id,
