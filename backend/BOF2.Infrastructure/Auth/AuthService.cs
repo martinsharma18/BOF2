@@ -5,6 +5,7 @@ using BOF2.Domain;
 using BOF2.Domain.Entities;
 using BOF2.Domain.Enums;
 using BOF2.Infrastructure.Persistence;
+using BOF2.Infrastructure.Services;
 using System.Security.Cryptography;
 using System.Text;
 using FluentValidation;
@@ -84,6 +85,7 @@ public class AuthService(
     public async Task<AuthResponse> RegisterIndividualAsync(RegisterIndividualRequest request, CancellationToken ct = default)
     {
         await individualValidator.ValidateAndThrowAsync(request, ct);
+        await EnsureSocialLinkUnusedAsync(request.SocialMediaLink!, ct);
 
         var user = new AppUser
         {
@@ -292,6 +294,21 @@ public class AuthService(
         if (at <= 0) return address;
         var shown = Math.Min(2, at);
         return address[..shown] + new string('•', Math.Max(at - shown, 2)) + address[at..];
+    }
+
+    /// <summary>One account per social media profile: the same link (ignoring www., http/https, case, trailing slash) can't register twice.</summary>
+    private async Task EnsureSocialLinkUnusedAsync(string link, CancellationToken ct)
+    {
+        var key = SocialLinks.Key(link);
+        var candidates = await db.IndividualProfiles.AsNoTracking()
+            .Where(p => p.SocialMediaLink != null && EF.Functions.ILike(p.SocialMediaLink, Projections.ToLikePattern(key)))
+            .Select(p => p.SocialMediaLink!)
+            .ToListAsync(ct);
+        if (candidates.Any(c => SocialLinks.Key(c) == key))
+            throw new FieldErrorsException(new Dictionary<string, string[]>
+            {
+                ["SocialMediaLink"] = ["This social media link is already used by another account."],
+            });
     }
 
     private static FieldErrorsException EmailError(string message) =>

@@ -11,7 +11,7 @@ import { cn } from '@/lib/cn'
 import { applyServerErrors } from '@/lib/formErrors'
 import type { Post } from '@/lib/types'
 import { useSavePost } from './api'
-import { postOptions, postTypes } from './labels'
+import { defaultPostOption, postOptions, postTypes } from './labels'
 
 const genderOptions = [
   { value: 'Male', label: 'Male' },
@@ -73,7 +73,17 @@ const fieldNames: (keyof Values)[] = [
 
 function toDefaults(post?: Post): Partial<Values> {
   if (!post) {
-    return { contactNumber: '', witnessContactNumber: '', isFromAnywhere: false, province: '', district: '', localLevel: '', title: '', requirement: '' }
+    return {
+      option: defaultPostOption,
+      contactNumber: '',
+      witnessContactNumber: '',
+      isFromAnywhere: false,
+      province: '',
+      district: '',
+      localLevel: '',
+      title: '',
+      requirement: '',
+    }
   }
   return {
     type: post.type,
@@ -207,14 +217,22 @@ export function PostForm({ post, onSaved }: { post?: Post; onSaved: (post: Post)
                 {postOptions.map((o) => (
                   <label
                     key={o.value}
+                    aria-disabled={o.disabled}
                     className={cn(
-                      'flex cursor-pointer items-center gap-3 rounded-xl bg-white p-3.5 ring-1 transition',
-                      selectedOption === o.value ? 'ring-2 ring-brand-500' : 'ring-slate-200 hover:ring-slate-300',
+                      'flex items-center gap-3 rounded-xl bg-white p-3.5 ring-1 transition',
+                      o.disabled
+                        ? 'cursor-not-allowed bg-slate-50 opacity-60 ring-slate-200'
+                        : selectedOption === o.value
+                          ? 'cursor-pointer ring-2 ring-brand-500'
+                          : 'cursor-pointer ring-slate-200 hover:ring-slate-300',
                     )}
                   >
-                    <input type="radio" value={o.value} {...register('option')} className="size-4 shrink-0 accent-brand-600" />
+                    <input type="radio" value={o.value} disabled={o.disabled} {...register('option')} className="size-4 shrink-0 accent-brand-600" />
                     <span className="min-w-0">
-                      <span className="block font-semibold text-slate-900">{o.label}</span>
+                      <span className="flex items-center gap-2 font-semibold text-slate-900">
+                        {o.label}
+                        {o.disabled && <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-600">Coming soon</span>}
+                      </span>
                       <span className="block text-xs text-slate-500">{o.description}</span>
                     </span>
                   </label>

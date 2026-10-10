@@ -17,10 +17,14 @@ export const postTypeLabel = (type: PostType) => postTypes.find((t) => t.value =
 export const postTypeHasPayments = (type: PostType) => postTypes.find((t) => t.value === type)?.payments ?? true
 
 /** The A / B choice on Type 1 posts. Rename here once their business meaning is final. */
-export const postOptions: { value: PostOption; label: string; description: string }[] = [
+export const postOptions: { value: PostOption; label: string; description: string; disabled?: boolean }[] = [
   { value: 'A', label: 'Option A', description: 'First Type 1 option' },
-  { value: 'B', label: 'Option B', description: 'Second Type 1 option' },
+  // Shown but not selectable for now. Remove `disabled` to open it.
+  { value: 'B', label: 'Option B', description: 'Second Type 1 option', disabled: true },
 ]
+
+/** Pre-selected on new Type 1 posts: the first option people can pick. */
+export const defaultPostOption = postOptions.find((o) => !o.disabled)?.value
 
 export const postOptionLabel = (option: PostOption) => postOptions.find((o) => o.value === option)?.label ?? option
 
